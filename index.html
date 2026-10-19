@@ -1,0 +1,749 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="icon" href="data:," />
+    <title>Fashion Website</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,700;0,800;1,500;1,600&family=Archivo:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <style>
+      :root{
+        --bg:#f6f5f1;
+        --surface:#ffffff;
+        --surface-2:#efece5;
+        --ink:#17140f;
+        --ink-soft:#57534a;
+        --line:#ddd8cc;
+        --accent:#bc3f12;
+        --accent-ink:#ffffff;
+        --chip:#ffffff;
+        --shadow:0 10px 30px rgba(23,20,15,.10);
+        --overlay:rgba(18,15,10,.72);
+        color-scheme:light;
+      }
+      @media (prefers-color-scheme: dark){
+        :root{
+          --bg:#121110;
+          --surface:#1c1a17;
+          --surface-2:#26231f;
+          --ink:#f2eee6;
+          --ink-soft:#b3aa9c;
+          --line:#37332c;
+          --accent:#e0651f;
+          --accent-ink:#171310;
+          --chip:#1c1a17;
+          --shadow:0 10px 30px rgba(0,0,0,.45);
+          --overlay:rgba(0,0,0,.8);
+          color-scheme:dark;
+        }
+      }
+      *{box-sizing:border-box}
+      html{scroll-behavior:smooth}
+      body{
+        margin:0;background:var(--bg);color:var(--ink);
+        font-family:"Archivo",system-ui,-apple-system,"Segoe UI",sans-serif;
+        -webkit-font-smoothing:antialiased;
+      }
+      img{display:block;max-width:100%}
+      button{font:inherit;cursor:pointer}
+      a{color:inherit}
+      .serif{font-family:"Playfair Display",Georgia,serif}
+
+      /* ---------- top bar ---------- */
+      .topbar{
+        position:sticky;top:0;z-index:40;
+        display:flex;align-items:center;gap:14px;
+        padding:12px clamp(14px,3vw,28px);
+        background:color-mix(in srgb, var(--bg) 88%, transparent);
+        backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+        border-bottom:1px solid var(--line);
+      }
+      .brand{display:flex;align-items:baseline;gap:10px;text-decoration:none;white-space:nowrap}
+      .brand .mark{
+        font-family:"Playfair Display",Georgia,serif;font-weight:800;font-size:26px;line-height:1;
+        border:2px solid var(--ink);padding:2px 7px 4px;letter-spacing:.02em;
+      }
+      .brand .name{font-weight:800;letter-spacing:.14em;font-size:13px;text-transform:uppercase}
+      .brand .name small{display:block;letter-spacing:.22em;font-size:9px;color:var(--ink-soft);font-weight:600}
+      .search{
+        flex:1;display:flex;align-items:center;gap:8px;min-width:0;
+        background:var(--surface);border:1px solid var(--line);border-radius:999px;
+        padding:9px 14px;
+      }
+      .search svg{flex:none;opacity:.55}
+      .search input{
+        border:0;outline:0;background:transparent;color:var(--ink);
+        font:inherit;font-size:15px;width:100%;min-width:0;
+      }
+      .search input::placeholder{color:var(--ink-soft)}
+      .saved-btn{
+        display:flex;align-items:center;gap:7px;white-space:nowrap;
+        background:var(--ink);color:var(--bg);border:0;border-radius:999px;
+        padding:10px 16px;font-weight:700;font-size:14px;
+      }
+      .saved-btn[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+      .saved-btn .count{
+        background:var(--bg);color:var(--ink);border-radius:999px;
+        min-width:20px;height:20px;display:grid;place-items:center;font-size:12px;padding:0 5px;
+      }
+      @media (max-width:560px){
+        .brand .name{display:none}
+        .topbar{gap:10px;padding:10px 12px}
+        .saved-btn{padding:9px 12px}
+      }
+
+      /* ---------- hero ---------- */
+      .hero{
+        display:grid;grid-template-columns:1.15fr .85fr;gap:clamp(18px,4vw,48px);
+        align-items:center;
+        padding:clamp(22px,5vw,54px) clamp(14px,3vw,28px) clamp(10px,2vw,20px);
+        max-width:1440px;margin:0 auto;
+      }
+      .hero .kicker{
+        font-size:12px;font-weight:700;letter-spacing:.28em;text-transform:uppercase;color:var(--accent);
+        display:flex;align-items:center;gap:10px;margin:0 0 14px;
+      }
+      .hero .kicker::after{content:"";height:1px;width:56px;background:var(--accent)}
+      .hero h1{
+        font-family:"Playfair Display",Georgia,serif;font-weight:800;
+        font-size:clamp(38px,6.2vw,72px);line-height:1.02;margin:0 0 16px;letter-spacing:-.01em;
+      }
+      .hero h1 em{font-style:italic;font-weight:600;color:var(--accent)}
+      .hero p.lede{font-size:clamp(15px,1.6vw,18px);line-height:1.6;color:var(--ink-soft);max-width:52ch;margin:0 0 22px}
+      .hero .cta-row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+      .btn-primary{
+        background:var(--accent);color:var(--accent-ink);border:0;border-radius:999px;
+        padding:13px 24px;font-weight:700;font-size:15px;text-decoration:none;display:inline-block;
+      }
+      .btn-ghost{
+        background:transparent;color:var(--ink);border:1.5px solid var(--ink);border-radius:999px;
+        padding:11.5px 22px;font-weight:700;font-size:15px;text-decoration:none;display:inline-block;
+      }
+      .hero figure{margin:0;position:relative}
+      .hero figure img{
+        width:100%;height:clamp(320px,52vh,560px);object-fit:cover;object-position:top center;
+        border-radius:6px 64px 6px 6px;
+      }
+      .hero figcaption{
+        position:absolute;left:14px;bottom:14px;background:var(--surface);color:var(--ink);
+        padding:9px 14px;border-radius:4px;box-shadow:var(--shadow);font-size:13px;max-width:78%;
+      }
+      .hero figcaption b{display:block;font-family:"Playfair Display",Georgia,serif;font-size:16px}
+      @media (max-width:760px){
+        .hero{grid-template-columns:1fr;padding-top:20px}
+        .hero figure img{height:340px;border-radius:6px 40px 6px 6px}
+      }
+
+      /* ---------- boards rail ---------- */
+      .boards{max-width:1440px;margin:0 auto;padding:18px clamp(14px,3vw,28px) 4px}
+      .section-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:14px}
+      .section-head h2{font-family:"Playfair Display",Georgia,serif;font-size:clamp(24px,3vw,34px);margin:0;font-weight:700}
+      .section-head span{font-size:13px;color:var(--ink-soft)}
+      .board-rail{
+        display:grid;grid-template-columns:repeat(5,1fr);gap:12px;
+      }
+      .board-card{
+        text-align:left;border:1px solid var(--line);background:var(--surface);
+        border-radius:8px;padding:0;overflow:hidden;transition:transform .18s ease, border-color .18s ease;
+      }
+      .board-card:hover{transform:translateY(-3px)}
+      .board-card.active{border-color:var(--accent);box-shadow:0 0 0 1.5px var(--accent)}
+      .board-card .thumbs{display:grid;grid-template-columns:1fr 1fr;gap:2px;background:var(--surface-2)}
+      .board-card .thumbs img{width:100%;height:74px;object-fit:cover}
+      .board-card .meta{padding:10px 12px 12px}
+      .board-card .meta b{display:block;font-size:14.5px;line-height:1.25}
+      .board-card .meta span{font-size:12px;color:var(--ink-soft)}
+      @media (max-width:900px){.board-rail{grid-template-columns:repeat(3,1fr)}}
+      @media (max-width:560px){
+        .board-rail{grid-template-columns:repeat(2,1fr)}
+        .board-card .thumbs img{height:56px}
+      }
+
+      /* ---------- filter bar ---------- */
+      .filterbar{
+        max-width:1440px;margin:0 auto;padding:16px clamp(14px,3vw,28px) 6px;
+        display:flex;flex-wrap:wrap;gap:8px;align-items:center;
+      }
+      .chip{
+        border:1px solid var(--line);background:var(--chip);color:var(--ink);
+        border-radius:999px;padding:8px 16px;font-weight:600;font-size:14px;
+      }
+      .chip.active{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+      .filterbar .spacer{flex:1}
+      .sortwrap{display:flex;align-items:center;gap:8px;font-size:13.5px;color:var(--ink-soft)}
+      .sortwrap select{
+        font:inherit;font-size:14px;color:var(--ink);background:var(--surface);
+        border:1px solid var(--line);border-radius:8px;padding:7px 9px;
+      }
+
+      /* ---------- masonry feed ---------- */
+      .feed{
+        max-width:1440px;margin:0 auto;
+        padding:14px clamp(14px,3vw,28px) 30px;
+        columns:4;column-gap:16px;
+      }
+      @media (max-width:1100px){.feed{columns:3}}
+      @media (max-width:760px){.feed{columns:2;column-gap:12px;padding-left:12px;padding-right:12px}}
+      .card{
+        break-inside:avoid;margin:0 0 16px;background:var(--surface);
+        border:1px solid var(--line);border-radius:10px;overflow:hidden;
+        transition:transform .18s ease, box-shadow .18s ease;
+      }
+      .card:hover{transform:translateY(-3px);box-shadow:var(--shadow)}
+      .card .photo{position:relative;border:0;padding:0;background:none;width:100%;display:block;text-align:left}
+      .card .photo img{width:100%;height:auto}
+      .card .save{
+        position:absolute;top:10px;right:10px;width:38px;height:38px;border-radius:999px;
+        border:0;background:var(--surface);color:var(--ink);display:grid;place-items:center;
+        box-shadow:var(--shadow);opacity:0;transform:translateY(-4px);transition:.18s ease;
+      }
+      .card:hover .save,.card .save.on,.save:focus-visible{opacity:1;transform:none}
+      @media (hover:none){.card .save{opacity:1;transform:none}}
+      .card .save.on{background:var(--accent);color:var(--accent-ink)}
+      .card .body{padding:12px 14px 14px}
+      .card .board-tag{
+        font-size:10.5px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);margin:0 0 5px;
+      }
+      .card h3{font-family:"Playfair Display",Georgia,serif;font-size:19px;line-height:1.2;margin:0 0 6px;font-weight:700}
+      .card p.note{font-size:13.5px;line-height:1.5;color:var(--ink-soft);margin:0 0 10px}
+      .card .row{display:flex;align-items:center;justify-content:space-between;gap:8px}
+      .price{font-weight:800;font-size:16.5px}
+      .price small{font-weight:600;color:var(--ink-soft);font-size:11.5px;display:block}
+      .shop{
+        background:var(--ink);color:var(--bg);text-decoration:none;border-radius:999px;
+        padding:8px 15px;font-weight:700;font-size:13.5px;white-space:nowrap;
+      }
+      .shop:hover{background:var(--accent);color:var(--accent-ink)}
+      .empty{
+        max-width:560px;margin:30px auto 60px;text-align:center;padding:0 20px;display:none;
+      }
+      .empty h3{font-family:"Playfair Display",Georgia,serif;font-size:26px;margin:0 0 8px}
+      .empty p{color:var(--ink-soft);line-height:1.6}
+
+      /* ---------- outfit strip ---------- */
+      .outfit{
+        max-width:1440px;margin:6px auto 0;padding:0 clamp(14px,3vw,28px) 34px;
+      }
+      .outfit-inner{
+        display:grid;grid-template-columns:.9fr 1.1fr;gap:0;background:var(--ink);color:var(--bg);
+        border-radius:12px;overflow:hidden;
+      }
+      .outfit-inner img{width:100%;height:100%;min-height:320px;object-fit:cover;object-position:top center}
+      .outfit-copy{padding:clamp(20px,4vw,44px);display:flex;flex-direction:column;justify-content:center}
+      .outfit-copy .kicker{font-size:11.5px;font-weight:700;letter-spacing:.26em;text-transform:uppercase;color:var(--accent);margin:0 0 10px}
+      .outfit-copy h2{font-family:"Playfair Display",Georgia,serif;font-size:clamp(28px,3.6vw,42px);margin:0 0 8px;font-weight:700;line-height:1.1}
+      .outfit-copy>p{color:color-mix(in srgb, var(--bg) 72%, transparent);line-height:1.6;margin:0 0 18px;font-size:15px}
+      .breakdown{list-style:none;margin:0 0 20px;padding:0}
+      .breakdown li{
+        display:flex;justify-content:space-between;gap:14px;padding:9px 0;
+        border-bottom:1px dashed color-mix(in srgb, var(--bg) 30%, transparent);font-size:15px;
+      }
+      .breakdown li.total{border-bottom:0;font-weight:800;font-size:17px}
+      .breakdown li.total span:last-child{color:var(--accent)}
+      .outfit-copy .btn-primary{align-self:flex-start}
+      @media (max-width:760px){.outfit-inner{grid-template-columns:1fr}.outfit-inner img{min-height:260px;max-height:340px}}
+
+      /* ---------- footer ---------- */
+      footer{
+        border-top:1px solid var(--line);margin-top:10px;
+        padding:28px clamp(14px,3vw,28px) 40px;
+      }
+      .foot-inner{max-width:1440px;margin:0 auto;display:flex;flex-wrap:wrap;gap:18px 34px;justify-content:space-between}
+      .foot-inner nav{display:flex;flex-wrap:wrap;gap:8px 20px}
+      .foot-inner nav a{font-weight:600;font-size:14.5px;text-decoration:none;border-bottom:1.5px solid var(--accent)}
+      .disclosure{max-width:1440px;margin:16px auto 0;font-size:12.5px;color:var(--ink-soft);line-height:1.6}
+
+      /* ---------- detail modal ---------- */
+      .modal-backdrop{
+        position:fixed;inset:0;background:var(--overlay);z-index:60;
+        display:none;align-items:flex-end;justify-content:center;padding:0;
+      }
+      .modal-backdrop.open{display:flex}
+      .modal{
+        background:var(--surface);color:var(--ink);width:min(920px,100%);
+        max-height:92vh;overflow:auto;border-radius:16px 16px 0 0;
+        display:grid;grid-template-columns:1fr 1fr;
+      }
+      @media (min-width:761px){
+        .modal-backdrop{align-items:center;padding:24px}
+        .modal{border-radius:14px}
+      }
+      @media (max-width:760px){.modal{grid-template-columns:1fr}}
+      .modal .m-photo{position:relative;background:var(--surface-2)}
+      .modal .m-photo img{width:100%;height:100%;max-height:92vh;object-fit:cover}
+      @media (max-width:760px){.modal .m-photo img{max-height:46vh}}
+      .modal .m-body{padding:clamp(18px,3.4vw,34px);display:flex;flex-direction:column;gap:12px}
+      .modal .m-body .board-tag{font-size:11px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);margin:0}
+      .modal .m-body h3{font-family:"Playfair Display",Georgia,serif;font-size:clamp(26px,3.4vw,36px);line-height:1.1;margin:0}
+      .modal .m-body .desc{color:var(--ink-soft);line-height:1.65;font-size:15px;margin:0}
+      .modal .m-price{font-size:24px;font-weight:800}
+      .modal .m-price small{display:block;font-size:12px;font-weight:600;color:var(--ink-soft)}
+      .modal .m-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:2px}
+      .modal .m-actions .shop{padding:12px 22px;font-size:15px}
+      .modal .m-save{
+        border:1.5px solid var(--ink);background:transparent;color:var(--ink);
+        border-radius:999px;padding:11px 20px;font-weight:700;font-size:15px;
+      }
+      .modal .m-save.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+      .modal .related{margin-top:8px}
+      .modal .related h4{margin:0 0 10px;font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft)}
+      .modal .related .rrow{display:flex;gap:10px}
+      .modal .related button{border:0;padding:0;background:none;border-radius:8px;overflow:hidden;flex:1}
+      .modal .related img{width:100%;height:96px;object-fit:cover}
+      .modal-close{
+        position:absolute;top:12px;right:12px;z-index:2;width:40px;height:40px;border-radius:999px;
+        border:0;background:var(--surface);color:var(--ink);box-shadow:var(--shadow);
+        display:grid;place-items:center;font-size:18px;line-height:1;
+      }
+      .toast{
+        position:fixed;left:50%;bottom:22px;transform:translate(-50%,80px);z-index:80;
+        background:var(--ink);color:var(--bg);padding:11px 20px;border-radius:999px;
+        font-weight:600;font-size:14px;transition:transform .25s ease;pointer-events:none;
+        box-shadow:var(--shadow);max-width:calc(100vw - 32px);text-align:center;
+      }
+      .toast.show{transform:translate(-50%,0)}
+      @media (prefers-reduced-motion: reduce){
+        *{transition:none !important;scroll-behavior:auto !important}
+      }
+    </style>
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="brand" href="#" aria-label="Fashion Goals home">
+        <span class="mark">FG</span>
+        <span class="name">Fashion Goals<small>The Style Board</small></span>
+      </a>
+      <label class="search">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.8-3.8"/></svg>
+        <input id="searchInput" type="search" placeholder="Search watches, hoodies, perfumes…" autocomplete="off" />
+      </label>
+      <button class="saved-btn" id="savedToggle" aria-pressed="false" title="Show saved looks">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4.2L5 21V4a1 1 0 0 1 1-1z"/></svg>
+        Saved <span class="count" id="savedCount">0</span>
+      </button>
+    </header>
+
+    <section class="hero">
+      <div>
+        <p class="kicker">Daily style, hand-picked</p>
+        <h1>Looks worth <em>saving,</em><br />prices worth checking.</h1>
+        <p class="lede">A style board for men's fashion — winter layers, streetwear sneakers, watches, fragrances and full outfit breakdowns. Browse the boards, save the looks you love, and tap through to shop each pick.</p>
+        <div class="cta-row">
+          <a class="btn-primary" href="#feed">Browse the board</a>
+          <a class="btn-ghost" href="#outfit">₹1,306 outfit breakdown</a>
+        </div>
+      </div>
+      <figure>
+        <img src="images/img-00.webp" alt="Black and white editorial photo of a man in a double-breasted blazer" />
+        <figcaption><b>Editor's pick</b>The sharp blazer look — formal, fearless, timeless.</figcaption>
+      </figure>
+    </section>
+
+    <section class="boards" aria-label="Boards">
+      <div class="section-head">
+        <h2>The Boards</h2>
+        <span>Tap a board to filter the feed</span>
+      </div>
+      <div class="board-rail" id="boardRail"></div>
+    </section>
+
+    <div class="filterbar" id="feed">
+      <div id="chips" style="display:contents"></div>
+      <div class="spacer"></div>
+      <label class="sortwrap">Sort
+        <select id="sortSel" aria-label="Sort looks">
+          <option value="featured">Featured</option>
+          <option value="price-asc">Price: low to high</option>
+          <option value="price-desc">Price: high to low</option>
+          <option value="name">Name A–Z</option>
+        </select>
+      </label>
+    </div>
+
+    <main class="feed" id="feedGrid" aria-live="polite"></main>
+    <div class="empty" id="emptyState">
+      <h3>Nothing here — yet</h3>
+      <p id="emptyText">Try a different search, or clear the board filter to see every look again.</p>
+      <p><button class="btn-primary" id="resetBtn" style="border:0">Show everything</button></p>
+    </div>
+
+    <section class="outfit" id="outfit">
+      <div class="outfit-inner">
+        <img src="images/img-01.jpg" alt="Man mid-jump in a street outfit of t-shirt, cargo pants and high-top sneakers" loading="lazy" />
+        <div class="outfit-copy">
+          <p class="kicker">Outfit breakdown</p>
+          <h2>Full street look, under ₹1,500</h2>
+          <p>The fit from the Outfit Breakdown reel on Instagram, priced piece by piece — proof a complete look doesn't need a big budget.</p>
+          <ul class="breakdown">
+            <li><span>T-shirt</span><span>₹155</span></li>
+            <li><span>Cargo pants</span><span>₹468</span></li>
+            <li><span>Sneakers</span><span>₹411</span></li>
+            <li><span>Sunglasses</span><span>₹140</span></li>
+            <li><span>Chain</span><span>₹132</span></li>
+            <li class="total"><span>Total look</span><span>₹1,306</span></li>
+          </ul>
+          <a class="btn-primary" href="https://www.instagram.com/wolf.7588197/" target="_blank" rel="noopener">Watch the breakdown reel</a>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      <div class="foot-inner">
+        <a class="brand" href="#" style="text-decoration:none">
+          <span class="mark">FG</span>
+          <span class="name">Fashion Goals<small>The Style Board</small></span>
+        </a>
+        <nav>
+          <a href="https://in.pinterest.com/Fashiongoalsshivly/" target="_blank" rel="noopener">Pinterest</a>
+          <a href="https://www.instagram.com/wolf.7588197/" target="_blank" rel="noopener">Instagram</a>
+          <a href="https://fashiongoalsblog.blogspot.com/" target="_blank" rel="noopener">Fashion Blog</a>
+        </nav>
+      </div>
+      <p class="disclosure">As an Amazon Associate I earn from qualifying purchases. Shop buttons on this page link to Amazon.in with the Fashion Goals affiliate tag — prices there can change, so the price shown on Amazon at checkout is the final one.</p>
+    </footer>
+
+    <div class="modal-backdrop" id="modalBackdrop" role="dialog" aria-modal="true" aria-hidden="true">
+      <div class="modal" id="modalCard"></div>
+    </div>
+    <div class="toast" id="toast" role="status"></div>
+
+    <script>
+      var TAG = "shiv0c63-21";
+      function shopUrl(it){ return "https://www.amazon.in/dp/" + it.asin + "?tag=" + TAG; }
+
+      var BOARDS = [
+        { id:"winter",     name:"Men's Winter Fashion",  note:"Hoodies, puffers & layers" },
+        { id:"sneakers",   name:"Sneakers & Streetwear", note:"Kicks & street looks" },
+        { id:"watches",    name:"Watches & Accessories", note:"Wrist game & add-ons" },
+        { id:"perfumes",   name:"Perfumes & Grooming",   note:"Scents that last" },
+        { id:"stuff",      name:"Stuff to Buy",          note:"Backpacks & everyday picks" }
+      ];
+
+      var ITEMS = [
+        { id:"titan", title:"Titan Men's Watch", board:"watches", img:"images/img-02.jpg",
+          alt:"Titan men's analog watch with a silver dial and black leather strap",
+          note:"The classic everyday Titan — clean dial, goes with formals and casuals alike.",
+          desc:"A clean, versatile analog from Titan. The grey dial pairs with a suit at work and a tee on weekends — one watch, every plan. Quartz movement, day-date window and a strap that breaks in beautifully.",
+          price:null, asin:"B0DZPDW9BP" },
+        { id:"fogg", title:"Fogg Scent Amber", board:"perfumes", img:"images/img-03.jpg",
+          alt:"Fogg Scent Amber perfume for men",
+          note:"Warm, woody and long-lasting — the evening scent from the perfume series.",
+          desc:"A warm amber eau de parfum built for evenings and occasions. Rich, slightly sweet and long-lasting on skin and clothes — spray on pulse points in the morning and it carries through the day.",
+          price:720, asin:"B0B7BWWBP8" },
+        { id:"dennis-black", title:"Dennis Lingo Black Shirt", board:"winter", img:"images/img-04.jpg",
+          alt:"Dennis Lingo black casual shirt",
+          note:"The black shirt that anchors half the looks on this board — sharp, slim and easy.",
+          desc:"A slim-fit black casual shirt from Dennis Lingo — the hardest-working piece in a man's wardrobe. Wear it tucked with trousers for dinner, or open over a tee for the street. Wrinkle-resistant cotton blend that holds its colour wash after wash.",
+          price:null, asin:"B0B7RKFPH1" },
+        { id:"casio", title:"Casio Men's Watch", board:"watches", img:"images/img-05.jpg",
+          alt:"Casio men's analog watch",
+          note:"Big dial, leather strap — the statement wrist pick of the season.",
+          desc:"A bold Casio with a genuine-leather strap and a dial that gets noticed. Dress it up with a blazer or down with a denim jacket — it's the easiest upgrade to any outfit on this board.",
+          price:null, asin:"B09KYLSD8K" },
+        { id:"dennis-polo", title:"Dennis Lingo Polo T-Shirt", board:"winter", img:"images/img-06.jpg",
+          alt:"Dennis Lingo polo t-shirt",
+          note:"The smart-casual staple — a polo that works from office hours to evenings out.",
+          desc:"A clean, structured polo from Dennis Lingo in a breathable piqué knit. The collar holds its shape, the fit stays sharp through the day, and black goes with every trouser and jean you own.",
+          price:null, asin:"B0C82719R9" },
+        { id:"envy", title:"ENVY Arnold Perfume", board:"perfumes", img:"images/img-07.jpg",
+          alt:"ENVY Arnold perfume for men",
+          note:"Bold and budget-friendly — a daily-driver scent under ₹200.",
+          desc:"A strong, masculine fragrance at a price that's hard to beat. Fresh top notes with a deep, musky base — ideal as an everyday office and college scent that smells far above its price.",
+          price:184, asin:"B0CWTV3LYH" },
+        { id:"puma", title:"Puma Men's Shoes", board:"sneakers", img:"images/img-08.jpg",
+          alt:"Puma men's shoes",
+          note:"Colour-pop Pumas that turn a plain fit into a street look.",
+          desc:"Chunky, colourful and comfortable — these Pumas do the talking. Pair with black jeans and a plain tee and the outfit is done. Cushioned sole for all-day city walking.",
+          price:null, asin:"B07V5KNB2V" },
+        { id:"wrogn", title:"WROGN Graphic Tee Look", board:"winter", img:"images/img-09.jpg",
+          alt:"WROGN graphic t-shirt",
+          note:"Layering inspiration — a statement tee under your heaviest winter jacket.",
+          desc:"A style idea for the coldest days: a WROGN tee layered under a chunky winter jacket. Keep everything else simple and let the layers carry the look. Shot in black and white, worn in full colour.",
+          price:null, asin:"B0GVRYZ27B" },
+        { id:"sneakers-white", title:"Classic White Sneakers", board:"sneakers", img:"images/img-10.jpg",
+          alt:"Pair of clean white sneakers",
+          note:"The one pair that matches everything in your wardrobe.",
+          desc:"Clean white sneakers — the most versatile shoes a man can own. They finish formals, casuals, kurtas and everything between. Keep them wiped down and they elevate every single outfit on this board.",
+          price:null, asin:"", hidden:true },
+        { id:"jump", title:"High-Top Street Look", board:"sneakers", img:"images/img-11.jpg",
+          alt:"Man mid-jump against a dark wall wearing high-top sneakers and black jeans",
+          note:"High-tops + black denim — the street uniform, mid-air.",
+          desc:"Black skinny denim, layered tee and high-top sneakers — the street uniform that never dates. The monochrome palette keeps it sharp; the sneakers add the height and the attitude.",
+          price:null, asin:"", hidden:true },
+        { id:"fastrack", title:"Fastrack Sunglasses", board:"watches", img:"images/img-12.jpg",
+          alt:"Fastrack sunglasses",
+          note:"The shades that finish the double-denim look — bold frames, UV-protected lenses.",
+          desc:"Fastrack sunglasses with bold, street-ready frames and UV-protected lenses. They finish a denim-on-denim fit, a plain tee, or a full suit — one pair, every plan. Lightweight build for all-day wear.",
+          price:null, asin:"B07C46M461" },
+        { id:"backpack", title:"Wildcraft Travel Backpack", board:"stuff", img:"images/img-13.jpg",
+          alt:"Black travel backpack with a water bottle beside it",
+          note:"The rugged everyday carry from the backpack pin series.",
+          desc:"A tough, structured backpack built for daily commutes and weekend trips alike — padded laptop sleeve, organised pockets and water-resistant fabric. The kind of bag you buy once and use for years.",
+          price:null, asin:"", hidden:true },
+        { id:"vincent", title:"Vincent Chase Aviator Sunglasses", board:"watches", img:"images/img-14.jpg",
+          alt:"Vincent Chase sunglasses",
+          note:"Amber-lens aviators — instant attitude for any face.",
+          desc:"Timeless Vincent Chase aviator frames with warm amber lenses. They suit almost every face shape, cut the harsh afternoon glare, and add a film-star finish to the simplest outfit.",
+          price:null, asin:"B08D6WQZMD" },
+        { id:"wildhorn", title:"WildHorn Leather Wallet", board:"watches", img:"images/img-15.jpg",
+          alt:"WildHorn leather bifold wallet",
+          note:"Slim bifold in tan leather — ages beautifully with use.",
+          desc:"A slim WildHorn bifold in full-grain tan leather with room for cards, cash and coins without the pocket bulge. The leather darkens and softens with use — it looks better in year two than day one.",
+          price:null, asin:"B0BRQJ3R92" },
+        { id:"zoro-belt", title:"Zoro Leather Belt", board:"watches", img:"images/img-16.jpg",
+          alt:"Zoro genuine leather belt",
+          note:"A genuine-leather belt that pulls the whole outfit together.",
+          desc:"A genuine-leather belt from Zoro with a clean metal buckle — the finishing touch for formals and jeans alike. Pairs with the WildHorn wallet for a matched leather set.",
+          price:null, asin:"B0C65H4TKB" },
+        { id:"engage", title:"Engage Perfume for Men", board:"perfumes", img:"images/img-17.jpg",
+          alt:"Engage Sport Cool deodorant spray for men",
+          note:"A fresh, energetic everyday scent — the office-and-college staple.",
+          desc:"An energetic everyday fragrance from Engage — fresh citrus up top with a clean, musky dry-down. Built for daily wear: office, college and everything after.",
+          price:null, asin:"B07S9QC8BL" },
+        { id:"brut", title:"Brut Original Perfume", board:"perfumes", img:"images/img-18.jpg",
+          alt:"Brut Original perfume for men",
+          note:"The timeless classic — bold, green and unmistakably masculine.",
+          desc:"Brut Original — the classic men's fragrance that never left the shelf. Bold, green and confident, with staying power that outlasts the day.",
+          price:null, asin:"B08CH37PS8" },
+        { id:"jovan", title:"Jovan Musk for Men", board:"perfumes", img:"images/img-19.jpg",
+          alt:"Jovan Black Musk perfume for men",
+          note:"Warm musk with a vintage soul — smooth, close and long-lasting.",
+          desc:"Jovan Musk — a warm, smooth musk that's been a men's staple for decades. Soft spices over a clean musk base; wears close and lasts for hours.",
+          price:null, asin:"B002XQ1TZ4" },
+        { id:"nike-perfume", title:"Nike Perfume for Men", board:"perfumes", img:"images/img-20.jpg",
+          alt:"Nike eau de toilette for men",
+          note:"Sporty and fresh — the post-gym, all-day-clean scent.",
+          desc:"A sporty, fresh fragrance from Nike — citrus and aquatic notes that smell clean all day. The gym-bag essential that doubles as a daily driver.",
+          price:null, asin:"B0FK9WJ4D9" },
+        { id:"park-avenue", title:"Park Avenue Perfume", board:"perfumes", img:"images/img-21.jpg",
+          alt:"Park Avenue Voyage perfume for men",
+          note:"Voyage vibes — fresh, confident and easy on the pocket.",
+          desc:"Park Avenue's everyday favourite — fresh top notes over a warm, confident base. Smells premium, priced for daily use.",
+          price:155, asin:"B084V46KGT" },
+        { id:"set-wet", title:"Set Wet Perfume (Pack of 3)", board:"perfumes", img:"images/img-22.jpg",
+          alt:"Set Wet perfume pack of 3 for men",
+          note:"Three scents in one pack — a different mood for every day.",
+          desc:"The Set Wet 3-pack: three pocket-friendly scents for the price of one. Three moods in one box — rotate by day, or gift the set.",
+          price:225, asin:"B079Q17WXZ" }
+      ];
+
+      var state = { board:"all", query:"", savedOnly:false, sort:"featured", saved:{} };
+
+      function inr(n){ return "₹" + n.toLocaleString("en-IN"); }
+      function boardName(id){ for (var i=0;i<BOARDS.length;i++) if (BOARDS[i].id===id) return BOARDS[i].name; return ""; }
+      function visibleItems(){ return ITEMS.filter(function(it){ return !it.hidden; }); }
+
+      /* ----- boards rail ----- */
+      var rail = document.getElementById("boardRail");
+      BOARDS.forEach(function(b){
+        var items = visibleItems().filter(function(it){ return it.board===b.id; });
+        if (!items.length) return;
+        var btn = document.createElement("button");
+        btn.className = "board-card"; btn.dataset.board = b.id;
+        btn.setAttribute("aria-label","Filter by board: " + b.name);
+        var thumbs = items.slice(0,4).map(function(it){
+          return '<img src="' + it.img + '" alt="" loading="lazy" />';
+        }).join("");
+        btn.innerHTML = '<span class="thumbs">' + thumbs + '</span>' +
+          '<span class="meta"><b>' + b.name + '</b><span>' + items.length + (items.length === 1 ? ' look' : ' looks') + ' · ' + b.note + '</span></span>';
+        btn.addEventListener("click", function(){
+          setBoard(state.board === b.id ? "all" : b.id);
+          document.getElementById("feed").scrollIntoView({ behavior:"smooth", block:"start" });
+        });
+        rail.appendChild(btn);
+      });
+
+      /* ----- filter chips ----- */
+      var chipsWrap = document.getElementById("chips");
+      var chipDefs = [{ id:"all", name:"All looks" }].concat(BOARDS.filter(function(b){
+        return visibleItems().some(function(it){ return it.board===b.id; });
+      }));
+      chipDefs.forEach(function(c){
+        var b = document.createElement("button");
+        b.className = "chip" + (c.id==="all" ? " active" : "");
+        b.dataset.chip = c.id; b.textContent = c.name;
+        b.addEventListener("click", function(){ setBoard(c.id); });
+        chipsWrap.appendChild(b);
+      });
+
+      function setBoard(id){
+        state.board = id;
+        document.querySelectorAll("[data-chip]").forEach(function(el){
+          el.classList.toggle("active", el.dataset.chip === id);
+        });
+        document.querySelectorAll(".board-card").forEach(function(el){
+          el.classList.toggle("active", el.dataset.board === id);
+        });
+        render();
+      }
+
+      /* ----- feed ----- */
+      var grid = document.getElementById("feedGrid");
+      var emptyState = document.getElementById("emptyState");
+
+      function saveBtnHTML(it){
+        var on = state.saved[it.id];
+        return '<button class="save' + (on ? " on" : "") + '" data-save="' + it.id + '" aria-label="' + (on ? "Remove from saved" : "Save this look") + '" aria-pressed="' + !!on + '">' +
+          '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4.2L5 21V4a1 1 0 0 1 1-1z"/></svg></button>';
+      }
+      function priceHTML(it){
+        if (it.price) return '<span class="price">' + inr(it.price) + (it.priceNote ? "<small>" + it.priceNote + "</small>" : "") + '</span>';
+        return '<span class="price"><small>price on Amazon</small></span>';
+      }
+
+      function render(){
+        var list = visibleItems().filter(function(it){
+          if (state.board !== "all" && it.board !== state.board) return false;
+          if (state.savedOnly && !state.saved[it.id]) return false;
+          if (state.query){
+            var q = state.query.toLowerCase();
+            var hay = (it.title + " " + it.note + " " + boardName(it.board)).toLowerCase();
+            if (hay.indexOf(q) === -1) return false;
+          }
+          return true;
+        });
+        if (state.sort === "price-asc")  list.sort(function(a,b){ return (a.price||999999) - (b.price||999999); });
+        if (state.sort === "price-desc") list.sort(function(a,b){ return (b.price||-1) - (a.price||-1); });
+        if (state.sort === "name")       list.sort(function(a,b){ return a.title.localeCompare(b.title); });
+
+        grid.innerHTML = list.map(function(it){
+          return '<article class="card">' +
+            '<button class="photo" data-open="' + it.id + '" aria-label="View ' + it.title + '">' +
+              '<img src="' + it.img + '" alt="' + it.alt + '" loading="lazy" />' +
+            '</button>' + saveBtnHTML(it) +
+            '<div class="body">' +
+              '<p class="board-tag">' + boardName(it.board) + '</p>' +
+              '<h3>' + it.title + '</h3>' +
+              '<p class="note">' + it.note + '</p>' +
+              '<div class="row">' + priceHTML(it) +
+                '<a class="shop" href="' + shopUrl(it) + '" target="_blank" rel="noopener sponsored">Shop</a>' +
+              '</div>' +
+            '</div>' +
+          '</article>';
+        }).join("");
+
+        /* save buttons sit outside .photo button; re-place them inside card via CSS position on card */
+        grid.querySelectorAll(".card").forEach(function(card){ card.style.position = "relative"; });
+
+        emptyState.style.display = list.length ? "none" : "block";
+        if (!list.length && state.savedOnly){
+          document.getElementById("emptyText").textContent = "No saved looks yet — tap the bookmark on any look to keep it here.";
+        } else if (!list.length){
+          document.getElementById("emptyText").textContent = "Try a different search, or clear the board filter to see every look again.";
+        }
+
+        grid.querySelectorAll("[data-open]").forEach(function(el){
+          el.addEventListener("click", function(){ openModal(el.dataset.open); });
+        });
+        grid.querySelectorAll("[data-save]").forEach(function(el){
+          el.addEventListener("click", function(ev){ ev.stopPropagation(); toggleSave(el.dataset.save); });
+        });
+        updateSavedCount();
+      }
+
+      function updateSavedCount(){
+        var n = Object.keys(state.saved).filter(function(k){ return state.saved[k]; }).length;
+        document.getElementById("savedCount").textContent = n;
+      }
+
+      var toastTimer = null;
+      function toast(msg){
+        var t = document.getElementById("toast");
+        t.textContent = msg; t.classList.add("show");
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(function(){ t.classList.remove("show"); }, 2200);
+      }
+
+      function toggleSave(id){
+        state.saved[id] = !state.saved[id];
+        var it = ITEMS.filter(function(x){ return x.id===id; })[0];
+        toast(state.saved[id] ? "Saved — " + it.title : "Removed — " + it.title);
+        render();
+        var mb = document.querySelector(".modal .m-save");
+        if (mb && mb.dataset.save === id) syncModalSave(id);
+      }
+
+      /* ----- search & sort ----- */
+      document.getElementById("searchInput").addEventListener("input", function(e){
+        state.query = e.target.value.trim(); render();
+      });
+      document.getElementById("sortSel").addEventListener("change", function(e){
+        state.sort = e.target.value; render();
+      });
+      document.getElementById("savedToggle").addEventListener("click", function(){
+        state.savedOnly = !state.savedOnly;
+        this.setAttribute("aria-pressed", state.savedOnly);
+        render();
+      });
+      document.getElementById("resetBtn").addEventListener("click", function(){
+        state.query = ""; state.savedOnly = false;
+        document.getElementById("searchInput").value = "";
+        document.getElementById("savedToggle").setAttribute("aria-pressed","false");
+        setBoard("all");
+      });
+
+      /* ----- detail modal ----- */
+      var backdrop = document.getElementById("modalBackdrop");
+      var modalCard = document.getElementById("modalCard");
+      var lastFocus = null;
+
+      function syncModalSave(id){
+        var mb = modalCard.querySelector(".m-save");
+        if (!mb) return;
+        var on = state.saved[id];
+        mb.classList.toggle("on", !!on);
+        mb.textContent = on ? "Saved ✓" : "Save this look";
+      }
+
+      function openModal(id){
+        var it = ITEMS.filter(function(x){ return x.id===id; })[0];
+        if (!it) return;
+        lastFocus = document.activeElement;
+        var related = visibleItems().filter(function(x){ return x.board===it.board && x.id!==it.id; }).slice(0,3);
+        modalCard.innerHTML =
+          '<div class="m-photo"><img src="' + it.img + '" alt="' + it.alt + '" />' +
+            '<button class="modal-close" id="modalClose" aria-label="Close">✕</button></div>' +
+          '<div class="m-body">' +
+            '<p class="board-tag">' + boardName(it.board) + '</p>' +
+            '<h3>' + it.title + '</h3>' +
+            '<p class="desc">' + it.desc + '</p>' +
+            (it.price ? '<p class="m-price">' + inr(it.price) + '<small>last seen price — final price on Amazon</small></p>'
+                      : '<p class="m-price"><small>Tap Shop to see today\'s price on Amazon</small></p>') +
+            '<div class="m-actions">' +
+              '<a class="shop" href="' + shopUrl(it) + '" target="_blank" rel="noopener sponsored">Shop on Amazon</a>' +
+              '<button class="m-save" data-save="' + it.id + '">Save this look</button>' +
+            '</div>' +
+            (related.length ? '<div class="related"><h4>More from this board</h4><div class="rrow">' +
+              related.map(function(r){
+                return '<button data-open="' + r.id + '" aria-label="View ' + r.title + '"><img src="' + r.img + '" alt="' + r.alt + '" loading="lazy" /></button>';
+              }).join("") + '</div></div>' : '') +
+          '</div>';
+        syncModalSave(id);
+        modalCard.querySelector(".m-save").addEventListener("click", function(){ toggleSave(id); });
+        modalCard.querySelectorAll("[data-open]").forEach(function(el){
+          el.addEventListener("click", function(){ openModal(el.dataset.open); });
+        });
+        document.getElementById("modalClose").addEventListener("click", closeModal);
+        backdrop.classList.add("open");
+        backdrop.setAttribute("aria-hidden","false");
+        document.body.style.overflow = "hidden";
+        document.getElementById("modalClose").focus();
+      }
+      function closeModal(){
+        backdrop.classList.remove("open");
+        backdrop.setAttribute("aria-hidden","true");
+        document.body.style.overflow = "";
+        if (lastFocus) lastFocus.focus();
+      }
+      backdrop.addEventListener("click", function(e){ if (e.target === backdrop) closeModal(); });
+      document.addEventListener("keydown", function(e){
+        if (e.key === "Escape" && backdrop.classList.contains("open")) closeModal();
+      });
+
+      render();
+    </script>
+  </body>
+</html>
