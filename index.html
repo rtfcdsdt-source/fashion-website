@@ -266,9 +266,17 @@
       .modal{
         background:var(--surface);color:var(--ink);width:min(920px,100%);
         max-height:92vh;overflow-y:auto;overflow-x:hidden;border-radius:16px 16px 0 0;
-        display:grid;grid-template-columns:1fr 1fr;
+        display:block;
         -webkit-overflow-scrolling:touch;overscroll-behavior:contain;
       }
+      /* continuous feed inside the viewer: every product is a full
+         photo + details section, stacked one after another in the
+         same scroll — like scrolling the home feed */
+      .m-item{display:grid;grid-template-columns:1fr 1fr}
+      .m-item + .m-item{border-top:1px solid var(--line)}
+      /* zero-height sticky bar: the X floats over the first photo (no
+         strip above it) and stays pinned while the feed scrolls */
+      .m-closebar{position:sticky;top:0;height:0;z-index:6}
       @media (min-width:761px){
         .modal-backdrop{align-items:center;padding:24px}
         .modal{border-radius:14px}
@@ -278,7 +286,8 @@
            edge of the screen with no overlay band above it, and the sheet
            scrolls vertically with native touch momentum */
         .modal-backdrop{align-items:stretch}
-        .modal{grid-template-columns:1fr;width:100%;height:100vh;height:100dvh;max-height:100vh;max-height:100dvh;border-radius:0}
+        .modal{width:100%;height:100vh;height:100dvh;max-height:100vh;max-height:100dvh;border-radius:0}
+        .m-item{grid-template-columns:1fr}
       }
       .modal .m-photo{
         position:relative;background:var(--surface-2);
@@ -311,8 +320,9 @@
            aspect ratio: no height cap, no letterbox gap */
         .modal .m-photo{aspect-ratio:auto !important;max-height:none}
         .modal .m-photo img{position:static;display:block;width:100%;max-width:100%;height:auto;touch-action:pan-y;-webkit-user-drag:none}
-        /* close button stays pinned to the top corner while scrolling */
-        .modal-close{position:fixed;top:calc(10px + env(safe-area-inset-top,0px));right:12px}
+        /* close button rides the sticky bar at the top corner, clear of
+           the notch / status area, at any scroll position */
+        .modal-close{top:calc(12px + env(safe-area-inset-top,0px))}
       }
       .modal .m-body{padding:clamp(18px,3.4vw,34px);display:flex;flex-direction:column;gap:12px}
       .modal .m-body .board-tag{font-size:11px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);margin:0}
@@ -646,6 +656,9 @@
       /* ----- feed ----- */
       var grid = document.getElementById("feedGrid");
       var emptyState = document.getElementById("emptyState");
+      /* ids in the order the feed currently shows them — the viewer
+         continues scrolling in exactly this order */
+      var currentList = [];
 
       function saveBtnHTML(it){
         var on = state.saved[it.id];
@@ -671,6 +684,7 @@
         if (state.sort === "price-asc")  list.sort(function(a,b){ return (a.price||999999) - (b.price||999999); });
         if (state.sort === "price-desc") list.sort(function(a,b){ return (b.price||-1) - (a.price||-1); });
         if (state.sort === "name")       list.sort(function(a,b){ return a.title.localeCompare(b.title); });
+        currentList = list.map(function(it){ return it.id; });
 
         grid.innerHTML = list.map(function(it){
           return '<article class="card">' +
@@ -725,8 +739,7 @@
         var it = ITEMS.filter(function(x){ return x.id===id; })[0];
         toast(state.saved[id] ? "Saved — " + it.title : "Removed — " + it.title);
         render();
-        var mb = document.querySelector(".modal .m-save");
-        if (mb && mb.dataset.save === id) syncModalSave(id);
+        syncModalSave(id);
       }
 
       /* ----- search & sort ----- */
@@ -754,73 +767,106 @@
       var lastFocus = null;
 
       function syncModalSave(id){
-        var mb = modalCard.querySelector(".m-save");
+        var mb = modalCard.querySelector('.m-save[data-save="' + id + '"]');
         if (!mb) return;
         var on = state.saved[id];
         mb.classList.toggle("on", !!on);
         mb.textContent = on ? "Saved ✓" : "Save this look";
       }
 
-      function openModal(id){
-        var it = ITEMS.filter(function(x){ return x.id===id; })[0];
-        if (!it) return;
-        lastFocus = document.activeElement;
+      /* one full product section of the viewer feed: photo at its
+         natural ratio, board, name, collapsible description, price,
+         and its own Shop (Amazon) + Save buttons */
+      function sectionHTML(it, first){
         var dims = dimsOf(it);
-        modalCard.innerHTML =
+        return '<section class="m-item" data-item="' + it.id + '">' +
           '<div class="m-photo loading" style="aspect-ratio:' + dims[0] + ' / ' + dims[1] + '"><span class="m-shimmer" aria-hidden="true"><span></span></span>' +
-            '<img src="' + it.img + '" alt="' + it.alt + '" width="' + dims[0] + '" height="' + dims[1] + '" decoding="async" />' +
-            '<button class="modal-close" id="modalClose" aria-label="Close">✕</button></div>' +
+            '<img src="' + it.img + '" alt="' + it.alt + '" width="' + dims[0] + '" height="' + dims[1] + '" decoding="async"' + (first ? '' : ' loading="lazy"') + ' />' +
+          '</div>' +
           '<div class="m-body">' +
             '<p class="board-tag">' + boardName(it.board) + '</p>' +
             '<h3>' + it.title + '</h3>' +
             '<p class="desc clamped">' + it.desc + '</p>' +
-            '<button class="desc-toggle" id="descToggle" type="button" aria-expanded="false" hidden>Read more <span class="chev" aria-hidden="true">▾</span></button>' +
+            '<button class="desc-toggle" type="button" aria-expanded="false" hidden>Read more <span class="chev" aria-hidden="true">▾</span></button>' +
             (it.price ? '<p class="m-price">' + inr(it.price) + '<small>last seen price — final price on Amazon</small></p>'
                       : '<p class="m-price"><small>Tap Shop to see today\'s price on Amazon</small></p>') +
             '<div class="m-actions">' +
               '<a class="shop" href="' + shopUrl(it) + '" target="_blank" rel="noopener sponsored">Shop on Amazon</a>' +
               '<button class="m-save" data-save="' + it.id + '">Save this look</button>' +
             '</div>' +
-          '</div>';
-        syncModalSave(id);
-        var mPhoto = modalCard.querySelector(".m-photo");
-        var mImg = mPhoto.querySelector("img");
-        var markLoaded = function(){
-          mImg.classList.add("loaded");
-          mPhoto.classList.remove("loading");
-        };
-        if (mImg.complete && mImg.naturalWidth) markLoaded();
-        else {
-          mImg.addEventListener("load", markLoaded);
-          mImg.addEventListener("error", markLoaded);
-        }
-        modalCard.querySelector(".m-save").addEventListener("click", function(){ toggleSave(id); });
+          '</div>' +
+        '</section>';
+      }
+
+      function itemById(id){
+        var found = ITEMS.filter(function(x){ return x.id===id; });
+        return found.length ? found[0] : null;
+      }
+
+      function openModal(id){
+        var it = itemById(id);
+        if (!it) return;
+        lastFocus = document.activeElement;
+        /* the viewer is one continuous scroll: it opens on the tapped
+           product, then the rest of the feed flows below it in the
+           order shown on the page, wrapping back to the top of the
+           list so every product is reachable without closing */
+        var ids = currentList.length ? currentList.slice() : visibleItems().map(function(x){ return x.id; });
+        var start = ids.indexOf(id);
+        if (start < 0){ ids = [id]; start = 0; }
+        var ordered = ids.slice(start).concat(ids.slice(0, start));
+        var html = '<div class="m-closebar"><button class="modal-close" id="modalClose" aria-label="Close">✕</button></div>';
+        ordered.forEach(function(pid, i){
+          var p = itemById(pid);
+          if (p) html += sectionHTML(p, i === 0);
+        });
+        modalCard.innerHTML = html;
+        ordered.forEach(function(pid){ syncModalSave(pid); });
+        modalCard.querySelectorAll(".m-item").forEach(function(sec){
+          var mPhoto = sec.querySelector(".m-photo");
+          var mImg = mPhoto.querySelector("img");
+          var markLoaded = function(){
+            mImg.classList.add("loaded");
+            mPhoto.classList.remove("loading");
+          };
+          if (mImg.complete && mImg.naturalWidth) markLoaded();
+          else {
+            mImg.addEventListener("load", markLoaded);
+            mImg.addEventListener("error", markLoaded);
+          }
+          var sv = sec.querySelector(".m-save");
+          sv.addEventListener("click", function(){ toggleSave(sv.dataset.save); });
+        });
         document.getElementById("modalClose").addEventListener("click", closeModal);
         backdrop.classList.add("open");
         backdrop.setAttribute("aria-hidden","false");
         document.body.style.overflow = "hidden";
+        modalCard.scrollTop = 0;
         document.getElementById("modalClose").focus();
-        setupDescToggle();
+        setupDescToggles();
       }
-      /* Long descriptions start clamped to 3 lines with a Read more /
-         Show less toggle; short ones that fit show in full, no button. */
-      function setupDescToggle(){
-        var descEl = modalCard.querySelector(".desc");
-        var btn = modalCard.querySelector(".desc-toggle");
-        if (!descEl || !btn) return;
-        /* measure in the open modal: if the clamped text overflows its
-           3-line box, the full text is longer — keep the toggle */
-        if (descEl.scrollHeight > descEl.clientHeight + 2){
-          btn.hidden = false;
-        } else {
-          descEl.classList.remove("clamped");
-          btn.hidden = true;
-        }
-        btn.addEventListener("click", function(){
-          var collapsed = descEl.classList.toggle("clamped");
-          btn.classList.toggle("expanded", !collapsed);
-          btn.setAttribute("aria-expanded", String(!collapsed));
-          btn.firstChild.textContent = collapsed ? "Read more " : "Show less ";
+      /* Long descriptions in every viewer section start clamped to
+         3 lines with a Read more / Show less toggle; short ones that
+         fit show in full, no button. */
+      function setupDescToggles(){
+        modalCard.querySelectorAll(".m-body").forEach(function(body){
+          var descEl = body.querySelector(".desc");
+          var btn = body.querySelector(".desc-toggle");
+          if (!descEl || !btn) return;
+          /* measure in the open modal: if the clamped text overflows its
+             3-line box, the full text is longer — keep the toggle */
+          if (descEl.scrollHeight > descEl.clientHeight + 2){
+            btn.hidden = false;
+          } else {
+            descEl.classList.remove("clamped");
+            btn.hidden = true;
+          }
+          btn.addEventListener("click", function(){
+            var collapsed = descEl.classList.toggle("clamped");
+            btn.classList.toggle("expanded", !collapsed);
+            btn.setAttribute("aria-expanded", String(!collapsed));
+            btn.firstChild.textContent = collapsed ? "Read more " : "Show less ";
+          });
         });
       }
 
