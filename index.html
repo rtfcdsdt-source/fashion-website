@@ -299,7 +299,12 @@
       }
       @keyframes m-shimmer{from{background-position:180% 0}to{background-position:-80% 0}}
       @keyframes m-spin{to{transform:rotate(360deg)}}
-      @media (max-width:760px){.modal .m-photo{max-height:56vh}}
+      @media (max-width:760px){
+        /* photo spans the full modal width edge-to-edge at its natural
+           aspect ratio: no height cap, no letterbox gap */
+        .modal .m-photo{aspect-ratio:auto !important;max-height:none}
+        .modal .m-photo img{position:static;width:100%;height:auto}
+      }
       .modal .m-body{padding:clamp(18px,3.4vw,34px);display:flex;flex-direction:column;gap:12px}
       .modal .m-body .board-tag{font-size:11px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);margin:0}
       .modal .m-body h3{font-family:"Playfair Display",Georgia,serif;font-size:clamp(26px,3.4vw,36px);line-height:1.1;margin:0}
