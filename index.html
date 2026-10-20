@@ -318,6 +318,17 @@
       .modal .m-body .board-tag{font-size:11px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);margin:0}
       .modal .m-body h3{font-family:"Playfair Display",Georgia,serif;font-size:clamp(26px,3.4vw,36px);line-height:1.1;margin:0}
       .modal .m-body .desc{color:var(--ink-soft);line-height:1.65;font-size:15px;margin:0}
+      .modal .m-body .desc.clamped{
+        display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden;
+      }
+      .desc-toggle{
+        align-self:flex-start;background:none;border:0;padding:8px 4px;margin:-4px 0 -2px -4px;
+        color:var(--accent);font-weight:700;font-size:14.5px;min-height:40px;
+        display:inline-flex;align-items:center;gap:5px;
+      }
+      .desc-toggle[hidden]{display:none}
+      .desc-toggle .chev{display:inline-block;font-size:11px;transition:transform .2s ease}
+      .desc-toggle.expanded .chev{transform:rotate(180deg)}
       .modal .m-price{font-size:24px;font-weight:800}
       .modal .m-price small{display:block;font-size:12px;font-weight:600;color:var(--ink-soft)}
       .modal .m-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:2px}
@@ -762,7 +773,8 @@
           '<div class="m-body">' +
             '<p class="board-tag">' + boardName(it.board) + '</p>' +
             '<h3>' + it.title + '</h3>' +
-            '<p class="desc">' + it.desc + '</p>' +
+            '<p class="desc clamped">' + it.desc + '</p>' +
+            '<button class="desc-toggle" id="descToggle" type="button" aria-expanded="false" hidden>Read more <span class="chev" aria-hidden="true">▾</span></button>' +
             (it.price ? '<p class="m-price">' + inr(it.price) + '<small>last seen price — final price on Amazon</small></p>'
                       : '<p class="m-price"><small>Tap Shop to see today\'s price on Amazon</small></p>') +
             '<div class="m-actions">' +
@@ -788,7 +800,30 @@
         backdrop.setAttribute("aria-hidden","false");
         document.body.style.overflow = "hidden";
         document.getElementById("modalClose").focus();
+        setupDescToggle();
       }
+      /* Long descriptions start clamped to 3 lines with a Read more /
+         Show less toggle; short ones that fit show in full, no button. */
+      function setupDescToggle(){
+        var descEl = modalCard.querySelector(".desc");
+        var btn = modalCard.querySelector(".desc-toggle");
+        if (!descEl || !btn) return;
+        /* measure in the open modal: if the clamped text overflows its
+           3-line box, the full text is longer — keep the toggle */
+        if (descEl.scrollHeight > descEl.clientHeight + 2){
+          btn.hidden = false;
+        } else {
+          descEl.classList.remove("clamped");
+          btn.hidden = true;
+        }
+        btn.addEventListener("click", function(){
+          var collapsed = descEl.classList.toggle("clamped");
+          btn.classList.toggle("expanded", !collapsed);
+          btn.setAttribute("aria-expanded", String(!collapsed));
+          btn.firstChild.textContent = collapsed ? "Read more " : "Show less ";
+        });
+      }
+
       function closeModal(){
         backdrop.classList.remove("open");
         backdrop.setAttribute("aria-hidden","true");
