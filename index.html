@@ -265,14 +265,21 @@
       .modal-backdrop.open{display:flex}
       .modal{
         background:var(--surface);color:var(--ink);width:min(920px,100%);
-        max-height:92vh;overflow:auto;border-radius:16px 16px 0 0;
+        max-height:92vh;overflow-y:auto;overflow-x:hidden;border-radius:16px 16px 0 0;
         display:grid;grid-template-columns:1fr 1fr;
+        -webkit-overflow-scrolling:touch;overscroll-behavior:contain;
       }
       @media (min-width:761px){
         .modal-backdrop{align-items:center;padding:24px}
         .modal{border-radius:14px}
       }
-      @media (max-width:760px){.modal{grid-template-columns:1fr}}
+      @media (max-width:760px){
+        /* full-screen sheet on phones: the photo starts at the very top
+           edge of the screen with no overlay band above it, and the sheet
+           scrolls vertically with native touch momentum */
+        .modal-backdrop{align-items:stretch}
+        .modal{grid-template-columns:1fr;width:100%;height:100vh;height:100dvh;max-height:100vh;max-height:100dvh;border-radius:0}
+      }
       .modal .m-photo{
         position:relative;background:var(--surface-2);
         aspect-ratio:4/5;max-height:92vh;overflow:hidden;
@@ -303,7 +310,9 @@
         /* photo spans the full modal width edge-to-edge at its natural
            aspect ratio: no height cap, no letterbox gap */
         .modal .m-photo{aspect-ratio:auto !important;max-height:none}
-        .modal .m-photo img{position:static;width:100%;height:auto}
+        .modal .m-photo img{position:static;display:block;width:100%;max-width:100%;height:auto;touch-action:pan-y;-webkit-user-drag:none}
+        /* close button stays pinned to the top corner while scrolling */
+        .modal-close{position:fixed;top:calc(10px + env(safe-area-inset-top,0px));right:12px}
       }
       .modal .m-body{padding:clamp(18px,3.4vw,34px);display:flex;flex-direction:column;gap:12px}
       .modal .m-body .board-tag{font-size:11px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);margin:0}
@@ -318,11 +327,6 @@
         border-radius:999px;padding:11px 20px;font-weight:700;font-size:15px;
       }
       .modal .m-save.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
-      .modal .related{margin-top:8px}
-      .modal .related h4{margin:0 0 10px;font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft)}
-      .modal .related .rrow{display:flex;gap:10px}
-      .modal .related button{border:0;padding:0;background:none;border-radius:8px;overflow:hidden;flex:1}
-      .modal .related img{width:100%;height:96px;object-fit:cover}
       .modal-close{
         position:absolute;top:12px;right:12px;z-index:2;width:40px;height:40px;border-radius:999px;
         border:0;background:#dc2626;color:#ffffff;box-shadow:var(--shadow);
@@ -750,7 +754,6 @@
         var it = ITEMS.filter(function(x){ return x.id===id; })[0];
         if (!it) return;
         lastFocus = document.activeElement;
-        var related = visibleItems().filter(function(x){ return x.board===it.board && x.id!==it.id; }).slice(0,3);
         var dims = dimsOf(it);
         modalCard.innerHTML =
           '<div class="m-photo loading" style="aspect-ratio:' + dims[0] + ' / ' + dims[1] + '"><span class="m-shimmer" aria-hidden="true"><span></span></span>' +
@@ -766,10 +769,6 @@
               '<a class="shop" href="' + shopUrl(it) + '" target="_blank" rel="noopener sponsored">Shop on Amazon</a>' +
               '<button class="m-save" data-save="' + it.id + '">Save this look</button>' +
             '</div>' +
-            (related.length ? '<div class="related"><h4>More from this board</h4><div class="rrow">' +
-              related.map(function(r){
-                return '<button data-open="' + r.id + '" aria-label="View ' + r.title + '"><img src="' + r.img + '" alt="' + r.alt + '" loading="lazy" /></button>';
-              }).join("") + '</div></div>' : '') +
           '</div>';
         syncModalSave(id);
         var mPhoto = modalCard.querySelector(".m-photo");
@@ -784,9 +783,6 @@
           mImg.addEventListener("error", markLoaded);
         }
         modalCard.querySelector(".m-save").addEventListener("click", function(){ toggleSave(id); });
-        modalCard.querySelectorAll("[data-open]").forEach(function(el){
-          el.addEventListener("click", function(){ openModal(el.dataset.open); });
-        });
         document.getElementById("modalClose").addEventListener("click", closeModal);
         backdrop.classList.add("open");
         backdrop.setAttribute("aria-hidden","false");
