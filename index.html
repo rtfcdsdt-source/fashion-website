@@ -602,14 +602,9 @@
     <script>
       var TAG = "shiv0c63-21";
       function shopUrl(it){ return "https://www.amazon.in/dp/" + it.asin + "?tag=" + TAG; }
-      /* looks without their own product link yet borrow the Shop
-         button of the closest matching look that has one */
-      var SHOP_FALLBACK = { "sneakers-white":"puma", "jump":"puma", "backpack":"wildhorn" };
-      function shopHref(it){
-        if (it.asin) return shopUrl(it);
-        var fb = itemById(SHOP_FALLBACK[it.id] || "");
-        return fb && fb.asin ? shopUrl(fb) : shopUrl(it);
-      }
+      /* looks with no product link of their own get no Shop button */
+      function hasShop(it){ return !!it.asin; }
+      function shopHref(it){ return it.asin ? shopUrl(it) : ""; }
 
       /* intrinsic pixel size of each photo, so the modal can reserve the
          exact box (and aspect ratio) before the image finishes loading */
@@ -931,7 +926,7 @@
               '<h3>' + it.title + '</h3>' +
               '<p class="note">' + it.note + '</p>' +
               '<div class="row">' + priceHTML(it) +
-                '<a class="shop" href="' + shopHref(it) + '" target="_blank" rel="noopener sponsored">Shop</a>' +
+                (hasShop(it) ? '<a class="shop" href="' + shopHref(it) + '" target="_blank" rel="noopener sponsored">Shop</a>' : '') +
               '</div>' +
             '</div>' +
           '</article>';
@@ -1029,9 +1024,9 @@
             '<p class="desc clamped">' + it.desc + '</p>' +
             '<button class="desc-toggle" type="button" aria-expanded="false" hidden>Read more <svg class="chev" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 9 7 7 7-7"/></svg></button>' +
             (it.price ? '<p class="m-price">' + inr(it.price) + '<small>last seen price — final price on Amazon</small></p>'
-                      : '<p class="m-price"><small>Tap Shop to see today\'s price on Amazon</small></p>') +
+                      : (hasShop(it) ? '<p class="m-price"><small>Tap Shop to see today\'s price on Amazon</small></p>' : '')) +
             '<div class="m-actions">' +
-              '<a class="shop" href="' + shopHref(it) + '" target="_blank" rel="noopener sponsored">Shop on Amazon</a>' +
+              (hasShop(it) ? '<a class="shop" href="' + shopHref(it) + '" target="_blank" rel="noopener sponsored">Shop on Amazon</a>' : '') +
               '<button class="m-save" data-save="' + it.id + '">Save this look</button>' +
             '</div>' +
           '</div>' +
