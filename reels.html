@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Video Reels</title>
+
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#000;color:#fff;font-family:Arial,sans-serif}
+header{position:fixed;top:0;left:0;width:100%;height:62px;background:#000;z-index:900}
+#feed{width:100%;max-width:500px;margin:62px auto 0;padding:8px}
+.video-card{background:#111;border:1px solid #252525;border-radius:12px;margin-bottom:18px;overflow:hidden}
+.video-info{padding:12px}
+.channel{font-size:14px;font-weight:bold;color:#ff9900;margin-bottom:6px}
+.video-title{font-size:15px;margin:0;overflow-wrap:anywhere}
+.player{width:100%;aspect-ratio:9/16;max-height:650px;background:#080808;border:0;display:block}
+.instagram-player{width:100%;min-height:500px;border:0;display:block;background:#080808}
+.open-link{display:inline-block;margin-top:10px;color:#ff9900;font-size:13px;text-decoration:none}
+
+#addBtn{
+ position:fixed;top:12px;right:16px;width:45px;height:45px;
+ border:0;border-radius:50%;background:#ff9900;color:#000;
+ font-size:32px;line-height:45px;text-align:center;padding:0;
+ cursor:grab;touch-action:none;z-index:1000;
+ box-shadow:0 0 12px #ff990055;user-select:none
+}
+#addBtn.dragging{cursor:grabbing;opacity:.85}
+
+.modal{display:none;position:fixed;inset:0;z-index:2000;background:#000d;align-items:center;justify-content:center;padding:16px}
+.modal-box{width:100%;max-width:400px;max-height:90vh;overflow-y:auto;background:#171717;border:1px solid #333;border-radius:14px;padding:20px}
+.modal-box h2{margin:0 0 18px;font-size:21px}
+.field-label{display:block;font-size:13px;color:#ddd;margin:13px 0 7px}
+.modal-box input,.modal-box select{width:100%;padding:12px;border-radius:8px;border:1px solid #444;background:#090909;color:#fff;outline:none;font-size:14px}
+.modal-box input:focus,.modal-box select:focus{border-color:#ff9900}
+.modal-actions{display:flex;gap:10px;margin-top:18px}
+.modal-btn{flex:1;padding:12px 8px;border:0;border-radius:8px;font-weight:bold;cursor:pointer}
+.btn-submit{background:#FFA500;color:#000}
+.btn-cancel{background:#444;color:#fff}
+.note{color:#aaa;font-size:12px;line-height:1.5;margin-top:12px}
+#message{display:none;margin-top:12px;padding:10px;border-radius:7px;background:#292929;font-size:13px;line-height:1.5;overflow-wrap:anywhere}
+
+@media(min-width:600px){
+ #feed{padding-top:15px}
+}
+</style>
+</head>
+
+<body>
+<header></header>
+
+<button id="addBtn" aria-label="Add video"
+title="Tap: Upload | Hold: Drag">+</button>
+
+<main id="feed">
+
+<article class="video-card">
+<iframe class="player"
+src="https://www.youtube.com/embed/ScMzIvxBSi4?playsinline=1&enablejsapi=1&autoplay=1&mute=1"
+title="YouTube video"
+data-type="youtube"
+allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+allowfullscreen></iframe>
+
+<div class="video-info">
+<div class="channel">Demo Channel</div>
+<p class="video-title">YouTube video example</p>
+</div>
+</article>
+
+</main>
+
+<div class="modal" id="uploadModal">
+<div class="modal-box">
+<h2>Upload Video</h2>
+
+<form id="uploadForm">
+
+<label class="field-label" for="platform">Platform चुनें</label>
+<select id="platform" required>
+<option value="youtube">YouTube</option>
+<option value="instagram">Instagram Reels</option>
+</select>
+
+<label class="field-label" id="urlLabel" for="videoUrl">YouTube Video Link</label>
+<input id="videoUrl" type="url"
+placeholder="https://www.youtube.com/watch?v=..." required>
+
+<label class="field-label" for="channelName">Channel / Username</label>
+<input id="channelName" type="text"
+placeholder="Channel name" maxlength="80">
+
+<label class="field-label" for="videoTitle">Video Title</label>
+<input id="videoTitle" type="text"
+placeholder="Video का नाम लिखें" maxlength="180">
+
+<div id="message" role="status"></div>
+
+<p class="note" id="platformNote">
+केवल उपलब्ध YouTube वीडियो का लिंक डालें।
+</p>
+
+<div class="modal-actions">
+<button type="submit" class="modal-btn btn-submit">Add Video</button>
+<button type="button" id="cancelBtn" class="modal-btn btn-cancel">Cancel</button>
+</div>
+
+</form>
+</div>
+</div>
+
+<script>
+const addBtn = document.getElementById("addBtn");
+const modal = document.getElementById("uploadModal");
+const form = document.getElementById("uploadForm");
+const feed = document.getElementById("feed");
+const platform = document.getElementById("platform");
+const videoUrl = document.getElementById("videoUrl");
+const channelName = document.getElementById("channelName");
+const videoTitle = document.getElementById("videoTitle");
+const urlLabel = document.getElementById("urlLabel");
+const platformNote = document.getElementById("platformNote");
+const message = document.getElementById("message");
+
+function openModal(){
+ modal.style.display="flex";
+ message.style.display="none";
+}
+
+function closeModal(){
+ modal.style.display="none";
+}
+
+addBtn.addEventListener("click",function(){
+ if(addBtn.dataset.wasDragged==="yes"){
+  addBtn.dataset.wasDragged="no";
+  return;
+ }
+ openModal();
+});
+
+document.getElementById("cancelBtn").addEventListener("click",closeModal);
+
+modal.addEventListener("click",e=>{
+ if(e.target===modal)closeModal();
+});
+
+document.addEventListener("keydown",e=>{
+ if(e.key==="Escape")closeModal();
+});
+
+platform.addEventListener("change",function(){
+ message.style.display="none";
+
+ if(platform.value==="instagram"){
+  urlLabel.textContent="Instagram Reel / Post Link";
+  videoUrl.placeholder="https://www.instagram.com/reel/SHORTCODE/";
+  platformNote.textContent="Public Instagram Reel/Post होना चाहिए। Instagram autoplay की गारंटी नहीं देता।";
+ }else{
+  urlLabel.textContent="YouTube Video Link";
+  videoUrl.placeholder="https://www.youtube.com/watch?v=...";
+  platformNote.textContent="YouTube वीडियो अपने आप चलाने के लिए autoplay का प्रयास होगा।";
+ }
+});
+
+function getYouTubeId(input){
+ try{
+  const url=new URL(input);
+  const host=url.hostname.toLowerCase().replace(/^www\./,"");
+
+  if(host==="youtu.be"){
+   return url.pathname.split("/").filter(Boolean)[0]||null;
+  }
+
+  if(["youtube.com","m.youtube.com","music.youtube.com"].includes(host)){
+   if(url.pathname==="/watch")return url.searchParams.get("v");
+
+   const parts=url.pathname.split("/").filter(Boolean);
+
+   if(["embed","shorts","live"].includes(parts[0])){
+    return parts[1]||null;
+   }
+  }
+ }catch(e){}
+
+ return null;
+}
+
+function getInstagramEmbed(input){
+ try{
+  const url=new URL(input);
+  const host=url.hostname.toLowerCase().replace(/^www\./,"");
+
+  if(!["instagram.com","m.instagram.com"].includes(host))return null;
+
+  const parts=url.pathname.split("/").filter(Boolean);
+  const type=parts[0],code=parts[1];
+
+  if(!["reel","reels","p","tv"].includes(type)||
+     !code||!/^[A-Za-z0-9_-]+$/.test(code))return null;
+
+  return "https://www.instagram.com/"+
+   (type==="reels"?"reel":type)+"/"+code+"/embed";
+ }catch(e){
+  return null;
+ }
+}
+
+function showMessage(text){
+ message.textContent=text;
+ message.style.display="block";
+}
+
+/* YouTube player commands */
+function youtubeCommand(iframe,command){
+ try{
+  iframe.contentWindow.postMessage(JSON.stringify({
+   event:"command",
+   func:command,
+   args:[]
+  }),"https://www.youtube.com");
+ }catch(e){}
+}
+
+/* Pause the video when it is no longer visible */
+function pauseVideo(iframe){
+ if(iframe.dataset.type==="youtube"){
+  youtubeCommand(iframe,"pauseVideo");
+ }
+ /* Instagram has no reliable public playback-control API */
+}
+
+/* Try to autoplay the video currently on screen */
+function playVideo(iframe){
+ if(iframe.dataset.type==="youtube"){
+  youtubeCommand(iframe,"playVideo");
+ }
+ /* Instagram playback is controlled by Instagram itself */
+}
+
+/* Automatically play the most visible YouTube video */
+const videoObserver = new IntersectionObserver(entries=>{
+ entries.forEach(entry=>{
+  const iframe=entry.target;
+
+  if(entry.isIntersecting && entry.intersectionRatio>=0.60){
+
+   document.querySelectorAll(".video-card iframe").forEach(other=>{
+    if(other!==iframe)pauseVideo(other);
+   });
+
+   playVideo(iframe);
+
+  }else{
+   pauseVideo(iframe);
+  }
+ });
+},{threshold:[0,0.60,1]});
+
+function observeAllVideos(){
+ document.querySelectorAll(".video-card iframe").forEach(iframe=>{
+  if(iframe.dataset.observed==="yes")return;
+
+  iframe.dataset.observed="yes";
+  videoObserver.observe(iframe);
+ });
+}
+
+observeAllVideos();
+
+function addVideoCard(src,type,channel,title,originalUrl){
+ const card=document.createElement("article");
+ card.className="video-card";
+
+ const iframe=document.createElement("iframe");
+ iframe.src=src;
+ iframe.title=title||(type==="instagram"?"Instagram post":"YouTube video");
+ iframe.setAttribute("allowfullscreen","");
+ iframe.setAttribute("loading","lazy");
+ iframe.referrerPolicy="strict-origin-when-cross-origin";
+ iframe.dataset.type=type;
+
+ if(type==="youtube"){
+  iframe.className="player";
+  iframe.setAttribute("allow",
+   "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share");
+ }else{
+  iframe.className="instagram-player";
+  iframe.setAttribute("scrolling","no");
+  iframe.style.overflow="hidden";
+ }
+
+ const info=document.createElement("div");
+ info.className="video-info";
+
+ const ch=document.createElement("div");
+ ch.className="channel";
+ ch.textContent=channel||(type==="instagram"?"Instagram Creator":"YouTube Creator");
+
+ const titleEl=document.createElement("p");
+ titleEl.className="video-title";
+ titleEl.textContent=title||"Video";
+
+ const link=document.createElement("a");
+ link.className="open-link";
+ link.href=originalUrl;
+ link.target="_blank";
+ link.rel="noopener noreferrer";
+ link.textContent=type==="instagram"?
+  "Instagram पर खोलें ↗":"YouTube पर खोलें ↗";
+
+ info.append(ch,titleEl,link);
+ card.append(iframe,info);
+ feed.prepend(card);
+
+ observeAllVideos();
+}
+
+form.addEventListener("submit",function(event){
+ event.preventDefault();
+
+ const selected=platform.value;
+ const url=videoUrl.value.trim();
+ const channel=channelName.value.trim();
+ const title=videoTitle.value.trim();
+
+ if(selected==="youtube"){
+  const id=getYouTubeId(url);
+
+  if(!id||!/^[A-Za-z0-9_-]{11}$/.test(id)){
+   showMessage("सही YouTube वीडियो, Shorts या Live लिंक डालें।");
+   return;
+  }
+
+  const src="https://www.youtube.com/embed/"+id+
+   "?playsinline=1&enablejsapi=1&autoplay=1&mute=0";
+
+  addVideoCard(src,"youtube",channel,title,url);
+
+ }else{
+  const src=getInstagramEmbed(url);
+
+  if(!src){
+   showMessage("सही Instagram Reel या Post लिंक डालें।");
+   return;
+  }
+
+  addVideoCard(src,"instagram",channel,title,url);
+ }
+
+ closeModal();
+ form.reset();
+ platform.value="youtube";
+ platform.dispatchEvent(new Event("change"));
+ window.scrollTo({top:0,behavior:"smooth"});
+});
+
+/* Hold + for one second to drag; tap to upload */
+let holdTimer=null;
+let isDragging=false;
+let holdTriggered=false;
+let startX=0,startY=0,offsetX=0,offsetY=0;
+
+addBtn.addEventListener("pointerdown",function(e){
+ if(e.button!==undefined&&e.button!==0)return;
+
+ startX=e.clientX;
+ startY=e.clientY;
+ holdTriggered=false;
+ isDragging=false;
+
+ const rect=addBtn.getBoundingClientRect();
+ offsetX=e.clientX-rect.left;
+ offsetY=e.clientY-rect.top;
+
+ holdTimer=setTimeout(()=>{
+  holdTriggered=true;
+  isDragging=true;
+  addBtn.classList.add("dragging");
+  addBtn.dataset.wasDragged="yes";
+ },1000);
+
+ try{addBtn.setPointerCapture(e.pointerId)}catch(err){}
+});
+
+addBtn.addEventListener("pointermove",function(e){
+ if(!holdTriggered){
+  if(Math.hypot(e.clientX-startX,e.clientY-startY)>10&&holdTimer){
+   clearTimeout(holdTimer);
+   holdTimer=null;
+  }
+  return;
+ }
+
+ if(!isDragging)return;
+
+ const x=Math.max(0,Math.min(innerWidth-addBtn.offsetWidth,e.clientX-offsetX));
+ const y=Math.max(0,Math.min(innerHeight-addBtn.offsetHeight,e.clientY-offsetY));
+
+ addBtn.style.left=x+"px";
+ addBtn.style.top=y+"px";
+ addBtn.style.right="auto";
+});
+
+function endDrag(){
+ if(holdTimer){
+  clearTimeout(holdTimer);
+  holdTimer=null;
+ }
+ if(isDragging){
+  addBtn.classList.remove("dragging");
+  isDragging=false;
+ }
+}
+
+addBtn.addEventListener("pointerup",endDrag);
+addBtn.addEventListener("pointercancel",endDrag);
+addBtn.addEventListener("lostpointercapture",endDrag);
+</script>
+
+</body>
+</html>
