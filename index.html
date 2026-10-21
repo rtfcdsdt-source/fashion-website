@@ -493,7 +493,23 @@
       .rv-back:active{background:#262626}
       .rv-title{font-size:17px;font-weight:700;margin:0;white-space:nowrap}
       .rv-feed{width:100%;max-width:500px;margin:0 auto;padding:8px}
-      .rv-card{background:#111;border:1px solid #252525;border-radius:12px;margin-bottom:18px;overflow:hidden}
+      .rv-savehint{margin:0;padding:8px 16px 2px;text-align:center;font-size:12px;color:#8a8a8a;line-height:1.5}
+      .rv-card{position:relative;background:#111;border:1px solid #252525;border-radius:12px;margin-bottom:18px;overflow:hidden}
+      .rv-del{
+        position:absolute;top:8px;right:8px;width:30px;height:30px;border-radius:50%;
+        border:1px solid rgba(255,255,255,.25);background:rgba(0,0,0,.65);color:#fff;
+        font-size:14px;line-height:1;padding:0;cursor:pointer;z-index:3;
+        display:flex;align-items:center;justify-content:center;
+      }
+      .rv-del:active{background:rgba(0,0,0,.9)}
+      .rv-saved{
+        position:fixed;left:50%;bottom:88px;transform:translate(-50%,8px);
+        background:#1d1d1d;color:#fff;border:1px solid #333;border-radius:999px;
+        padding:9px 16px;font-size:13px;z-index:95;opacity:0;visibility:hidden;
+        transition:opacity .25s ease,transform .25s ease,visibility .25s;
+        max-width:calc(100vw - 32px);text-align:center;white-space:nowrap;
+      }
+      .rv-saved.show{opacity:1;visibility:visible;transform:translate(-50%,0)}
       .rv-info{padding:12px}
       .rv-channel{font-size:14px;font-weight:bold;color:#ff9900;margin-bottom:6px}
       .rv-vtitle{font-size:15px;margin:0;overflow-wrap:anywhere}
@@ -676,11 +692,13 @@
         <button class="rv-back" id="rvBack" type="button" aria-label="Back to Fashion Goals shop">← Shop</button>
         <p class="rv-title">Video Reels</p>
       </div>
+      <p class="rv-savehint">Jode hue video isi phone me save rehte hain — refresh ya band karne par bhi nahi udte.</p>
 
       <button class="rv-add" id="rvAddBtn" type="button" aria-label="Add video" title="Tap: Upload | Hold: Drag">+</button>
 
       <main class="rv-feed" id="rvFeed">
-        <article class="rv-card">
+        <article class="rv-card" id="rvDemoCard">
+          <button class="rv-del" id="rvDemoDel" type="button" aria-label="Remove demo video">✕</button>
           <iframe class="rv-player" id="rvDemoPlayer"
             data-src="https://www.youtube.com/embed/ScMzIvxBSi4?playsinline=1&enablejsapi=1&autoplay=1&mute=1"
             title="YouTube video"
@@ -724,6 +742,7 @@
           </form>
         </div>
       </div>
+      <div class="rv-saved" id="rvSaved" role="status"></div>
     </div>
     <button class="to-top" id="toTop" type="button" aria-label="Back to top">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5"/><path d="m5 12 7-7 7 7"/></svg>
@@ -1294,6 +1313,43 @@
       var rvMessage = document.getElementById("rvMessage");
       var rvDemoLoaded = false;
 
+      /* ----- saved reels: videos the user adds are kept in THIS
+         browser only (localStorage), so they survive a refresh or
+         closing the site and come back in the same order. If storage
+         is unavailable (private mode, blocked), everything falls
+         back to in-session behaviour — nothing breaks. ----- */
+      var RV_STORE_KEY = "fgReelsVideosV1";
+      var rvSavedVideos = [];
+      var rvStoreOK = false;
+      function rvLoadSaved(){
+        try{
+          var raw = window.localStorage.getItem(RV_STORE_KEY);
+          if (raw){
+            var parsed = JSON.parse(raw);
+            if (Array.isArray(parsed)) rvSavedVideos = parsed;
+          }
+          rvStoreOK = true;
+        }catch(e){
+          rvSavedVideos = [];
+          rvStoreOK = false;
+        }
+      }
+      function rvPersist(){
+        if (!rvStoreOK) return;
+        try{
+          window.localStorage.setItem(RV_STORE_KEY, JSON.stringify(rvSavedVideos));
+        }catch(e){}
+      }
+      var rvSavedEl = document.getElementById("rvSaved");
+      var rvSavedTimer = null;
+      function rvShowSaved(text){
+        if (!rvSavedEl) return;
+        rvSavedEl.textContent = text;
+        rvSavedEl.classList.add("show");
+        if (rvSavedTimer) clearTimeout(rvSavedTimer);
+        rvSavedTimer = setTimeout(function(){ rvSavedEl.classList.remove("show"); }, 2200);
+      }
+
       /* YouTube player commands */
       function rvYoutubeCommand(iframe, command){
         try{
@@ -1439,7 +1495,7 @@
         rvMessage.style.display = "block";
       }
 
-      function rvAddVideoCard(src, type, channel, title, originalUrl){
+      function rvAddVideoCard(src, type, channel, title, originalUrl, record){
         var card = document.createElement("article");
         card.className = "rv-card";
 
@@ -1481,6 +1537,28 @@
 
         info.append(ch, titleEl, link);
         card.append(iframe, info);
+
+        /* ✕ removes the card — and, when it is a saved video, its
+           stored entry too, so it stays gone after a refresh */
+        var del = document.createElement("button");
+        del.className = "rv-del";
+        del.type = "button";
+        del.setAttribute("aria-label", "Remove video");
+        del.textContent = "✕";
+        del.addEventListener("click", function(){
+          rvPauseVideo(iframe);
+          card.remove();
+          if (record){
+            var i = rvSavedVideos.indexOf(record);
+            if (i !== -1){
+              rvSavedVideos.splice(i, 1);
+              rvPersist();
+            }
+          }
+          rvShowSaved("Video hata diya");
+        });
+        card.appendChild(del);
+
         rvFeed.prepend(card);
 
         rvObserveAllVideos();
@@ -1502,22 +1580,52 @@
           }
           var src = "https://www.youtube.com/embed/" + id +
             "?playsinline=1&enablejsapi=1&autoplay=1&mute=0";
-          rvAddVideoCard(src, "youtube", channel, title, url);
+          var ytRec = { type:"youtube", src:src, url:url, channel:channel, title:title };
+          rvSavedVideos.push(ytRec);
+          rvPersist();
+          rvAddVideoCard(src, "youtube", channel, title, url, ytRec);
         } else {
           var igSrc = rvGetInstagramEmbed(url);
           if (!igSrc){
             rvShowMessage("सही Instagram Reel या Post लिंक डालें।");
             return;
           }
-          rvAddVideoCard(igSrc, "instagram", channel, title, url);
+          var igRec = { type:"instagram", src:igSrc, url:url, channel:channel, title:title };
+          rvSavedVideos.push(igRec);
+          rvPersist();
+          rvAddVideoCard(igSrc, "instagram", channel, title, url, igRec);
         }
 
+        rvShowSaved("Video save ho gaya ✓");
         rvCloseUpload();
         rvForm.reset();
         rvPlatform.value = "youtube";
         rvPlatform.dispatchEvent(new Event("change"));
         rvView.scrollTo({ top:0, behavior:"smooth" });
       });
+
+      /* Restore the saved videos on load, oldest first through the
+         same prepend the form uses — so the feed shows them
+         newest-first, exactly as they were added, above the demo
+         card. Their iframes keep loading="lazy", so nothing loads
+         while the shop is being browsed. */
+      rvLoadSaved();
+      rvSavedVideos.slice().reverse().forEach(function(rec){
+        if (rec && rec.src && (rec.type === "youtube" || rec.type === "instagram")){
+          rvAddVideoCard(rec.src, rec.type, rec.channel || "", rec.title || "", rec.url || "", rec);
+        }
+      });
+
+      /* The demo card can be removed for the session; it is built
+         into the page, so it comes back on the next visit. */
+      var rvDemoDel = document.getElementById("rvDemoDel");
+      if (rvDemoDel){
+        rvDemoDel.addEventListener("click", function(){
+          var demoCard = document.getElementById("rvDemoCard");
+          if (demoCard) demoCard.remove();
+          rvShowSaved("Video hata diya");
+        });
+      }
 
       /* Hold + for one second to drag; tap to upload */
       var rvHoldTimer = null;
