@@ -495,23 +495,35 @@
       /* the feed is the user's drawing, BOTH halves of it:
          sabse upar EK BADA frame — the FIRST video (right now
          the "Dil De Mohalle" Short) sits alone at the top in
-         one big frame at its full own size — and below it the
-         teen frame ek line me agal-bagal: every video added
-         after the first falls into the three frames side by
-         side, three in a row, then the next three below, and
-         so on. Every frame still holds its video in that
-         video's OWN size (the rv-fit-* shapes below), so a
-         tall Short stands tall in its frame and a wide video
-         lies wide in its own. The big top frame belongs to
-         whichever card is FIRST in the feed: it is pure CSS
-         (:first-of-type below), so it follows the cards by
-         itself — if the top card is removed, the next one
-         takes the big frame, and added cards never do while
-         one sits above them. */
+         one big frame at its full own size — and below it
+         THREE PACKED COLUMNS (Pinterest-style): every video
+         added after the first drops into whichever column is
+         currently the shortest, so the frames stack tight
+         with NO empty black gaps — a mixed row of wide 16:9
+         and tall 9:16 videos no longer leaves dead space
+         under the shorter ones. Every frame still holds its
+         video in that video's OWN size (the rv-fit-* shapes
+         below), so a tall Short stands tall in its column
+         and a wide video lies wide in its own. The big top
+         frame belongs to whichever card is FIRST in the feed:
+         it is pure CSS (:first-of-type below), so it follows
+         the cards by itself — if the top card is removed, the
+         next one takes the big frame, and added cards never
+         do while one sits above them. */
       .rv-feed{
         width:100%;max-width:1120px;margin:0 auto;padding:8px;
-        display:grid;grid-template-columns:repeat(3,1fr);gap:8px;align-items:start;
       }
+      /* the three packed columns under the big top frame:
+         each column is a plain vertical stack, and the script
+         always appends the next video to the shortest column
+         (measured by the videos' own shapes), so the columns
+         stay balanced and gap-free at every width */
+      .rv-cols{
+        display:grid;grid-template-columns:repeat(3,1fr);gap:8px;align-items:start;
+        margin-top:8px;
+      }
+      .rv-col{display:flex;flex-direction:column;gap:8px;min-width:0}
+      .rv-col>.rv-card{width:100%}
       /* the big top frame: the first card spans the whole
          feed width, alone in its row, and its player is let
          out to the video's full size — a tall Short stands
@@ -541,7 +553,7 @@
       /* shown only while the feed holds no video at all — it is
          a hint line, not a card; the moment a video is added it
          hides, and it comes back if the last video is removed */
-      .rv-empty{grid-column:1/-1;color:#999;text-align:center;font-size:14px;line-height:1.6;padding:44px 18px;margin:0}
+      .rv-empty{color:#999;text-align:center;font-size:14px;line-height:1.6;padding:44px 18px;margin:0}
       .rv-empty[hidden]{display:none}
       .rv-info{padding:12px}
       .rv-channel{font-size:14px;font-weight:bold;color:#ff9900;margin-bottom:6px}
@@ -561,10 +573,10 @@
       .rv-fit-tall{aspect-ratio:9/16;width:min(100%,46vh);width:min(100%,46dvh);margin:0 auto}
       .rv-fit-portrait{aspect-ratio:4/5;width:min(100%,62vh);width:min(100%,62dvh);margin:0 auto}
       .rv-fit-square{aspect-ratio:1/1;width:min(100%,68vh);width:min(100%,68dvh);margin:0 auto}
-      /* in the 3-across frame grid an Instagram embed takes
+      /* in the packed columns an Instagram embed takes
          its frame's own shape like every other video — no
          fixed minimum height forcing one frame taller than
-         its line-mates */
+         its column-mates */
       .rv-feed .rv-igplayer{min-height:0}
       .rv-openlink{display:inline-block;margin-top:10px;color:#ff9900;font-size:13px;text-decoration:none}
       .rv-add{
@@ -615,11 +627,13 @@
       @media(min-width:600px){
         .rv-feed{padding-top:15px}
       }
-      /* the three-frames-in-a-line grid is the layout at EVERY
+      /* the three packed columns are the layout at EVERY
          width, phone included — wider screens only get a
          roomier gap between the frames */
       @media(min-width:900px){
-        .rv-feed{gap:18px;padding:16px}
+        .rv-feed{padding:16px}
+        .rv-cols{gap:18px;margin-top:18px}
+        .rv-col{gap:18px}
       }
       @media (prefers-reduced-motion: reduce){
         *{transition:none !important;scroll-behavior:auto !important}
@@ -733,7 +747,7 @@
              it always sits at the TOP of the feed, alone in the
              big full-size frame (see the :first-of-type rules);
              every video added with the logo button falls into
-             the three side-by-side frames below it. Like the
+             the three packed columns below it. Like the
              old demo card, its ✕ removes it for this session
              only. -->
         <article class="rv-card" id="rvDilCard">
@@ -743,6 +757,16 @@
             allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
             referrerpolicy="strict-origin-when-cross-origin"></iframe>
         </article>
+        <!-- the three packed columns below the big top frame:
+             every video added with the logo button is placed by
+             the script into the currently shortest of these
+             three columns, in its own true size, so no empty
+             gaps are left between the frames -->
+        <div class="rv-cols" id="rvCols">
+          <div class="rv-col"></div>
+          <div class="rv-col"></div>
+          <div class="rv-col"></div>
+        </div>
       </main>
 
       <div class="rv-modal" id="rvUploadModal">
@@ -1564,6 +1588,51 @@
         return ig;
       }
 
+      /* ----- packed columns below the big top frame -----
+         The videos under the big frame live in THREE vertical
+         columns (Pinterest-style). Each new video is appended
+         to the column that is currently SHORTEST, so the
+         frames pack tight with no empty gaps even when wide
+         16:9 and tall 9:16 videos mix. A column's height is
+         tracked from the videos' own shapes (height ÷ width
+         of each fit), never from rendered pixels — the restore
+         below runs while the view is still hidden, and shape
+         maths gives the exact same packing on every load.
+         The saved list stays the source of truth for order:
+         cards are created by walking it in add order and each
+         one drops into the then-shortest column, so a reload
+         restores the same packed arrangement. */
+      var rvColsEl = document.getElementById("rvCols");
+      var rvColEls = rvColsEl ? Array.prototype.slice.call(rvColsEl.children) : [];
+      var RV_RATIO = { wide: 9/16, tall: 16/9, portrait: 5/4, square: 1 };
+      var rvColHeights = [0, 0, 0];
+      /* every added card, in add order — the big-frame
+         promotion below walks this list */
+      var rvCardOrder = [];
+      /* the card currently holding the big top frame among the
+         DIRECT children of the feed (the baked-in Dil card, or
+         a promoted added card); null while the slot is empty */
+      function rvBigCard(){
+        var kids = rvFeed.children;
+        for (var i = 0; i < kids.length; i++){
+          if (kids[i].classList && kids[i].classList.contains("rv-card")) return kids[i];
+        }
+        return null;
+      }
+      /* when the big-frame card is removed, the next added
+         card (in add order) moves up into the big frame; the
+         column it leaves just gets shorter — the remaining
+         cards in it stay stacked tight, so no gap opens */
+      function rvPromoteNext(){
+        var next = rvCardOrder[0];
+        if (!next || !rvColsEl) return;
+        if (typeof next._rvCol === "number" && next._rvCol >= 0){
+          rvColHeights[next._rvCol] -= next._rvRatio || 0;
+          next._rvCol = -1;
+        }
+        rvFeed.insertBefore(next, rvColsEl);
+      }
+
       function rvAddVideoCard(src, type, channel, title, originalUrl, record){
         var card = document.createElement("article");
         card.className = "rv-card";
@@ -1608,7 +1677,16 @@
         del.setAttribute("aria-label", "Remove video");
         del.textContent = "✕";
         del.addEventListener("click", function(){
+          var wasBig = (typeof card._rvCol === "number" && card._rvCol === -1);
+          if (typeof card._rvCol === "number" && card._rvCol >= 0){
+            rvColHeights[card._rvCol] -= card._rvRatio || 0;
+          }
+          var oi = rvCardOrder.indexOf(card);
+          if (oi !== -1) rvCardOrder.splice(oi, 1);
           card.remove();
+          /* if the removed card held the big top frame, the
+             next added card takes its place up there */
+          if (wasBig) rvPromoteNext();
           rvSyncEmpty();
           if (record){
             var i = rvSavedVideos.indexOf(record);
@@ -1627,12 +1705,33 @@
         });
         card.appendChild(del);
 
-        /* every new card is appended BELOW the ones already in
-           the feed — newest at the bottom, in the exact order
-           the videos were added, and the restore below walks
-           the saved list the same way, so a reload brings the
-           cards back in that same order */
-        rvFeed.appendChild(card);
+        /* every new card lands BELOW the big top frame, in
+           the packed columns: it is appended to whichever
+           column is currently shortest (by the videos' own
+           shapes), so wide and tall videos pack together
+           with no empty gaps. The restore below walks the
+           saved list in add order and places each card the
+           same way, so a reload brings back the same packed
+           arrangement in the same order. If the big frame is
+           empty (its card was removed this session), the new
+           card takes the big frame instead. */
+        card._rvRatio = RV_RATIO[fit] || RV_RATIO.wide;
+        rvCardOrder.push(card);
+        if (!rvBigCard() && rvColsEl){
+          card._rvCol = -1;
+          rvFeed.insertBefore(card, rvColsEl);
+        } else if (rvColEls.length === 3){
+          var ci = 0;
+          for (var k = 1; k < 3; k++){
+            if (rvColHeights[k] < rvColHeights[ci]) ci = k;
+          }
+          card._rvCol = ci;
+          rvColHeights[ci] += card._rvRatio;
+          rvColEls[ci].appendChild(card);
+        } else {
+          card._rvCol = -1;
+          rvFeed.appendChild(card);
+        }
         rvSyncEmpty();
         /* every feed render re-applies the logo's saved spot, so
            adding or restoring cards can never reset it either */
@@ -1727,6 +1826,9 @@
         rvDilDel.addEventListener("click", function(){
           var dilCard = document.getElementById("rvDilCard");
           if (dilCard) dilCard.remove();
+          /* the big top frame passes to the first added video,
+             exactly as it did when the feed was a plain grid */
+          rvPromoteNext();
           rvSyncEmpty();
           rvRestoreLogoPos();
           rvShowSaved("Video hata diya");
