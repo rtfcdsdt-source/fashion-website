@@ -564,6 +564,18 @@
         display:flex;align-items:center;justify-content:center;
       }
       .rv-del:active{background:rgba(0,0,0,.9)}
+      /* TAP-TO-PROMOTE hit layer: an invisible button covering
+         every card BELOW the big top frame — tapping it moves
+         that video up into the big frame (see rvTapPromote in
+         the script). It sits above the player (z 2) but below
+         the ✕ button (z 3), so ✕ still only deletes. The
+         big-frame card's layer is hidden by the script, so its
+         player keeps its own tap-to-play/pause behaviour. */
+      .rv-promote-hit{
+        position:absolute;inset:0;z-index:2;display:block;
+        background:transparent;border:0;padding:0;cursor:pointer;
+        -webkit-tap-highlight-color:transparent;
+      }
       .rv-saved{
         position:fixed;left:50%;bottom:88px;transform:translate(-50%,8px);
         background:#1d1d1d;color:#fff;border:1px solid #333;border-radius:999px;
@@ -1754,7 +1766,153 @@
         if (oi !== -1) rvOrder.splice(oi, 1);
         card.remove();
         if (wasBig) rvPromoteNewest();
+        /* TAP-TO-PROMOTE bookkeeping: if the baked-in Dil card
+           was the one removed, its promoted flag (below) goes
+           with it; and the tap layers follow the new arrangement
+           — the card that just took the big frame loses its
+           layer, so its player taps work as before */
+        if (card === rvDilCardEl){ rvPromotedDil = false; rvSavePromoted(); }
+        rvSyncPromoteLayers();
       }
+
+      /* ================= TAP-TO-PROMOTE =================
+         Added on the user's request, on top of the rotation
+         above; the rest of the feed code is untouched, and
+         removing this block plus its few call lines (in
+         rvDetachCard, rvAddVideoCard, the Dil init, the upload
+         submit handler and the restore tail) restores the
+         previous build exactly.
+         Tapping any card that is NOT in the big top frame —
+         whether it sits in the packed columns (tall / portrait
+         / square) or in the full-width wide band — MOVES that
+         video up into the big frame, where it starts playing
+         in its own original size; no copy of it stays below.
+         The video that held the frame shifts down by the usual
+         rules (wide → top of the wide band; the rest → the
+         packed columns) and every other card keeps its zone
+         and relative order. The promoted video counts as the
+         NEWEST from then on, and that is the saved state: for
+         a saved video its entry moves to the end of the saved
+         list; for the baked-in Dil De Mohalle card, which has
+         no saved entry, a small flag is kept instead — either
+         way, a reload restores the same big-frame video. */
+      var RV_PROMOTED_KEY = "fgReelsPromotedV1";
+      var rvPromotedDil = false;
+      function rvLoadPromoted(){
+        try{ rvPromotedDil = window.localStorage.getItem(RV_PROMOTED_KEY) === "dil"; }
+        catch(e){ rvPromotedDil = false; }
+      }
+      function rvSavePromoted(){
+        try{
+          if (rvPromotedDil) window.localStorage.setItem(RV_PROMOTED_KEY, "dil");
+          else window.localStorage.removeItem(RV_PROMOTED_KEY);
+        }catch(e){}
+      }
+      /* the invisible tap layer over a below-big card; the ✕
+         button stays above it (z 3 over z 2), so tapping ✕
+         only ever deletes, never promotes */
+      function rvAttachPromoteLayer(card){
+        var hit = document.createElement("button");
+        hit.type = "button";
+        hit.className = "rv-promote-hit";
+        hit.setAttribute("aria-label", "Play this video in the big frame");
+        hit.addEventListener("click", function(){ rvTapPromote(card); });
+        card.appendChild(hit);
+        card._rvHit = hit;
+        return hit;
+      }
+      function rvStripAutoplay(card){
+        var f = card.querySelector("iframe");
+        if (!f) return;
+        var s = f.getAttribute("src") || "";
+        if (s.indexOf("autoplay=") === -1) return;
+        f.src = s.replace(/([?&])autoplay=\d&?/g, "$1").replace(/[?&]$/, "");
+      }
+      /* show the tap layer on every card below the big frame
+         and hide it on the big-frame card itself, whose player
+         keeps its normal tap behaviour; also make sure only
+         the big-frame player can carry the autoplay flag a
+         promotion gave it, so a video that later shifts down
+         never starts playing inside its small frame */
+      function rvSyncPromoteLayers(){
+        rvOrder.forEach(function(card){
+          var isBig = card._rvZone === "big";
+          if (card._rvHit) card._rvHit.style.display = isBig ? "none" : "";
+          if (!isBig) rvStripAutoplay(card);
+        });
+      }
+      /* hand the promoted YouTube player an autoplay start:
+         the promoting tap is the visitor's own tap, so the
+         video begins playing up in the big frame. (An
+         Instagram embed cannot autoplay — up in the big frame
+         it plays on its own tap there, exactly as before.) */
+      function rvAutoplayCard(card){
+        var f = card.querySelector("iframe");
+        if (!f || f.classList.contains("rv-igplayer")) return;
+        var s = f.getAttribute("src") || "";
+        if (!s) return;
+        var allow = f.getAttribute("allow") || "";
+        if (allow.indexOf("autoplay") === -1){
+          f.setAttribute("allow", allow ? allow + "; autoplay" : "autoplay");
+        }
+        if (s.indexOf("autoplay=") !== -1) return;
+        f.src = s + (s.indexOf("?") === -1 ? "?" : "&") + "autoplay=1";
+      }
+      /* rebuild the three zones with the given card as the
+         newest: every other card replays into its zone in its
+         existing relative order (wide → the band, most
+         recently placed on top; the rest → the currently
+         shortest column), then the given card takes the big
+         frame — the same end state the add-rotation produces
+         for this order, with nobody's zone or order changed
+         beyond the promotion itself */
+      function rvRearrange(newest){
+        if (!newest || !rvColsEl || rvColEls.length !== 3) return;
+        var seq = rvOrder.filter(function(c){ return c !== newest; });
+        seq.push(newest);
+        rvColHeights = [0, 0, 0];
+        seq.forEach(function(card){
+          if (card === newest){
+            card._rvCol = -1;
+            card._rvZone = "big";
+            rvFeed.insertBefore(card, rvBandEl || rvColsEl);
+          } else if (card._rvFit === "wide"){
+            rvPlaceInBand(card);
+          } else {
+            rvPlaceInColumns(card);
+          }
+        });
+        rvOrder = seq;
+      }
+      function rvTapPromote(card){
+        if (!card || card._rvZone === "big") return;
+        var rec = card._rvRecord || null;
+        if (rec){
+          /* a saved video: its entry becomes the last in the
+             saved list, so the reload replay restores it in
+             the big frame with the rest arranged as before */
+          var i = rvSavedVideos.indexOf(rec);
+          if (i !== -1){
+            rvSavedVideos.splice(i, 1);
+            rvSavedVideos.push(rec);
+          }
+          rvPromotedDil = false;
+        } else if (card === rvDilCardEl){
+          /* the baked-in Dil card has no saved entry — the
+             small flag remembers its promotion instead */
+          rvPromotedDil = true;
+        }
+        rvSavePromoted();
+        rvPersist();
+        rvRearrange(card);
+        rvSyncPromoteLayers();
+        rvAutoplayCard(card);
+        /* the promoted video now sits in the big frame at the
+           very top — scroll up to it, like an add does */
+        rvView.scrollTo({ top: 0, behavior: "smooth" });
+      }
+      /* ================= end TAP-TO-PROMOTE ================= */
+
       /* the baked-in Dil De Mohalle card is the OLDEST item
          in the rotation: it holds the big frame until the
          first visitor video is added, then it too rotates
@@ -1769,6 +1927,11 @@
         rvDilCardEl._rvFit = "tall";
         rvDilCardEl._rvRatio = RV_RATIO.tall;
         rvOrder.push(rvDilCardEl);
+        /* TAP-TO-PROMOTE: the Dil card gets its tap layer too,
+           so once other videos have pushed it below the big
+           frame, tapping it brings it back up like any card */
+        rvDilCardEl._rvRecord = null;
+        rvAttachPromoteLayer(rvDilCardEl);
       }
 
       function rvAddVideoCard(src, type, channel, title, originalUrl, record){
@@ -1800,6 +1963,12 @@
           igFrame.setAttribute("loading", "lazy");
           card.appendChild(igFrame);
         }
+
+        /* TAP-TO-PROMOTE: remember this card's saved entry (so
+           a tap can move that entry to the end of the saved
+           list) and give the card its invisible tap layer */
+        card._rvRecord = record || null;
+        rvAttachPromoteLayer(card);
 
         /* added cards show ONLY the player/thumbnail — no channel
            line, no title line and no "open on YouTube" link under
@@ -1867,6 +2036,10 @@
         /* every feed render re-applies the logo's saved spot, so
            adding or restoring cards can never reset it either */
         rvRestoreLogoPos();
+        /* TAP-TO-PROMOTE: the tap layers follow the rotation —
+           the card that just took the big frame loses its layer
+           and the one that dropped down gains it */
+        rvSyncPromoteLayers();
       }
 
       /* the hint line shows only while the feed holds no video
@@ -1916,6 +2089,11 @@
           rvAddVideoCard(igSrc, "instagram", channel, title, url, igRec);
         }
 
+        /* TAP-TO-PROMOTE: a freshly added video is the newest
+           and takes the big frame, so any earlier tap-promotion
+           of the Dil De Mohalle card ends here */
+        if (rvPromotedDil){ rvPromotedDil = false; rvSavePromoted(); }
+
         rvShowSaved("Video save ho gaya ✓");
         rvCloseUpload();
         rvForm.reset();
@@ -1951,6 +2129,19 @@
         }
       });
       rvSyncEmpty();
+
+      /* TAP-TO-PROMOTE restore: if the last visit left the
+         baked-in Dil De Mohalle card tap-promoted into the big
+         frame, put it back there now (a promoted SAVED video
+         needs nothing here — its entry was moved to the end of
+         the saved list, so the replay above already restored
+         it into the big frame). Nothing autoplays on a fresh
+         load; the layers are then synced to the arrangement. */
+      rvLoadPromoted();
+      if (rvPromotedDil && rvDilCardEl && rvDilCardEl._rvZone !== "big"){
+        rvRearrange(rvDilCardEl);
+      }
+      rvSyncPromoteLayers();
 
       /* The kept "Dil De Mohalle" card can be removed with its
          ✕ for this session only; it is baked into the page, so
