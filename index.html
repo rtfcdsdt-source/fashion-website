@@ -3,28 +3,45 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="color-scheme" content="dark" />
+    <meta name="color-scheme" content="light dark" />
     <link rel="icon" href="data:," />
     <title>Fashion Website</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,700;0,800;1,500;1,600&family=Archivo:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
     <style>
-      /* the site is dark by design — one dark palette for every
-         visitor, whatever their phone's own light/dark setting */
+      /* the site follows the visitor's own phone setting: the warm
+         paper palette below on light-mode phones, the dark palette
+         further down on dark-mode phones */
       :root{
-        --bg:#121110;
-        --surface:#1c1a17;
-        --surface-2:#26231f;
-        --ink:#f2eee6;
-        --ink-soft:#b3aa9c;
-        --line:#37332c;
+        --bg:#faf7f1;
+        --surface:#ffffff;
+        --surface-2:#f1ece2;
+        --ink:#1d1a16;
+        --ink-soft:#6f675a;
+        --line:#e2dacb;
         --accent:#dc2626;
         --accent-ink:#ffffff;
-        --chip:#1c1a17;
-        --shadow:0 10px 30px rgba(0,0,0,.45);
-        --overlay:rgba(0,0,0,.8);
-        color-scheme:dark;
+        --chip:#ffffff;
+        --shadow:0 10px 30px rgba(29,26,22,.14);
+        --overlay:rgba(24,21,17,.55);
+        color-scheme:light;
+      }
+      @media (prefers-color-scheme: dark){
+        :root{
+          --bg:#121110;
+          --surface:#1c1a17;
+          --surface-2:#26231f;
+          --ink:#f2eee6;
+          --ink-soft:#b3aa9c;
+          --line:#37332c;
+          --accent:#dc2626;
+          --accent-ink:#ffffff;
+          --chip:#1c1a17;
+          --shadow:0 10px 30px rgba(0,0,0,.45);
+          --overlay:rgba(0,0,0,.8);
+          color-scheme:dark;
+        }
       }
       *{box-sizing:border-box}
       html{scroll-behavior:smooth}
@@ -662,7 +679,7 @@
         <article class="rv-card" id="rvDemoCard">
           <button class="rv-del" id="rvDemoDel" type="button" aria-label="Remove demo video">✕</button>
           <button class="rv-facade" id="rvDemoFacade" type="button"
-            data-src="https://www.youtube.com/embed/ScMzIvxBSi4?playsinline=1&enablejsapi=1&autoplay=1&mute=1"
+            data-src="https://www.youtube.com/embed/ScMzIvxBSi4?playsinline=1&enablejsapi=1&autoplay=1&mute=0"
             aria-label="Play demo video">
             <img src="data:image/jpeg;base64,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" alt="" loading="lazy" />
             <span class="rv-play"><svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></span>
@@ -1352,9 +1369,43 @@
         /* Instagram has no reliable public playback-control API */
       }
       function rvPlayVideo(iframe){
-        if (iframe.dataset.type === "youtube") rvYoutubeCommand(iframe, "playVideo");
+        if (iframe.dataset.type === "youtube"){
+          /* sound on — reels are never muted by default — then play */
+          rvYoutubeCommand(iframe, "unMute");
+          rvYoutubeCommand(iframe, "playVideo");
+        }
         /* Instagram playback is controlled by Instagram itself */
       }
+
+      /* Browsers only allow sound-on playback after the visitor has
+         interacted with the page. The first tap anywhere inside the
+         reels view unlocks it: from then on, a reel that scrolls
+         into view starts on its own, with sound, where the browser
+         permits. */
+      var rvPlaybackUnlocked = false;
+      function rvUnlockPlayback(){ rvPlaybackUnlocked = true; }
+      rvView.addEventListener("pointerdown", rvUnlockPlayback, true);
+      rvView.addEventListener("click", rvUnlockPlayback, true);
+
+      /* A player announces "onReady" once it has finished booting
+         (after the "listening" registration in rvMakeIframe). If that
+         reel is the one that should be playing, start it then —
+         this is what makes ONE tap on a facade play with sound even
+         in browsers that ignore the autoplay URL parameter, where
+         an early playVideo command would otherwise be dropped and
+         the visitor would have to tap the player a second time. */
+      window.addEventListener("message", function(e){
+        if (e.origin !== "https://www.youtube.com") return;
+        var data = null;
+        try{ data = JSON.parse(e.data); }catch(err){ return; }
+        if (!data || data.event !== "onReady") return;
+        rvFeed.querySelectorAll("iframe").forEach(function(f){
+          if (f.contentWindow === e.source &&
+              f.dataset.wantPlay === "yes" && rvPlaybackUnlocked){
+            rvPlayVideo(f);
+          }
+        });
+      });
       function rvPauseAllVideos(){
         rvFeed.querySelectorAll("iframe").forEach(rvPauseVideo);
       }
@@ -1365,10 +1416,14 @@
           var iframe = entry.target;
           if (entry.isIntersecting && entry.intersectionRatio >= 0.60){
             rvFeed.querySelectorAll("iframe").forEach(function(other){
-              if (other !== iframe) rvPauseVideo(other);
+              if (other !== iframe){ other.dataset.wantPlay = "no"; rvPauseVideo(other); }
             });
-            rvPlayVideo(iframe);
+            iframe.dataset.wantPlay = "yes";
+            /* auto-start only once a tap somewhere in this view has
+               unlocked sound-on playback */
+            if (rvPlaybackUnlocked) rvPlayVideo(iframe);
           } else {
+            iframe.dataset.wantPlay = "no";
             rvPauseVideo(iframe);
           }
         });
@@ -1492,6 +1547,15 @@
           iframe.className = "rv-player";
           iframe.setAttribute("allow",
             "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share");
+          iframe.addEventListener("load", function(){
+            /* register for player events so the onReady handler can
+               start this reel the moment the player is truly ready */
+            try{
+              iframe.contentWindow.postMessage(JSON.stringify({ event:"listening" }),
+                "https://www.youtube.com");
+            }catch(e){}
+            if (iframe.dataset.wantPlay === "yes" && rvPlaybackUnlocked) rvPlayVideo(iframe);
+          });
         } else {
           iframe.className = "rv-igplayer";
           iframe.setAttribute("scrolling", "no");
@@ -1522,8 +1586,13 @@
             '<span class="rv-play"><svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></span>' +
             '<span class="rv-tap">Tap to play</span>';
           facade.addEventListener("click", function(){
+            /* ONE tap: the embed loads with autoplay=1 and sound on
+               (mute=0 in its src), and wantPlay tells the onReady /
+               load handlers to start it the moment it can play */
+            rvFeed.querySelectorAll("iframe").forEach(function(o){ o.dataset.wantPlay = "no"; });
             rvPauseAllVideos();
             liveIframe = rvMakeIframe(src, type, title);
+            liveIframe.dataset.wantPlay = "yes";
             facade.replaceWith(liveIframe);
             rvObserveAllVideos();
           });
@@ -1901,8 +1970,10 @@
       var rvDemoFacade = document.getElementById("rvDemoFacade");
       if (rvDemoFacade){
         rvDemoFacade.addEventListener("click", function(){
+          rvFeed.querySelectorAll("iframe").forEach(function(o){ o.dataset.wantPlay = "no"; });
           rvPauseAllVideos();
           var demoIframe = rvMakeIframe(rvDemoFacade.getAttribute("data-src"), "youtube", "YouTube video");
+          demoIframe.dataset.wantPlay = "yes";
           rvDemoFacade.replaceWith(demoIframe);
           rvObserveAllVideos();
         });
