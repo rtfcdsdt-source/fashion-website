@@ -592,12 +592,26 @@
       .rv-info{padding:12px}
       .rv-channel{font-size:14px;font-weight:bold;color:#ff9900;margin-bottom:6px}
       .rv-vtitle{font-size:15px;margin:0;overflow-wrap:anywhere}
-      /* each card IS the embed player itself — YouTube's own
-         thumbnail and its own play button inside the iframe, with
-         no custom poster, "Tap to play" label or play icon of
-         ours laid over it */
+      /* the real embed player — mounted ONLY in the big top
+         frame; every other card shows the lightweight
+         .rv-facade in the same box instead (see below) */
       .rv-player{width:100%;background:#080808;border:0;display:block}
       .rv-igplayer{width:100%;border:0;display:block;background:#080808}
+      /* the lightweight facade every card below the big frame
+         shows instead of a live player: the video's own
+         thumbnail photo (YouTube) or a plain dark panel
+         (Instagram / other links), with a play badge in the
+         middle. It carries the video's own rv-fit-* shape,
+         so the card keeps its exact size — only the heavy
+         player is gone, which is what stops the stutter. */
+      .rv-facade{position:relative;width:100%;background:#0a0a0a;overflow:hidden;display:block}
+      .rv-facade img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+      .rv-facade-badge{
+        position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+        width:52px;height:52px;border-radius:50%;pointer-events:none;
+        background:rgba(0,0,0,.62);border:1px solid rgba(255,255,255,.45);color:#fff;
+        display:flex;align-items:center;justify-content:center;font-size:19px;padding-left:3px;
+      }
       /* every video keeps its OWN size: the box takes the
          video's real shape — khada (9:16), chauda (16:9),
          portrait (4:5) ya barabar (1:1) — so a video of any
@@ -788,10 +802,13 @@
              session only. -->
         <article class="rv-card" id="rvDilCard">
           <button class="rv-del" id="rvDilDel" type="button" aria-label="Remove Dil De Mohalle video">✕</button>
-          <iframe class="rv-player rv-fit-tall" src="https://www.youtube.com/embed/CPJMyx5tQTY?playsinline=1&rel=0"
-            title="Dil De Mohalle — Saregama Music Short" loading="lazy" allowfullscreen
-            allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-            referrerpolicy="strict-origin-when-cross-origin"></iframe>
+          <!-- the card starts as a lightweight facade (thumbnail
+               + play badge); the script mounts the real player
+               only while this card holds the big top frame -->
+          <div class="rv-facade rv-fit-tall">
+            <img src="https://i.ytimg.com/vi/CPJMyx5tQTY/hqdefault.jpg" alt="" loading="lazy" />
+            <span class="rv-facade-badge" aria-hidden="true">▶</span>
+          </div>
         </article>
         <!-- the full-width wide band, directly below the big
              top frame and above the columns: a wide video that
@@ -841,6 +858,10 @@
 
             <label class="rv-field-label" for="rvVideoTitle">Video Title</label>
             <input id="rvVideoTitle" type="text" placeholder="Video का नाम लिखें" maxlength="180">
+
+            <label class="rv-field-label" for="rvAdminCode">Secret Code</label>
+            <input id="rvAdminCode" type="password" placeholder="Secret code (sirf owner ke liye)" autocomplete="off">
+            <p class="rv-note">Code daloge to video SABKO dikhegi; khali chhoda to sirf tumhare phone par rahegi.</p>
 
             <div class="rv-message" id="rvMessage" role="status"></div>
 
@@ -1442,6 +1463,7 @@
       var rvUrlLabel = document.getElementById("rvUrlLabel");
       var rvPlatformNote = document.getElementById("rvPlatformNote");
       var rvMessage = document.getElementById("rvMessage");
+      var rvCodeInput = document.getElementById("rvAdminCode");
 
       /* ----- saved reels: videos the user adds are kept in THIS
          browser only (localStorage), so they survive a refresh or
@@ -1480,23 +1502,22 @@
         rvSavedTimer = setTimeout(function(){ rvSavedEl.classList.remove("show"); }, 2200);
       }
 
-      /* ----- direct embed players -----
-         Like the very first version, every card IS the embed
-         player itself: YouTube's own thumbnail and YouTube's own
-         play button inside the iframe — no custom poster, no
-         "Tap to play" label and no play icon of ours over it,
-         and nothing autoplays or preloads a player stack.
-         Closing the view (or backgrounding the tab) reloads
-         each embed back to its thumbnail, so no reel keeps
-         playing where nobody can see it. */
+      /* ----- one live player, and only in the big frame -----
+         Every card carries a lightweight facade (thumbnail +
+         play badge — see rvMakeFacade further down); the real
+         embed player exists ONLY in the big top frame, which
+         is what keeps the feed smooth and the data use low.
+         Closing the view (or backgrounding the tab) drops the
+         big frame's player back to its facade, so no reel
+         keeps playing — or loading — where nobody can see
+         it; coming back re-mounts it. */
       function rvStopAllPlayers(){
-        rvView.querySelectorAll("iframe").forEach(function(f){
-          var s = f.getAttribute("src");
-          if (s) f.src = s;
-        });
+        rvOrder.slice().forEach(function(card){ rvShowFacade(card); });
       }
       document.addEventListener("visibilitychange", function(){
-        if (document.hidden && rvView.classList.contains("open")) rvStopAllPlayers();
+        if (!rvView.classList.contains("open")) return;
+        if (document.hidden) rvStopAllPlayers();
+        else rvSyncPlayers();
       });
 
       function rvOpenReels(){
@@ -1504,6 +1525,12 @@
         rvView.setAttribute("aria-hidden", "false");
         document.body.style.overflow = "hidden";
         rvView.scrollTop = 0;
+        /* mount the big frame's real player, and fetch the
+           SHARED reels list — if it brings anything new the
+           feed rebuilds with it merged in; any failure leaves
+           the feed exactly as it was */
+        rvSyncPlayers();
+        rvFetchShared();
         /* the logo greets the visitor at the exact spot it was
            last dropped, never back at the default corner */
         rvRestoreLogoPos();
@@ -1524,6 +1551,12 @@
       function rvOpenUpload(){
         rvModal.classList.add("open");
         rvMessage.style.display = "none";
+        /* the owner's secret code, once it has worked on this
+           phone, is prefilled — he never has to type it again */
+        if (rvCodeInput && !rvCodeInput.value){
+          var savedCode = rvAdminCode();
+          if (savedCode) rvCodeInput.value = savedCode;
+        }
       }
       function rvCloseUpload(){
         rvModal.classList.remove("open");
@@ -1630,6 +1663,91 @@
         ig.className = "rv-igplayer rv-fit-" + (fit || "tall");
         ig.dataset.type = "instagram";
         return ig;
+      }
+
+      /* ----- lightweight facades: ONE live player only -----
+         A real YouTube/Instagram player for every card is
+         what made the reels stutter and eat data — a dozen
+         live players on one page is more than a phone can
+         carry. So every card below the big top frame is just
+         a LIGHTWEIGHT FACADE: for a YouTube link its
+         thumbnail photo with a play badge; for an Instagram
+         link a plain dark panel with the same badge (no
+         external image). The real embed iframe is mounted
+         ONLY in the big top frame, and only while the view
+         is open. Whenever a different video takes the big
+         frame (an add, a tap-to-promote, a delete), the
+         previous big card drops its iframe and reverts to
+         its facade — exactly one live player exists at any
+         time. A card remembers everything needed to swap:
+         _rvType, _rvSrc, _rvTitle, _rvYtId and _rvFit. */
+      function rvMakeFacade(card){
+        var d = document.createElement("div");
+        d.className = "rv-facade rv-fit-" + (card._rvFit || "wide");
+        if (card._rvType === "youtube" && card._rvYtId){
+          var img = document.createElement("img");
+          img.src = "https://i.ytimg.com/vi/" + card._rvYtId + "/hqdefault.jpg";
+          img.alt = "";
+          img.setAttribute("loading", "lazy");
+          d.appendChild(img);
+        }
+        var badge = document.createElement("span");
+        badge.className = "rv-facade-badge";
+        badge.setAttribute("aria-hidden", "true");
+        badge.textContent = "▶";
+        d.appendChild(badge);
+        return d;
+      }
+      /* show the card's facade and drop any live player it
+         carries — the card keeps its exact size and place;
+         only the heavy iframe goes away */
+      function rvShowFacade(card){
+        if (!card) return;
+        var f = card.querySelector("iframe");
+        if (f) f.remove();
+        if (!card._rvFacadeEl){
+          card._rvFacadeEl = rvMakeFacade(card);
+          card.insertBefore(card._rvFacadeEl, card.firstChild);
+        } else if (!card.contains(card._rvFacadeEl)){
+          card.insertBefore(card._rvFacadeEl, card.firstChild);
+        }
+      }
+      /* mount the real embed player where the facade sits —
+         called for the big-frame card only. A YouTube player
+         restarts from the clean embed link (an autoplay flag
+         a promotion added is re-applied by rvAutoplayCard);
+         an Instagram embed can never autoplay, as before. */
+      function rvMountPlayer(card){
+        if (!card || card.querySelector("iframe")) return;
+        var frame;
+        if (card._rvType === "instagram"){
+          frame = rvMakeIframe(null, card._rvSrc, "instagram", card._rvTitle, card._rvFit);
+        } else {
+          frame = document.createElement("iframe");
+          frame.className = "rv-player rv-fit-" + (card._rvFit || "wide");
+          frame.src = card._rvSrc;
+          frame.title = card._rvTitle || "YouTube video";
+          frame.setAttribute("allowfullscreen", "");
+          frame.setAttribute("allow",
+            "accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share");
+          frame.referrerPolicy = "strict-origin-when-cross-origin";
+        }
+        if (card._rvFacadeEl && card.contains(card._rvFacadeEl)){
+          card.replaceChild(frame, card._rvFacadeEl);
+        } else {
+          card.insertBefore(frame, card.firstChild);
+        }
+      }
+      /* keep exactly one live player: the big top frame's,
+         and only while the reels view is open — every other
+         card shows its facade */
+      function rvSyncPlayers(){
+        var big = rvBigCard();
+        var open = rvView.classList.contains("open");
+        rvOrder.forEach(function(card){
+          if (open && card === big) rvMountPlayer(card);
+          else rvShowFacade(card);
+        });
       }
 
       /* ----- below the big top frame: the wide band, then
@@ -1840,6 +1958,11 @@
           if (card._rvHit) card._rvHit.style.display = isBig ? "none" : "";
           if (!isBig) rvStripAutoplay(card);
         });
+        /* the arrangement just changed, so the ONE live
+           player follows it: the new big-frame card mounts
+           its real embed, the card that left the frame
+           reverts to its lightweight facade */
+        rvSyncPlayers();
       }
       /* hand the promoted YouTube player an autoplay start:
          the promoting tap is the visitor's own tap, so the
@@ -1887,7 +2010,18 @@
       function rvTapPromote(card){
         if (!card || card._rvZone === "big") return;
         var rec = card._rvRecord || null;
-        if (rec){
+        if (rec && rec.shared){
+          /* a SHARED video: its id becomes the last in this
+             phone's own shared arrangement, and it is
+             remembered as the promoted shared card — the
+             reload rebuild restores it in the big frame the
+             same way it restores a promoted local video */
+          var pref = rvSharedOrderPref().filter(function(s){ return s !== rec.sid; });
+          pref.push(rec.sid);
+          rvLsSet(RV_SORDER_KEY, pref);
+          rvLsSet(RV_PSHARED_KEY, rec.sid);
+          rvPromotedDil = false;
+        } else if (rec){
           /* a saved video: its entry becomes the last in the
              saved list, so the reload replay restores it in
              the big frame with the rest arranged as before */
@@ -1897,10 +2031,12 @@
             rvSavedVideos.push(rec);
           }
           rvPromotedDil = false;
+          rvLsSet(RV_PSHARED_KEY, null);
         } else if (card === rvDilCardEl){
           /* the baked-in Dil card has no saved entry — the
              small flag remembers its promotion instead */
           rvPromotedDil = true;
+          rvLsSet(RV_PSHARED_KEY, null);
         }
         rvSavePromoted();
         rvPersist();
@@ -1918,6 +2054,9 @@
          first visitor video is added, then it too rotates
          down into the columns like any other card */
       var rvDilCardEl = document.getElementById("rvDilCard");
+      /* true once the Dil card's ✕ has removed it this
+         session — a shared-list rebuild must not resurrect it */
+      var rvDilRemoved = false;
       if (rvDilCardEl){
         rvDilCardEl._rvCol = -1;
         rvDilCardEl._rvZone = "big";
@@ -1931,6 +2070,15 @@
            so once other videos have pushed it below the big
            frame, tapping it brings it back up like any card */
         rvDilCardEl._rvRecord = null;
+        /* the facade/player swap data: the card's markup
+           already holds its lightweight facade; the real
+           player mounts from this link only while the card
+           holds the big top frame */
+        rvDilCardEl._rvType = "youtube";
+        rvDilCardEl._rvSrc = "https://www.youtube.com/embed/CPJMyx5tQTY?playsinline=1&rel=0";
+        rvDilCardEl._rvYtId = "CPJMyx5tQTY";
+        rvDilCardEl._rvTitle = "Dil De Mohalle — Saregama Music Short";
+        rvDilCardEl._rvFacadeEl = rvDilCardEl.querySelector(".rv-facade");
         rvAttachPromoteLayer(rvDilCardEl);
       }
 
@@ -1938,31 +2086,31 @@
         var card = document.createElement("article");
         card.className = "rv-card";
 
-        /* A card is the embed player itself, as in the first
-           version: YouTube's own thumbnail and its own play
-           button inside the iframe — no poster facade, no
-           "Tap to play" label and no play icon of ours on top.
-           Instagram cards are likewise the plain lazy embed. */
+        /* A card starts as its LIGHTWEIGHT FACADE — a
+           thumbnail photo with a play badge for YouTube, a
+           plain dark panel for Instagram — never a live
+           player. The real embed is mounted only if and
+           while this card holds the big top frame (see
+           rvSyncPlayers), which is what keeps the whole
+           feed smooth and light on data. */
         /* the card's box takes THIS video's own size, so it
            fits whole — a wide video lies wide, a Short stands
            tall, none of them squeezed into one fixed shape */
         var fit = rvFitOf(record || { type:type, url:originalUrl || "" });
+        card._rvType = type;
+        card._rvSrc = src;
+        card._rvTitle = title || "";
+        card._rvFit = fit;
+        card._rvYtId = null;
         if (type === "youtube"){
-          var f = document.createElement("iframe");
-          f.className = "rv-player rv-fit-" + fit;
-          f.src = src;
-          f.title = title || "YouTube video";
-          f.setAttribute("loading", "lazy");
-          f.setAttribute("allowfullscreen", "");
-          f.setAttribute("allow",
-            "accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share");
-          f.referrerPolicy = "strict-origin-when-cross-origin";
-          card.appendChild(f);
-        } else {
-          var igFrame = rvMakeIframe(null, src, type, title, fit);
-          igFrame.setAttribute("loading", "lazy");
-          card.appendChild(igFrame);
+          card._rvYtId = rvGetYouTubeId(originalUrl || "") || null;
+          if (!card._rvYtId){
+            var em = /embed\/([A-Za-z0-9_-]+)/.exec(src || "");
+            if (em) card._rvYtId = em[1];
+          }
         }
+        card._rvFacadeEl = rvMakeFacade(card);
+        card.appendChild(card._rvFacadeEl);
 
         /* TAP-TO-PROMOTE: remember this card's saved entry (so
            a tap can move that entry to the end of the saved
@@ -1984,6 +2132,14 @@
         del.setAttribute("aria-label", "Remove video");
         del.textContent = "✕";
         del.addEventListener("click", function(){
+          /* a SHARED card's ✕ follows the shared rules (see
+             rvDeleteSharedCard below): deleted for everyone
+             when this phone holds the owner's secret code,
+             hidden on this phone only when it does not */
+          if (record && record.shared){
+            rvDeleteSharedCard(card, record);
+            return;
+          }
           /* detach handles the rotation too: if this card
              held the big top frame, the next-newest remaining
              card takes its place up there */
@@ -2040,6 +2196,7 @@
            the card that just took the big frame loses its layer
            and the one that dropped down gains it */
         rvSyncPromoteLayers();
+        return card;
       }
 
       /* the hint line shows only while the feed holds no video
@@ -2050,50 +2207,19 @@
         rvEmptyEl.hidden = !!rvFeed.querySelector(".rv-card");
       }
 
-      rvForm.addEventListener("submit", function(event){
-        event.preventDefault();
-
-        var selected = rvPlatform.value;
-        var url = rvVideoUrl.value.trim();
-        var channel = rvChannelName.value.trim();
-        var title = rvVideoTitle.value.trim();
-        /* the size picked in the form wins; "Auto" reads the
-           shape from the link itself (Shorts/Reels tall, a
-           normal video wide) — either way it is saved with
-           the video so it always fits the same way */
-        var fitPick = rvFit.value === "auto"
-          ? rvDetectFit(url, selected)
-          : rvFit.value;
-
-        if (selected === "youtube"){
-          var id = rvGetYouTubeId(url);
-          if (!id || !/^[A-Za-z0-9_-]{11}$/.test(id)){
-            rvShowMessage("सही YouTube वीडियो, Shorts या Live लिंक डालें।");
-            return;
-          }
-          var src = "https://www.youtube.com/embed/" + id +
-            "?playsinline=1&rel=0";
-          var ytRec = { type:"youtube", src:src, url:url, channel:channel, title:title, fit:fitPick };
-          rvSavedVideos.push(ytRec);
-          rvPersist();
-          rvAddVideoCard(src, "youtube", channel, title, url, ytRec);
-        } else {
-          var igSrc = rvGetInstagramEmbed(url);
-          if (!igSrc){
-            rvShowMessage("सही Instagram Reel या Post लिंक डालें।");
-            return;
-          }
-          var igRec = { type:"instagram", src:igSrc, url:url, channel:channel, title:title, fit:fitPick };
-          rvSavedVideos.push(igRec);
-          rvPersist();
-          rvAddVideoCard(igSrc, "instagram", channel, title, url, igRec);
-        }
-
-        /* TAP-TO-PROMOTE: a freshly added video is the newest
-           and takes the big frame, so any earlier tap-promotion
-           of the Dil De Mohalle card ends here */
-        if (rvPromotedDil){ rvPromotedDil = false; rvSavePromoted(); }
-
+      /* add a video to this phone's own local list, exactly
+         as the upload form has always done */
+      function rvAddLocalVideo(rec){
+        rvSavedVideos.push(rec);
+        rvPersist();
+        return rvAddVideoCard(rec.src, rec.type, rec.channel, rec.title, rec.url, rec);
+      }
+      /* the shared tail of every successful add: a freshly
+         added video is the newest and takes the big frame, so
+         any earlier tap-promotion of any card ends here; the
+         form closes and the feed scrolls up to the new card */
+      function rvFinishAdd(){
+        rvClearPromotions();
         rvShowSaved("Video save ho gaya ✓");
         rvCloseUpload();
         rvForm.reset();
@@ -2102,6 +2228,103 @@
         /* the new card takes the BIG frame at the TOP of the
            feed — scroll up to it so the user sees it there */
         rvView.scrollTo({ top: 0, behavior:"smooth" });
+      }
+      var rvSubmitting = false;
+      rvForm.addEventListener("submit", function(event){
+        event.preventDefault();
+        if (rvSubmitting) return;
+
+        var selected = rvPlatform.value;
+        var url = rvVideoUrl.value.trim();
+        var channel = rvChannelName.value.trim();
+        var title = rvVideoTitle.value.trim();
+        var code = rvCodeInput ? rvCodeInput.value.trim() : "";
+        /* the size picked in the form wins; "Auto" reads the
+           shape from the link itself (Shorts/Reels tall, a
+           normal video wide) — either way it is saved with
+           the video so it always fits the same way */
+        var fitPick = rvFit.value === "auto"
+          ? rvDetectFit(url, selected)
+          : rvFit.value;
+
+        var rec = null;
+        if (selected === "youtube"){
+          var id = rvGetYouTubeId(url);
+          if (!id || !/^[A-Za-z0-9_-]{11}$/.test(id)){
+            rvShowMessage("सही YouTube वीडियो, Shorts या Live लिंक डालें।");
+            return;
+          }
+          var src = "https://www.youtube.com/embed/" + id +
+            "?playsinline=1&rel=0";
+          rec = { type:"youtube", src:src, url:url, channel:channel, title:title, fit:fitPick };
+        } else {
+          var igSrc = rvGetInstagramEmbed(url);
+          if (!igSrc){
+            rvShowMessage("सही Instagram Reel या Post लिंक डालें।");
+            return;
+          }
+          rec = { type:"instagram", src:igSrc, url:url, channel:channel, title:title, fit:fitPick };
+        }
+
+        /* no Secret Code: the video stays on this phone only,
+           exactly as the form has always behaved */
+        if (!code){
+          rvAddLocalVideo(rec);
+          rvFinishAdd();
+          return;
+        }
+
+        /* a Secret Code was entered: the video goes to the
+           SHARED list first, so it reaches every visitor. The
+           code that works is remembered on this phone and
+           prefilled next time. A wrong code — or a shared
+           list that is not ready yet — never loses the video:
+           it is added on this phone instead, and the form
+           says so; the link field is cleared so the same
+           video cannot be added twice by tapping again. */
+        rvSubmitting = true;
+        rvShowMessage("Video sabke liye add ho raha hai…");
+        fetch("/api/reels", {
+          method:"POST", cache:"no-store",
+          headers:{ "Content-Type":"application/json" },
+          body: JSON.stringify({ code:code, url:url, size:fitPick })
+        }).then(function(r){
+          return r.json().catch(function(){ return null; }).then(function(data){
+            return { status:r.status, data:data };
+          });
+        }).then(function(out){
+          rvSubmitting = false;
+          if (out.data && out.data.ok && out.data.reel){
+            rvSaveAdminCode(code);
+            var srec = rvSharedRecord(out.data.reel);
+            if (srec){
+              rvSharedRecs.push(srec);
+              var pref = rvSharedOrderPref();
+              if (pref.indexOf(srec.sid) === -1){
+                pref.push(srec.sid);
+                rvLsSet(RV_SORDER_KEY, pref);
+              }
+              rvSharedCards[srec.sid] = rvAddVideoCard(srec.src, srec.type, channel, title, srec.url, srec);
+              rvSharedShownKey = rvOrderedSharedRecs().map(function(r){ return r.sid; }).join(",");
+              rvFinishAdd();
+              return;
+            }
+          }
+          rvAddLocalVideo(rec);
+          rvClearPromotions();
+          if (out.status === 401){
+            rvShowMessage("Code galat hai — video sirf tumhare phone par add hui hai");
+          } else {
+            rvShowMessage("Shared list abhi ready nahi hai — video sirf tumhare phone par add hui hai");
+          }
+          rvVideoUrl.value = "";
+        }).catch(function(){
+          rvSubmitting = false;
+          rvAddLocalVideo(rec);
+          rvClearPromotions();
+          rvShowMessage("Shared list abhi ready nahi hai — video sirf tumhare phone par add hui hai");
+          rvVideoUrl.value = "";
+        });
       });
 
       /* The feed holds the ONE card the user chose to keep —
@@ -2111,37 +2334,243 @@
          "Placeholder Video" demo card is deleted for good and
          never comes back. */
 
-      /* Restore the saved videos on load by replaying the
-         stored list in add order through the same rotation
-         the upload form uses: each card takes the big frame
-         and pushes the previous one down into its own zone
-         (the wide band if wide, the columns otherwise), so
-         the feed comes back with the NEWEST video in the big
-         top frame and the rest in the band and columns below
-         it — exactly the arrangement the last add or delete
-         left behind, and a deletion never reshuffles the ones
-         that remain. The embeds are lazy, so nothing heavy
+      /* ================= SHARED REELS (sabko dikhegi) =================
+         Videos the owner adds with his Secret Code live in a
+         shared list on the server (GET/POST/DELETE /api/reels
+         — see api/reels.js): they show to EVERY visitor,
+         merged into this same feed in this order — Dil De
+         Mohalle (oldest) → the shared reels → this phone's
+         own local reels (newest) — and the rotation, the
+         three-zone layout and tap-to-promote treat them
+         exactly like local videos. What stays per-visitor is
+         only the ARRANGEMENT of the shared list, kept on
+         each phone the same way local arrangement already
+         was: the order tap-promotions leave shared ids in
+         (fgReelsSharedOrderV1), the last tap-promoted shared
+         card (fgReelsPromotedSharedV1 — the mirror of the
+         Dil flag), and shared cards hidden with ✕ on this
+         phone (fgReelsHiddenSharedV1). The owner's code,
+         once it has worked, is remembered on his phone only
+         (fgReelsAdminCode) and prefilled into the form.
+         Until the server side is set up — or whenever the
+         fetch fails — everything silently stays exactly as
+         it was: Dil + this phone's local reels, no error. */
+      var RV_CODE_KEY = "fgReelsAdminCode";
+      var RV_HIDDEN_KEY = "fgReelsHiddenSharedV1";
+      var RV_SORDER_KEY = "fgReelsSharedOrderV1";
+      var RV_PSHARED_KEY = "fgReelsPromotedSharedV1";
+      var rvSharedRecs = [];
+      var rvSharedCards = {};
+      var rvSharedShownKey = null;
+      var rvSharedLoading = false;
+
+      function rvLsGet(key){
+        try{
+          var v = window.localStorage.getItem(key);
+          return v ? JSON.parse(v) : null;
+        }catch(e){ return null; }
+      }
+      function rvLsSet(key, val){
+        try{
+          if (val === null || val === undefined) window.localStorage.removeItem(key);
+          else window.localStorage.setItem(key, JSON.stringify(val));
+        }catch(e){}
+      }
+      function rvAdminCode(){
+        try{ return window.localStorage.getItem(RV_CODE_KEY) || ""; }
+        catch(e){ return ""; }
+      }
+      function rvSaveAdminCode(code){
+        try{ window.localStorage.setItem(RV_CODE_KEY, code); }catch(e){}
+      }
+      function rvHiddenShared(){
+        var v = rvLsGet(RV_HIDDEN_KEY);
+        return Array.isArray(v) ? v : [];
+      }
+      function rvSharedOrderPref(){
+        var v = rvLsGet(RV_SORDER_KEY);
+        return Array.isArray(v) ? v : [];
+      }
+      /* one row of the server's shared list becomes a feed
+         record in the same shape the local list uses, plus
+         its server id; a link the page cannot embed (neither
+         a YouTube nor an Instagram link) is skipped, exactly
+         like an invalid local entry */
+      function rvSharedRecord(row){
+        var url = row && row.url ? String(row.url) : "";
+        if (!url) return null;
+        var type = /instagram\.com/.test(url) ? "instagram" : "youtube";
+        var src = null;
+        if (type === "instagram"){
+          src = rvGetInstagramEmbed(url);
+        } else {
+          var yid = rvGetYouTubeId(url);
+          if (yid) src = "https://www.youtube.com/embed/" + yid + "?playsinline=1&rel=0";
+        }
+        if (!src) return null;
+        var fit = (row.size && RV_FITS.indexOf(row.size) !== -1)
+          ? row.size : rvDetectFit(url, type);
+        return { shared:true, sid:row.id, type:type, src:src, url:url,
+                 channel:"", title:"", fit:fit };
+      }
+      /* the shared reels in THIS visitor's arrangement: the
+         order their tap-promotions left them in, with any
+         brand-new shared reels behind them in server order,
+         minus the ones hidden on this phone */
+      function rvOrderedSharedRecs(){
+        var hidden = rvHiddenShared();
+        var byId = {};
+        rvSharedRecs.forEach(function(r){ byId[r.sid] = r; });
+        var out = [], seen = {};
+        rvSharedOrderPref().forEach(function(sid){
+          if (byId[sid] && !seen[sid]){ seen[sid] = 1; out.push(byId[sid]); }
+        });
+        rvSharedRecs.forEach(function(r){
+          if (!seen[r.sid]){ seen[r.sid] = 1; out.push(r); }
+        });
+        return out.filter(function(r){ return hidden.indexOf(r.sid) === -1; });
+      }
+      function rvPromotedSharedCard(){
+        var sid = rvLsGet(RV_PSHARED_KEY);
+        if (sid === null || sid === undefined) return null;
+        return rvSharedCards[sid] || null;
+      }
+      /* every successful add ends all tap-promotions: the
+         Dil flag (as before) and the promoted shared card */
+      function rvClearPromotions(){
+        if (rvPromotedDil){ rvPromotedDil = false; rvSavePromoted(); }
+        rvLsSet(RV_PSHARED_KEY, null);
+      }
+      /* rebuild the whole feed from its three sources in
+         merge order — Dil (oldest), shared, local (newest) —
+         replayed through the same rotation the upload form
+         uses, then the remembered tap-promotions are put
+         back (a promoted local video needs nothing: its
+         entry sits at the end of the local list, so the
+         replay restores it by itself). Runs once on load —
+         the shared list is still empty then, so the feed is
+         exactly Dil + local as before — and again whenever
+         a fresh shared list actually changes the feed. */
+      function rvRebuildFeed(){
+        rvOrder.slice().forEach(function(card){ card.remove(); });
+        rvOrder = [];
+        rvColHeights = [0, 0, 0];
+        rvSharedCards = {};
+        if (rvDilCardEl && !rvDilRemoved){
+          rvDilCardEl._rvCol = -1;
+          rvDilCardEl._rvZone = "big";
+          rvFeed.insertBefore(rvDilCardEl, rvBandEl || rvColsEl);
+          rvOrder.push(rvDilCardEl);
+        }
+        var ordered = rvOrderedSharedRecs();
+        rvSharedShownKey = ordered.map(function(r){ return r.sid; }).join(",");
+        ordered.forEach(function(rec){
+          rvSharedCards[rec.sid] = rvAddVideoCard(rec.src, rec.type, "", "", rec.url, rec);
+        });
+        rvSavedVideos.slice().forEach(function(rec){
+          if (rec && rec.src && (rec.type === "youtube" || rec.type === "instagram")){
+            rvAddVideoCard(rec.src, rec.type, rec.channel || "", rec.title || "", rec.url || "", rec);
+          }
+        });
+        if (rvPromotedDil && rvDilCardEl && !rvDilRemoved && rvDilCardEl._rvZone !== "big"){
+          rvRearrange(rvDilCardEl);
+        } else {
+          var pc = rvPromotedSharedCard();
+          if (pc && pc._rvZone !== "big") rvRearrange(pc);
+        }
+        rvSyncEmpty();
+        rvSyncPromoteLayers();
+      }
+      /* fetch the shared list when the reels view opens.
+         ANY failure — offline, server not configured yet,
+         an unreadable reply — leaves the feed exactly as it
+         was: no error shown, no change. A list identical to
+         the one already shown does not rebuild, so a video
+         playing in the big frame is never disturbed. */
+      function rvFetchShared(){
+        if (rvSharedLoading || typeof fetch !== "function") return;
+        rvSharedLoading = true;
+        fetch("/api/reels", { cache:"no-store" }).then(function(r){
+          if (!r.ok) throw new Error("shared");
+          return r.json();
+        }).then(function(data){
+          if (!data || !data.ok || !Array.isArray(data.reels)) throw new Error("shared");
+          var recs = [];
+          data.reels.forEach(function(row){
+            var rec = rvSharedRecord(row);
+            if (rec) recs.push(rec);
+          });
+          rvSharedRecs = recs;
+          var key = rvOrderedSharedRecs().map(function(r){ return r.sid; }).join(",");
+          if (key !== rvSharedShownKey) rvRebuildFeed();
+        }).catch(function(){})
+        .then(function(){ rvSharedLoading = false; });
+      }
+      /* a shared card's ✕: with the owner's code saved on
+         this phone the video is deleted on the server, so
+         it disappears for everyone (a wrong code keeps the
+         card and says so); with no code saved here, the
+         card is only hidden on this phone — and the hide
+         is kept, like the Dil card's, so it stays hidden */
+      function rvDeleteSharedCard(card, rec){
+        var code = rvAdminCode();
+        if (!code){
+          var hidden = rvHiddenShared();
+          if (hidden.indexOf(rec.sid) === -1){
+            hidden.push(rec.sid);
+            rvLsSet(RV_HIDDEN_KEY, hidden);
+          }
+          rvDetachCard(card);
+          delete rvSharedCards[rec.sid];
+          rvSyncEmpty();
+          rvRestoreLogoPos();
+          rvShowSaved("Video hata diya");
+          return;
+        }
+        fetch("/api/reels", {
+          method:"DELETE", cache:"no-store",
+          headers:{ "Content-Type":"application/json" },
+          body: JSON.stringify({ code:code, id:rec.sid })
+        }).then(function(r){
+          return r.json().catch(function(){ return null; }).then(function(data){
+            return { status:r.status, data:data };
+          });
+        }).then(function(out){
+          if (out.status === 401){
+            rvShowSaved("Code galat hai");
+            return;
+          }
+          if (out.data && out.data.ok){
+            rvSharedRecs = rvSharedRecs.filter(function(x){ return x.sid !== rec.sid; });
+            rvLsSet(RV_SORDER_KEY, rvSharedOrderPref().filter(function(s){ return s !== rec.sid; }));
+            if (rvLsGet(RV_PSHARED_KEY) === rec.sid) rvLsSet(RV_PSHARED_KEY, null);
+            rvDetachCard(card);
+            delete rvSharedCards[rec.sid];
+            rvSyncEmpty();
+            rvRestoreLogoPos();
+            rvShowSaved("Video hata diya");
+          } else {
+            rvShowSaved("Video nahi hata — dobara try karein");
+          }
+        }).catch(function(){
+          rvShowSaved("Video nahi hata — dobara try karein");
+        });
+      }
+      /* ================= end SHARED REELS ================= */
+
+      /* Restore the feed on load: replay Dil, the shared
+         list (still empty at this point — it is fetched when
+         the view opens) and the saved local videos through
+         the rotation, so the feed comes back with the NEWEST
+         video in the big top frame and the rest in the band
+         and columns below it — exactly the arrangement the
+         last add or delete left behind, and a deletion never
+         reshuffles the ones that remain. Every card is a
+         lightweight facade at this point, so nothing heavy
          loads while the shop is being browsed. */
       rvLoadSaved();
-      rvSavedVideos.slice().forEach(function(rec){
-        if (rec && rec.src && (rec.type === "youtube" || rec.type === "instagram")){
-          rvAddVideoCard(rec.src, rec.type, rec.channel || "", rec.title || "", rec.url || "", rec);
-        }
-      });
-      rvSyncEmpty();
-
-      /* TAP-TO-PROMOTE restore: if the last visit left the
-         baked-in Dil De Mohalle card tap-promoted into the big
-         frame, put it back there now (a promoted SAVED video
-         needs nothing here — its entry was moved to the end of
-         the saved list, so the replay above already restored
-         it into the big frame). Nothing autoplays on a fresh
-         load; the layers are then synced to the arrangement. */
       rvLoadPromoted();
-      if (rvPromotedDil && rvDilCardEl && rvDilCardEl._rvZone !== "big"){
-        rvRearrange(rvDilCardEl);
-      }
-      rvSyncPromoteLayers();
+      rvRebuildFeed();
 
       /* The kept "Dil De Mohalle" card can be removed with its
          ✕ for this session only; it is baked into the page, so
@@ -2156,6 +2585,7 @@
                frame or a column — it detaches like any card;
                if it held the big frame, the frame passes to
                the newest added video that remains */
+            rvDilRemoved = true;
             rvDetachCard(dilCard);
           }
           rvSyncEmpty();
