@@ -492,16 +492,36 @@
         border-radius:999px;padding:8px 14px;font-size:14px;font-weight:700;
       }
       .rv-back:active{background:#262626}
-      /* the feed is the user's drawing: teen frame ek line me
-         agal-bagal — three frames side by side in one row, then
-         the next three in the row below, and so on. Every frame
-         still holds its video in that video's OWN size (the
-         rv-fit-* shapes below), so a tall Short stands tall in
-         its frame and a wide video lies wide in its own. */
+      /* the feed is the user's drawing, BOTH halves of it:
+         sabse upar EK BADA frame — the FIRST video (right now
+         the "Dil De Mohalle" Short) sits alone at the top in
+         one big frame at its full own size — and below it the
+         teen frame ek line me agal-bagal: every video added
+         after the first falls into the three frames side by
+         side, three in a row, then the next three below, and
+         so on. Every frame still holds its video in that
+         video's OWN size (the rv-fit-* shapes below), so a
+         tall Short stands tall in its frame and a wide video
+         lies wide in its own. The big top frame belongs to
+         whichever card is FIRST in the feed: it is pure CSS
+         (:first-of-type below), so it follows the cards by
+         itself — if the top card is removed, the next one
+         takes the big frame, and added cards never do while
+         one sits above them. */
       .rv-feed{
         width:100%;max-width:1120px;margin:0 auto;padding:8px;
         display:grid;grid-template-columns:repeat(3,1fr);gap:8px;align-items:start;
       }
+      /* the big top frame: the first card spans the whole
+         feed width, alone in its row, and its player is let
+         out to the video's full size — a tall Short stands
+         full-width and near full-height instead of squeezed
+         into a third of the row (the small-frame caps in the
+         rv-fit-* rules are widened for this card only) */
+      .rv-feed>.rv-card:first-of-type{grid-column:1/-1}
+      .rv-feed>.rv-card:first-of-type .rv-fit-tall{width:min(100%,54vh);width:min(100%,54dvh)}
+      .rv-feed>.rv-card:first-of-type .rv-fit-portrait{width:min(100%,68vh);width:min(100%,68dvh)}
+      .rv-feed>.rv-card:first-of-type .rv-fit-square{width:min(100%,80vh);width:min(100%,80dvh)}
       .rv-card{position:relative;background:#111;border:1px solid #252525;border-radius:12px;margin-bottom:0;overflow:hidden}
       .rv-del{
         position:absolute;top:6px;right:6px;width:26px;height:26px;border-radius:50%;
@@ -709,10 +729,13 @@
       <main class="rv-feed" id="rvFeed">
         <p class="rv-empty" id="rvEmpty" hidden>Abhi koi video nahi hai — logo wala button dabakar apna pehla video jodein।</p>
         <!-- the one card the user chose to keep: the "Dil De
-             Mohalle" Short (Saregama Music). It always sits at
-             the TOP of the feed; every video added with the logo
-             button stacks below it. Like the old demo card, its
-             ✕ removes it for this session only. -->
+             Mohalle" Short (Saregama Music). As the FIRST card
+             it always sits at the TOP of the feed, alone in the
+             big full-size frame (see the :first-of-type rules);
+             every video added with the logo button falls into
+             the three side-by-side frames below it. Like the
+             old demo card, its ✕ removes it for this session
+             only. -->
         <article class="rv-card" id="rvDilCard">
           <button class="rv-del" id="rvDilDel" type="button" aria-label="Remove Dil De Mohalle video">✕</button>
           <iframe class="rv-player rv-fit-tall" src="https://www.youtube.com/embed/CPJMyx5tQTY?playsinline=1&rel=0"
