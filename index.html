@@ -492,12 +492,20 @@
         border-radius:999px;padding:8px 14px;font-size:14px;font-weight:700;
       }
       .rv-back:active{background:#262626}
-      /* the feed is the user's drawing, BOTH halves of it:
-         sabse upar EK BADA frame — one video sits alone at
-         the top in one big frame at its full own size — and
-         below it THREE PACKED COLUMNS (Pinterest-style):
-         every other video drops into whichever column is
-         currently the shortest, so the frames stack tight
+      /* the feed has THREE zones, top to bottom:
+         (1) sabse upar EK BADA frame — one video sits alone
+         at the top in one big frame at its full own size.
+         (2) Directly below it, a FULL-WIDTH WIDE BAND: a
+         wide 16:9 video that rotates down out of the big
+         frame does NOT shrink into a small column card — it
+         keeps its full width and its full original size in
+         this band, above the columns; several demoted wide
+         videos stack here one below another, the most
+         recently demoted at the top of the band.
+         (3) At the bottom, THREE PACKED COLUMNS
+         (Pinterest-style): every non-wide video (tall 9:16,
+         portrait 4:5, square 1:1) drops into whichever column
+         is currently the shortest, so the frames stack tight
          with NO empty black gaps — a mixed row of wide 16:9
          and tall 9:16 videos no longer leaves dead space
          under the shorter ones. Every frame still holds its
@@ -507,14 +515,15 @@
          frame ROTATES: it always holds the NEWEST video.
          The moment a new video is added it takes the big
          frame, and the video that sat there until then
-         automatically shifts down into the columns as a
-         normal small card — and so on with every add. The
-         styling itself is pure CSS (:first-of-type below):
-         the script simply keeps the big-frame card as the
-         feed's direct-child card, placed before the columns,
-         so the frame follows the rotation by itself. If the
-         big-frame video is deleted, the next-newest remaining
-         video takes the frame. */
+         automatically shifts down into its own zone — the
+         wide band if it is wide, the columns otherwise — and
+         so on with every add. The styling itself is pure CSS
+         (:first-of-type below): the script simply keeps the
+         big-frame card as the feed's direct-child card,
+         placed before the band and the columns, so the frame
+         follows the rotation by itself. If the big-frame
+         video is deleted, the next-newest remaining video
+         takes the frame. */
       .rv-feed{
         width:100%;max-width:1120px;margin:0 auto;padding:8px;
       }
@@ -529,6 +538,14 @@
       }
       .rv-col{display:flex;flex-direction:column;gap:8px;min-width:0}
       .rv-col>.rv-card{width:100%}
+      /* the full-width wide band between the big top frame
+         and the columns: demoted wide videos stack here one
+         below another, each at the feed's full width and its
+         own full original size (rv-fit-wide already spans
+         the whole card) — an empty band takes no space */
+      .rv-band{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+      .rv-band:empty{display:none}
+      .rv-band>.rv-card{width:100%}
       /* the big top frame: the first card spans the whole
          feed width, alone in its row, and its player is let
          out to the video's full size — a tall Short stands
@@ -639,6 +656,7 @@
         .rv-feed{padding:16px}
         .rv-cols{gap:18px;margin-top:18px}
         .rv-col{gap:18px}
+        .rv-band{gap:18px;margin-top:18px}
       }
       @media (prefers-reduced-motion: reduce){
         *{transition:none !important;scroll-behavior:auto !important}
@@ -763,11 +781,19 @@
             allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
             referrerpolicy="strict-origin-when-cross-origin"></iframe>
         </article>
-        <!-- the three packed columns below the big top frame:
-             every video added with the logo button is placed by
-             the script into the currently shortest of these
-             three columns, in its own true size, so no empty
-             gaps are left between the frames -->
+        <!-- the full-width wide band, directly below the big
+             top frame and above the columns: a wide video that
+             rotates down out of the big frame is placed here
+             by the script at its full width and full original
+             size — it never shrinks into a small column card.
+             Several demoted wide videos stack in this band one
+             below another, the most recently demoted on top. -->
+        <div class="rv-band" id="rvBand"></div>
+        <!-- the three packed columns at the bottom of the feed:
+             every non-wide video added with the logo button is
+             placed by the script into the currently shortest of
+             these three columns, in its own true size, so no
+             empty gaps are left between the frames -->
         <div class="rv-cols" id="rvCols">
           <div class="rv-col"></div>
           <div class="rv-col"></div>
@@ -1594,20 +1620,30 @@
         return ig;
       }
 
-      /* ----- packed columns below the big top frame -----
-         The videos under the big frame live in THREE vertical
-         columns (Pinterest-style). Each card that rotates down
-         out of the big frame is appended to the column that is
-         currently SHORTEST, so the frames pack tight with no
-         empty gaps even when wide 16:9 and tall 9:16 videos
-         mix. A column's height is tracked from the videos' own
+      /* ----- below the big top frame: the wide band, then
+         the packed columns -----
+         A card's zone follows its saved size class (card
+         ._rvFit, from the upload form's "Video ka Size" pick
+         or the auto-detect). A WIDE card that rotates down out
+         of the big frame goes into the FULL-WIDTH WIDE BAND
+         directly under the big frame: it keeps its full width
+         and full original size there instead of shrinking
+         into a small column card, and demoted wide cards
+         stack in the band one below another, most recently
+         demoted at the top. Every NON-wide card lives in
+         THREE vertical columns (Pinterest-style): each is
+         appended to the column that is currently SHORTEST, so
+         the frames pack tight with no empty gaps even when
+         tall 9:16, portrait 4:5 and square 1:1 videos mix. A
+         column's height is tracked from the videos' own
          shapes (height ÷ width of each fit), never from
          rendered pixels — the restore below runs while the
          view is still hidden, and shape maths gives the exact
          same packing on every load. The saved list stays the
          source of truth for order: a reload replays it in add
-         order through the same rotation, so the same packed
-         arrangement comes back. */
+         order through the same rotation, so the same
+         three-zone arrangement comes back. */
+      var rvBandEl = document.getElementById("rvBand");
       var rvColsEl = document.getElementById("rvCols");
       var rvColEls = rvColsEl ? Array.prototype.slice.call(rvColsEl.children) : [];
       var RV_RATIO = { wide: 9/16, tall: 16/9, portrait: 5/4, square: 1 };
@@ -1618,15 +1654,19 @@
          NEWEST: the baked-in Dil De Mohalle card is the oldest
          of all, and every video the visitor adds is appended
          behind it. The LAST card in this list holds the big
-         top frame; all the others live in the packed columns.
-         Adding a video therefore rotates the frames: the new
-         card takes the big frame, and the card that held it
-         until then drops into the columns as a normal small
-         card. Deleting the big-frame card hands the frame to
-         the next-newest card that remains — and when every
-         added video is gone, Dil De Mohalle (the oldest) is
-         the last one left, so it returns to the big frame by
-         itself. */
+         top frame; all the others live below it — wide ones
+         at full size in the wide band, the rest packed into
+         the columns. Adding a video therefore rotates the
+         frames: the new card takes the big frame, and the card
+         that held it until then drops down into its own zone.
+         Deleting the big-frame card hands the frame to the
+         next-newest card that remains, wherever it sits —
+         and when every added video is gone, Dil De Mohalle
+         (the oldest) is the last one left, so it returns to
+         the big frame by itself. Each card remembers its zone
+         in card._rvZone: "big", "band" or "col" (with
+         card._rvCol holding its column index while it is in
+         the columns, -1 elsewhere). */
       var rvOrder = [];
       /* the card currently holding the big top frame among the
          DIRECT children of the feed; null while the slot is
@@ -1650,8 +1690,19 @@
       function rvPlaceInColumns(card){
         var ci = rvShortestCol();
         card._rvCol = ci;
+        card._rvZone = "col";
         rvColHeights[ci] += card._rvRatio || 0;
         rvColEls[ci].appendChild(card);
+      }
+      /* drop a demoted WIDE card into the full-width band
+         above the columns: it keeps the feed's full width and
+         its own full original size there, and it lands at the
+         TOP of the band — the most recently demoted wide
+         video sits highest, older ones stack below it */
+      function rvPlaceInBand(card){
+        card._rvCol = -1;
+        card._rvZone = "band";
+        if (rvBandEl) rvBandEl.insertBefore(card, rvBandEl.firstChild);
       }
       /* lift a card back out of its column (the column just
          gets shorter — the cards left in it stay stacked
@@ -1662,28 +1713,42 @@
           card._rvCol = -1;
         }
       }
-      /* the card in the big frame steps down into the columns
-         to make room for a newer one */
+      /* the card in the big frame steps down to make room for
+         a newer one — into its own zone: the wide band at full
+         size if it is a wide video, the packed columns as a
+         normal small card otherwise */
       function rvDemoteBig(){
         var big = rvBigCard();
-        if (big && rvColEls.length === 3) rvPlaceInColumns(big);
+        if (!big) return;
+        if (big._rvFit === "wide"){
+          if (rvBandEl) rvPlaceInBand(big);
+        } else if (rvColEls.length === 3){
+          rvPlaceInColumns(big);
+        }
       }
       /* hand the big frame to the newest card that remains
          (the tail of rvOrder) — used when the card holding
-         the frame is removed */
+         the frame is removed. The promoted card may sit in
+         the wide band or in a column; either way it lifts
+         straight out (leaving the band needs no bookkeeping —
+         the cards left in it simply stack up) and takes the
+         frame above the band */
       function rvPromoteNewest(){
         var next = rvOrder[rvOrder.length - 1];
         if (!next || !rvColsEl) return;
         rvTakeOutOfColumns(next);
         next._rvCol = -1;
-        rvFeed.insertBefore(next, rvColsEl);
+        next._rvZone = "big";
+        rvFeed.insertBefore(next, rvBandEl || rvColsEl);
       }
       /* detach a card from the feed entirely: out of the
-         order list, out of its column's height, out of the
-         DOM — and if it held the big frame, the frame passes
-         to the next-newest remaining card */
+         order list, out of its column's height (if it sat in
+         one), out of the DOM — the band and the columns
+         simply close up around the gap — and if it held the
+         big frame, the frame passes to the next-newest
+         remaining card */
       function rvDetachCard(card){
-        var wasBig = (typeof card._rvCol === "number" && card._rvCol === -1);
+        var wasBig = (card._rvZone === "big");
         rvTakeOutOfColumns(card);
         var oi = rvOrder.indexOf(card);
         if (oi !== -1) rvOrder.splice(oi, 1);
@@ -1697,6 +1762,11 @@
       var rvDilCardEl = document.getElementById("rvDilCard");
       if (rvDilCardEl){
         rvDilCardEl._rvCol = -1;
+        rvDilCardEl._rvZone = "big";
+        /* Dil De Mohalle is a tall Short, so when it is demoted
+           it packs into the columns like any other tall video —
+           never into the wide band */
+        rvDilCardEl._rvFit = "tall";
         rvDilCardEl._rvRatio = RV_RATIO.tall;
         rvOrder.push(rvDilCardEl);
       }
@@ -1771,19 +1841,24 @@
            the BIG top frame at its own full size — and the
            card that held the frame until then (the Dil card,
            or the previously newest video) automatically drops
-           into the packed columns below as a normal small
-           card, into whichever column is currently shortest,
-           so the columns stay packed with no gaps. This is
-           also how a reload restores the arrangement: the
-           saved list is replayed in add order through this
-           same path, so the newest saved video ends up in the
-           big frame and the rest packed below it. */
+           down into its own zone: the wide band at full size
+           if it is wide, otherwise whichever of the packed
+           columns is currently shortest, so the columns stay
+           packed with no gaps. This is also how a reload
+           restores the arrangement: the saved list is
+           replayed in add order through this same path, so
+           the newest saved video ends up in the big frame and
+           the rest settle into the band and columns below it,
+           in exactly the three-zone arrangement the last add
+           or delete left behind. */
         card._rvRatio = RV_RATIO[fit] || RV_RATIO.wide;
+        card._rvFit = fit;
+        card._rvZone = "big";
         rvOrder.push(card);
         if (rvColsEl && rvColEls.length === 3){
           rvDemoteBig();
           card._rvCol = -1;
-          rvFeed.insertBefore(card, rvColsEl);
+          rvFeed.insertBefore(card, rvBandEl || rvColsEl);
         } else {
           card._rvCol = -1;
           rvFeed.appendChild(card);
@@ -1861,13 +1936,14 @@
       /* Restore the saved videos on load by replaying the
          stored list in add order through the same rotation
          the upload form uses: each card takes the big frame
-         and pushes the previous one down into the columns,
-         so the feed comes back with the NEWEST video in the
-         big top frame and the rest packed below it — exactly
-         the arrangement the last add or delete left behind,
-         and a deletion never reshuffles the ones that remain.
-         The embeds are lazy, so nothing heavy loads while the
-         shop is being browsed. */
+         and pushes the previous one down into its own zone
+         (the wide band if wide, the columns otherwise), so
+         the feed comes back with the NEWEST video in the big
+         top frame and the rest in the band and columns below
+         it — exactly the arrangement the last add or delete
+         left behind, and a deletion never reshuffles the ones
+         that remain. The embeds are lazy, so nothing heavy
+         loads while the shop is being browsed. */
       rvLoadSaved();
       rvSavedVideos.slice().forEach(function(rec){
         if (rec && rec.src && (rec.type === "youtube" || rec.type === "instagram")){
