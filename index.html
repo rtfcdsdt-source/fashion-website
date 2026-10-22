@@ -447,14 +447,21 @@
       .logo-dock{
         position:fixed;left:50%;bottom:calc(14px + env(safe-area-inset-bottom,0px));
         transform:translateX(-50%);z-index:45;
-        width:68px;height:68px;padding:0;border:0;background:none;cursor:pointer;
+        width:60px;height:60px;padding:0;border:0;background:none;cursor:pointer;
         -webkit-tap-highlight-color:transparent;
+        transition:transform .28s ease,opacity .28s ease,visibility .28s ease;
       }
       .logo-dock img{
         width:100%;height:100%;
         filter:drop-shadow(0 8px 18px rgba(0,0,0,.35));
       }
       .logo-dock:active{transform:translateX(-50%) scale(.94)}
+      /* the dock rides with the top bar: scrolling down slides it
+         away below the screen edge, scrolling up brings it back */
+      body.ui-hidden .logo-dock{
+        transform:translate(-50%,calc(100% + 32px));
+        opacity:0;visibility:hidden;pointer-events:none;
+      }
       .to-top{
         position:fixed;right:16px;bottom:calc(14px + env(safe-area-inset-bottom,0px));z-index:45;
         width:52px;height:52px;border-radius:50%;border:0;cursor:pointer;
