@@ -493,11 +493,10 @@
       }
       .rv-back:active{background:#262626}
       /* the feed is the user's drawing, BOTH halves of it:
-         sabse upar EK BADA frame — the FIRST video (right now
-         the "Dil De Mohalle" Short) sits alone at the top in
-         one big frame at its full own size — and below it
-         THREE PACKED COLUMNS (Pinterest-style): every video
-         added after the first drops into whichever column is
+         sabse upar EK BADA frame — one video sits alone at
+         the top in one big frame at its full own size — and
+         below it THREE PACKED COLUMNS (Pinterest-style):
+         every other video drops into whichever column is
          currently the shortest, so the frames stack tight
          with NO empty black gaps — a mixed row of wide 16:9
          and tall 9:16 videos no longer leaves dead space
@@ -505,11 +504,17 @@
          video in that video's OWN size (the rv-fit-* shapes
          below), so a tall Short stands tall in its column
          and a wide video lies wide in its own. The big top
-         frame belongs to whichever card is FIRST in the feed:
-         it is pure CSS (:first-of-type below), so it follows
-         the cards by itself — if the top card is removed, the
-         next one takes the big frame, and added cards never
-         do while one sits above them. */
+         frame ROTATES: it always holds the NEWEST video.
+         The moment a new video is added it takes the big
+         frame, and the video that sat there until then
+         automatically shifts down into the columns as a
+         normal small card — and so on with every add. The
+         styling itself is pure CSS (:first-of-type below):
+         the script simply keeps the big-frame card as the
+         feed's direct-child card, placed before the columns,
+         so the frame follows the rotation by itself. If the
+         big-frame video is deleted, the next-newest remaining
+         video takes the frame. */
       .rv-feed{
         width:100%;max-width:1120px;margin:0 auto;padding:8px;
       }
@@ -743,13 +748,14 @@
       <main class="rv-feed" id="rvFeed">
         <p class="rv-empty" id="rvEmpty" hidden>Abhi koi video nahi hai — logo wala button dabakar apna pehla video jodein।</p>
         <!-- the one card the user chose to keep: the "Dil De
-             Mohalle" Short (Saregama Music). As the FIRST card
-             it always sits at the TOP of the feed, alone in the
-             big full-size frame (see the :first-of-type rules);
-             every video added with the logo button falls into
-             the three packed columns below it. Like the
-             old demo card, its ✕ removes it for this session
-             only. -->
+             Mohalle" Short (Saregama Music). It is the OLDEST
+             card in the rotation: it holds the big full-size
+             frame at the top of the feed until the first video
+             is added with the logo button — then it too shifts
+             down into the three packed columns, and it returns
+             to the big frame if every added video is removed.
+             Like the old demo card, its ✕ removes it for this
+             session only. -->
         <article class="rv-card" id="rvDilCard">
           <button class="rv-del" id="rvDilDel" type="button" aria-label="Remove Dil De Mohalle video">✕</button>
           <iframe class="rv-player rv-fit-tall" src="https://www.youtube.com/embed/CPJMyx5tQTY?playsinline=1&rel=0"
@@ -1590,28 +1596,41 @@
 
       /* ----- packed columns below the big top frame -----
          The videos under the big frame live in THREE vertical
-         columns (Pinterest-style). Each new video is appended
-         to the column that is currently SHORTEST, so the
-         frames pack tight with no empty gaps even when wide
-         16:9 and tall 9:16 videos mix. A column's height is
-         tracked from the videos' own shapes (height ÷ width
-         of each fit), never from rendered pixels — the restore
-         below runs while the view is still hidden, and shape
-         maths gives the exact same packing on every load.
-         The saved list stays the source of truth for order:
-         cards are created by walking it in add order and each
-         one drops into the then-shortest column, so a reload
-         restores the same packed arrangement. */
+         columns (Pinterest-style). Each card that rotates down
+         out of the big frame is appended to the column that is
+         currently SHORTEST, so the frames pack tight with no
+         empty gaps even when wide 16:9 and tall 9:16 videos
+         mix. A column's height is tracked from the videos' own
+         shapes (height ÷ width of each fit), never from
+         rendered pixels — the restore below runs while the
+         view is still hidden, and shape maths gives the exact
+         same packing on every load. The saved list stays the
+         source of truth for order: a reload replays it in add
+         order through the same rotation, so the same packed
+         arrangement comes back. */
       var rvColsEl = document.getElementById("rvCols");
       var rvColEls = rvColsEl ? Array.prototype.slice.call(rvColsEl.children) : [];
       var RV_RATIO = { wide: 9/16, tall: 16/9, portrait: 5/4, square: 1 };
       var rvColHeights = [0, 0, 0];
-      /* every added card, in add order — the big-frame
-         promotion below walks this list */
-      var rvCardOrder = [];
+      /* ----- the rotation: the big top frame always holds
+         the NEWEST video -----
+         rvOrder lists every card in the feed from OLDEST to
+         NEWEST: the baked-in Dil De Mohalle card is the oldest
+         of all, and every video the visitor adds is appended
+         behind it. The LAST card in this list holds the big
+         top frame; all the others live in the packed columns.
+         Adding a video therefore rotates the frames: the new
+         card takes the big frame, and the card that held it
+         until then drops into the columns as a normal small
+         card. Deleting the big-frame card hands the frame to
+         the next-newest card that remains — and when every
+         added video is gone, Dil De Mohalle (the oldest) is
+         the last one left, so it returns to the big frame by
+         itself. */
+      var rvOrder = [];
       /* the card currently holding the big top frame among the
-         DIRECT children of the feed (the baked-in Dil card, or
-         a promoted added card); null while the slot is empty */
+         DIRECT children of the feed; null while the slot is
+         empty (its card was removed this session) */
       function rvBigCard(){
         var kids = rvFeed.children;
         for (var i = 0; i < kids.length; i++){
@@ -1619,18 +1638,67 @@
         }
         return null;
       }
-      /* when the big-frame card is removed, the next added
-         card (in add order) moves up into the big frame; the
-         column it leaves just gets shorter — the remaining
-         cards in it stay stacked tight, so no gap opens */
-      function rvPromoteNext(){
-        var next = rvCardOrder[0];
-        if (!next || !rvColsEl) return;
-        if (typeof next._rvCol === "number" && next._rvCol >= 0){
-          rvColHeights[next._rvCol] -= next._rvRatio || 0;
-          next._rvCol = -1;
+      function rvShortestCol(){
+        var ci = 0;
+        for (var k = 1; k < 3; k++){
+          if (rvColHeights[k] < rvColHeights[ci]) ci = k;
         }
+        return ci;
+      }
+      /* drop a card into the currently shortest column as a
+         normal small card, keeping the height bookkeeping */
+      function rvPlaceInColumns(card){
+        var ci = rvShortestCol();
+        card._rvCol = ci;
+        rvColHeights[ci] += card._rvRatio || 0;
+        rvColEls[ci].appendChild(card);
+      }
+      /* lift a card back out of its column (the column just
+         gets shorter — the cards left in it stay stacked
+         tight, so no gap opens) */
+      function rvTakeOutOfColumns(card){
+        if (typeof card._rvCol === "number" && card._rvCol >= 0){
+          rvColHeights[card._rvCol] -= card._rvRatio || 0;
+          card._rvCol = -1;
+        }
+      }
+      /* the card in the big frame steps down into the columns
+         to make room for a newer one */
+      function rvDemoteBig(){
+        var big = rvBigCard();
+        if (big && rvColEls.length === 3) rvPlaceInColumns(big);
+      }
+      /* hand the big frame to the newest card that remains
+         (the tail of rvOrder) — used when the card holding
+         the frame is removed */
+      function rvPromoteNewest(){
+        var next = rvOrder[rvOrder.length - 1];
+        if (!next || !rvColsEl) return;
+        rvTakeOutOfColumns(next);
+        next._rvCol = -1;
         rvFeed.insertBefore(next, rvColsEl);
+      }
+      /* detach a card from the feed entirely: out of the
+         order list, out of its column's height, out of the
+         DOM — and if it held the big frame, the frame passes
+         to the next-newest remaining card */
+      function rvDetachCard(card){
+        var wasBig = (typeof card._rvCol === "number" && card._rvCol === -1);
+        rvTakeOutOfColumns(card);
+        var oi = rvOrder.indexOf(card);
+        if (oi !== -1) rvOrder.splice(oi, 1);
+        card.remove();
+        if (wasBig) rvPromoteNewest();
+      }
+      /* the baked-in Dil De Mohalle card is the OLDEST item
+         in the rotation: it holds the big frame until the
+         first visitor video is added, then it too rotates
+         down into the columns like any other card */
+      var rvDilCardEl = document.getElementById("rvDilCard");
+      if (rvDilCardEl){
+        rvDilCardEl._rvCol = -1;
+        rvDilCardEl._rvRatio = RV_RATIO.tall;
+        rvOrder.push(rvDilCardEl);
       }
 
       function rvAddVideoCard(src, type, channel, title, originalUrl, record){
@@ -1677,16 +1745,10 @@
         del.setAttribute("aria-label", "Remove video");
         del.textContent = "✕";
         del.addEventListener("click", function(){
-          var wasBig = (typeof card._rvCol === "number" && card._rvCol === -1);
-          if (typeof card._rvCol === "number" && card._rvCol >= 0){
-            rvColHeights[card._rvCol] -= card._rvRatio || 0;
-          }
-          var oi = rvCardOrder.indexOf(card);
-          if (oi !== -1) rvCardOrder.splice(oi, 1);
-          card.remove();
-          /* if the removed card held the big top frame, the
-             next added card takes its place up there */
-          if (wasBig) rvPromoteNext();
+          /* detach handles the rotation too: if this card
+             held the big top frame, the next-newest remaining
+             card takes its place up there */
+          rvDetachCard(card);
           rvSyncEmpty();
           if (record){
             var i = rvSavedVideos.indexOf(record);
@@ -1705,29 +1767,23 @@
         });
         card.appendChild(del);
 
-        /* every new card lands BELOW the big top frame, in
-           the packed columns: it is appended to whichever
-           column is currently shortest (by the videos' own
-           shapes), so wide and tall videos pack together
-           with no empty gaps. The restore below walks the
-           saved list in add order and places each card the
-           same way, so a reload brings back the same packed
-           arrangement in the same order. If the big frame is
-           empty (its card was removed this session), the new
-           card takes the big frame instead. */
+        /* ROTATION: every new card is the newest, so it takes
+           the BIG top frame at its own full size — and the
+           card that held the frame until then (the Dil card,
+           or the previously newest video) automatically drops
+           into the packed columns below as a normal small
+           card, into whichever column is currently shortest,
+           so the columns stay packed with no gaps. This is
+           also how a reload restores the arrangement: the
+           saved list is replayed in add order through this
+           same path, so the newest saved video ends up in the
+           big frame and the rest packed below it. */
         card._rvRatio = RV_RATIO[fit] || RV_RATIO.wide;
-        rvCardOrder.push(card);
-        if (!rvBigCard() && rvColsEl){
+        rvOrder.push(card);
+        if (rvColsEl && rvColEls.length === 3){
+          rvDemoteBig();
           card._rvCol = -1;
           rvFeed.insertBefore(card, rvColsEl);
-        } else if (rvColEls.length === 3){
-          var ci = 0;
-          for (var k = 1; k < 3; k++){
-            if (rvColHeights[k] < rvColHeights[ci]) ci = k;
-          }
-          card._rvCol = ci;
-          rvColHeights[ci] += card._rvRatio;
-          rvColEls[ci].appendChild(card);
         } else {
           card._rvCol = -1;
           rvFeed.appendChild(card);
@@ -1790,26 +1846,28 @@
         rvForm.reset();
         rvPlatform.value = "youtube";
         rvPlatform.dispatchEvent(new Event("change"));
-        /* the new card lands at the BOTTOM of the feed, below
-           every card already there — scroll down to it so the
-           user sees where it went */
-        rvView.scrollTo({ top: rvView.scrollHeight, behavior:"smooth" });
+        /* the new card takes the BIG frame at the TOP of the
+           feed — scroll up to it so the user sees it there */
+        rvView.scrollTo({ top: 0, behavior:"smooth" });
       });
 
       /* The feed holds the ONE card the user chose to keep —
          the "Dil De Mohalle" Short, baked into the markup above
-         at the top of the feed — plus the videos the visitor
-         adds with the logo button (saved on this phone,
-         restored below). The old "Placeholder Video" demo card
-         is deleted for good and never comes back. */
+         — plus the videos the visitor adds with the logo button
+         (saved on this phone, restored below). The old
+         "Placeholder Video" demo card is deleted for good and
+         never comes back. */
 
-      /* Restore the saved videos on load by walking the stored
-         list in its own order and appending each card below
-         the previous one — so the feed comes back in exactly
-         the order the videos were added (oldest at the top,
-         newest at the bottom), and a deletion never reshuffles
-         the ones that remain. The embeds are lazy, so nothing
-         heavy loads while the shop is being browsed. */
+      /* Restore the saved videos on load by replaying the
+         stored list in add order through the same rotation
+         the upload form uses: each card takes the big frame
+         and pushes the previous one down into the columns,
+         so the feed comes back with the NEWEST video in the
+         big top frame and the rest packed below it — exactly
+         the arrangement the last add or delete left behind,
+         and a deletion never reshuffles the ones that remain.
+         The embeds are lazy, so nothing heavy loads while the
+         shop is being browsed. */
       rvLoadSaved();
       rvSavedVideos.slice().forEach(function(rec){
         if (rec && rec.src && (rec.type === "youtube" || rec.type === "instagram")){
@@ -1820,15 +1878,19 @@
 
       /* The kept "Dil De Mohalle" card can be removed with its
          ✕ for this session only; it is baked into the page, so
-         it is back at the top of the feed on the next visit. */
+         it is back on the next visit — oldest in the rotation
+         again, in the big frame if no videos are saved. */
       var rvDilDel = document.getElementById("rvDilDel");
       if (rvDilDel){
         rvDilDel.addEventListener("click", function(){
           var dilCard = document.getElementById("rvDilCard");
-          if (dilCard) dilCard.remove();
-          /* the big top frame passes to the first added video,
-             exactly as it did when the feed was a plain grid */
-          rvPromoteNext();
+          if (dilCard){
+            /* wherever the rotation has put it — the big
+               frame or a column — it detaches like any card;
+               if it held the big frame, the frame passes to
+               the newest added video that remains */
+            rvDetachCard(dilCard);
+          }
           rvSyncEmpty();
           rvRestoreLogoPos();
           rvShowSaved("Video hata diya");
