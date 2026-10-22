@@ -492,10 +492,19 @@
         border-radius:999px;padding:8px 14px;font-size:14px;font-weight:700;
       }
       .rv-back:active{background:#262626}
-      .rv-feed{width:100%;max-width:500px;margin:0 auto;padding:8px}
-      .rv-card{position:relative;background:#111;border:1px solid #252525;border-radius:12px;margin-bottom:18px;overflow:hidden}
+      /* the feed is the user's drawing: teen frame ek line me
+         agal-bagal — three frames side by side in one row, then
+         the next three in the row below, and so on. Every frame
+         still holds its video in that video's OWN size (the
+         rv-fit-* shapes below), so a tall Short stands tall in
+         its frame and a wide video lies wide in its own. */
+      .rv-feed{
+        width:100%;max-width:1120px;margin:0 auto;padding:8px;
+        display:grid;grid-template-columns:repeat(3,1fr);gap:8px;align-items:start;
+      }
+      .rv-card{position:relative;background:#111;border:1px solid #252525;border-radius:12px;margin-bottom:0;overflow:hidden}
       .rv-del{
-        position:absolute;top:8px;right:8px;width:30px;height:30px;border-radius:50%;
+        position:absolute;top:6px;right:6px;width:26px;height:26px;border-radius:50%;
         border:1px solid rgba(255,255,255,.25);background:rgba(0,0,0,.65);color:#fff;
         font-size:14px;line-height:1;padding:0;cursor:pointer;z-index:3;
         display:flex;align-items:center;justify-content:center;
@@ -512,7 +521,7 @@
       /* shown only while the feed holds no video at all — it is
          a hint line, not a card; the moment a video is added it
          hides, and it comes back if the last video is removed */
-      .rv-empty{color:#999;text-align:center;font-size:14px;line-height:1.6;padding:44px 18px;margin:0}
+      .rv-empty{grid-column:1/-1;color:#999;text-align:center;font-size:14px;line-height:1.6;padding:44px 18px;margin:0}
       .rv-empty[hidden]{display:none}
       .rv-info{padding:12px}
       .rv-channel{font-size:14px;font-weight:bold;color:#ff9900;margin-bottom:6px}
@@ -532,8 +541,11 @@
       .rv-fit-tall{aspect-ratio:9/16;width:min(100%,46vh);width:min(100%,46dvh);margin:0 auto}
       .rv-fit-portrait{aspect-ratio:4/5;width:min(100%,62vh);width:min(100%,62dvh);margin:0 auto}
       .rv-fit-square{aspect-ratio:1/1;width:min(100%,68vh);width:min(100%,68dvh);margin:0 auto}
-      .rv-igplayer.rv-fit-tall,.rv-igplayer.rv-fit-portrait,.rv-igplayer.rv-fit-square{min-height:480px}
-      .rv-igplayer.rv-fit-wide{min-height:340px}
+      /* in the 3-across frame grid an Instagram embed takes
+         its frame's own shape like every other video — no
+         fixed minimum height forcing one frame taller than
+         its line-mates */
+      .rv-feed .rv-igplayer{min-height:0}
       .rv-openlink{display:inline-block;margin-top:10px;color:#ff9900;font-size:13px;text-decoration:none}
       .rv-add{
         position:fixed;top:12px;right:16px;width:60px;height:60px;
@@ -583,14 +595,11 @@
       @media(min-width:600px){
         .rv-feed{padding-top:15px}
       }
-      /* wide screens follow the drawing's side-by-side khade
-         hisse: the video boxes sit in columns next to each
-         other, each still in its own true size — phones keep
-         the single tall stack of boxes from the drawing's
-         main frame */
+      /* the three-frames-in-a-line grid is the layout at EVERY
+         width, phone included — wider screens only get a
+         roomier gap between the frames */
       @media(min-width:900px){
-        .rv-feed{max-width:1120px;display:grid;grid-template-columns:repeat(3,1fr);gap:18px;align-items:start}
-        .rv-card{margin-bottom:0}
+        .rv-feed{gap:18px;padding:16px}
       }
       @media (prefers-reduced-motion: reduce){
         *{transition:none !important;scroll-behavior:auto !important}
