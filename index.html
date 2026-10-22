@@ -509,7 +509,7 @@
       .rv-info{padding:12px}
       .rv-channel{font-size:14px;font-weight:bold;color:#ff9900;margin-bottom:6px}
       .rv-vtitle{font-size:15px;margin:0;overflow-wrap:anywhere}
-      .rv-player{width:100%;aspect-ratio:9/16;max-height:650px;background:#080808;border:0;display:block}
+      .rv-player{width:100%;aspect-ratio:9/16;max-height:650px;min-height:520px;background:#080808;border:0;display:block}
       /* thumbnail facade: a card before it is tapped — just the
          video's poster photo and a play button, so a feed of 100+
          videos costs almost nothing to open and scroll */
@@ -531,7 +531,37 @@
         color:rgba(255,255,255,.88);font-size:12.5px;font-weight:700;letter-spacing:.05em;
         pointer-events:none;text-shadow:0 1px 6px rgba(0,0,0,.85);
       }
-      .rv-igplayer{width:100%;min-height:500px;border:0;display:block;background:#080808}
+      /* the live player sits UNDER its facade poster; the poster
+         lifts only when the video is confirmed playing and returns
+         whenever the reel scrolls away — a card never sits black:
+         worst case it shows its poster photo */
+      .rv-host{position:relative;width:100%;background:#080808;overflow:hidden}
+      .rv-host iframe{position:absolute;inset:0;width:100%;height:100%;min-height:0;border:0}
+      .rv-host .rv-facade{position:absolute;inset:0;width:100%;height:100%;max-height:none;z-index:3}
+      .rv-facade.off{display:none}
+      /* Instagram stage: the embed fills the stage; a transparent
+         shield catches the first tap so only one reel is current */
+      .rv-igstage{position:relative;width:100%;aspect-ratio:9/16;max-height:650px;min-height:560px;background:#080808;overflow:hidden}
+      .rv-igstage .rv-igplayer{width:100%;height:100%}
+      .rv-shield{
+        position:absolute;inset:0;z-index:3;width:100%;height:100%;
+        background:transparent;border:0;padding:0;cursor:pointer;
+        -webkit-tap-highlight-color:transparent;
+      }
+      .rv-shield .rv-play{
+        position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+        width:64px;height:64px;border-radius:50%;
+        background:rgba(0,0,0,.62);border:1.5px solid rgba(255,255,255,.85);
+        display:grid;place-items:center;color:#fff;pointer-events:none;
+      }
+      .rv-shield .rv-play svg{margin-left:4px}
+      .rv-shield .rv-tap{
+        position:absolute;left:0;right:0;bottom:12px;text-align:center;
+        color:rgba(255,255,255,.88);font-size:12.5px;font-weight:700;letter-spacing:.05em;
+        pointer-events:none;text-shadow:0 1px 6px rgba(0,0,0,.85);
+      }
+      .rv-shield.off{display:none}
+      .rv-igplayer{width:100%;min-height:560px;border:0;display:block;background:#080808}
       .rv-openlink{display:inline-block;margin-top:10px;color:#ff9900;font-size:13px;text-decoration:none}
       .rv-add{
         position:fixed;top:12px;right:16px;width:45px;height:45px;
@@ -678,13 +708,17 @@
       <main class="rv-feed" id="rvFeed">
         <article class="rv-card" id="rvDemoCard">
           <button class="rv-del" id="rvDemoDel" type="button" aria-label="Remove demo video">✕</button>
+          <div class="rv-host" id="rvDemoStage" data-type="youtube" data-want-play="no" data-ended="no"
+            data-vid="ScMzIvxBSi4"
+            data-src-plain="https://www.youtube.com/embed/ScMzIvxBSi4?playsinline=1&enablejsapi=1"
+            style="aspect-ratio:9/16;max-height:650px;min-height:520px">
           <button class="rv-facade" id="rvDemoFacade" type="button"
-            data-src="https://www.youtube.com/embed/ScMzIvxBSi4?playsinline=1&enablejsapi=1&autoplay=1&mute=0"
             aria-label="Play demo video">
             <img src="data:image/jpeg;base64,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" alt="" loading="lazy" />
             <span class="rv-play"><svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></span>
             <span class="rv-tap">Tap to play</span>
           </button>
+          </div>
           <div class="rv-info">
             <div class="rv-channel">Demo Channel</div>
             <p class="rv-vtitle">YouTube video example</p>
@@ -1364,92 +1398,124 @@
           }), "https://www.youtube.com");
         }catch(e){}
       }
-      function rvPauseVideo(iframe){
-        if (iframe.dataset.type === "youtube") rvYoutubeCommand(iframe, "pauseVideo");
-        /* Instagram has no reliable public playback-control API */
-      }
-      function rvPlayVideo(iframe){
-        if (iframe.dataset.type === "youtube"){
-          /* sound on — reels are never muted by default — then play */
-          rvYoutubeCommand(iframe, "unMute");
-          rvYoutubeCommand(iframe, "playVideo");
-        }
-        /* Instagram playback is controlled by Instagram itself */
-      }
+      /* playback control lives with the player registry further
+         down (rvPausePlayer / rvDrivePlayer), which drives the
+         real YouTube API players and verifies their state */
 
-      /* Browsers only allow sound-on playback after the visitor has
-         interacted with the page. The first tap anywhere inside the
-         reels view unlocks it: from then on, a reel that scrolls
-         into view starts on its own, with sound, where the browser
-         permits. */
+      /* Playback starts on its own, as automatically as the
+         browser allows — with NO tap at all wherever Chrome's
+         autoplay policy permits sound (a returning visitor, or one
+         whose media engagement qualifies). Where the policy asks
+         for one interaction first, the reel starts MUTED the
+         moment it is on screen — it is never left frozen — and the
+         visitor's very first tap or touch anywhere on the page
+         turns the sound on for the reel already playing; that tap
+         is never spent twice. A reel confirmed playing WITH sound
+         also unlocks the rest: later reels are driven sound-first. */
       var rvPlaybackUnlocked = false;
-      function rvUnlockPlayback(){ rvPlaybackUnlocked = true; }
-      rvView.addEventListener("pointerdown", rvUnlockPlayback, true);
-      rvView.addEventListener("click", rvUnlockPlayback, true);
-
-      /* A player announces "onReady" once it has finished booting
-         (after the "listening" registration in rvMakeIframe). If that
-         reel is the one that should be playing, start it then —
-         this is what makes ONE tap on a facade play with sound even
-         in browsers that ignore the autoplay URL parameter, where
-         an early playVideo command would otherwise be dropped and
-         the visitor would have to tap the player a second time. */
-      window.addEventListener("message", function(e){
-        if (e.origin !== "https://www.youtube.com") return;
-        var data = null;
-        try{ data = JSON.parse(e.data); }catch(err){ return; }
-        if (!data || data.event !== "onReady") return;
-        rvFeed.querySelectorAll("iframe").forEach(function(f){
-          if (f.contentWindow === e.source &&
-              f.dataset.wantPlay === "yes" && rvPlaybackUnlocked){
-            rvPlayVideo(f);
-          }
-        });
+      function rvUnlockPlayback(){
+        if (rvPlaybackUnlocked) return;
+        rvPlaybackUnlocked = true;
+        if (rvCurrentStage) rvDrivePlayer(rvCurrentStage);
+      }
+      ["pointerdown","keydown","touchstart"].forEach(function(evt){
+        document.addEventListener(evt, rvUnlockPlayback, { capture:true, passive:true });
       });
+
+      /* A reel is "in view" while at least 60% of it is on screen —
+         computed from plain geometry, NOT via IntersectionObserver:
+         inside this fixed, internally scrolling view, observer
+         delivery proved unreliable (the black-screen bug: entries
+         for reels already on screen sometimes never arrived, so
+         nothing ever played). Geometry on the view's own scroll
+         events is deterministic. */
+      function rvInView(el){
+        if (!el || !el.isConnected || !rvView.classList.contains("open")) return false;
+        var r = el.getBoundingClientRect();
+        if (r.height <= 0 || r.width <= 0) return false;
+        var visH = Math.min(r.bottom, window.innerHeight) - Math.max(r.top, 0);
+        var visW = Math.min(r.right, window.innerWidth) - Math.max(r.left, 0);
+        return visH > 0 && visW > 0 &&
+          (visH / r.height) >= 0.60 && (visW / r.width) >= 0.50;
+      }
+
+      /* Pause everything the moment the tab/app is backgrounded —
+         a reel the visitor can no longer see must not keep playing */
+      document.addEventListener("visibilitychange", function(){
+        if (document.hidden) rvPauseAllVideos();
+      });
+
       function rvPauseAllVideos(){
-        rvFeed.querySelectorAll("iframe").forEach(rvPauseVideo);
+        rvStages.forEach(rvPausePlayer);
+        if (rvCurrentStage && rvStages.indexOf(rvCurrentStage) === -1){
+          rvPausePlayer(rvCurrentStage);
+        }
       }
 
-      /* Automatically play the most visible YouTube video in the feed */
-      var rvVideoObserver = new IntersectionObserver(function(entries){
-        entries.forEach(function(entry){
-          var iframe = entry.target;
-          if (entry.isIntersecting && entry.intersectionRatio >= 0.60){
-            rvFeed.querySelectorAll("iframe").forEach(function(other){
-              if (other !== iframe){ other.dataset.wantPlay = "no"; rvPauseVideo(other); }
-            });
-            iframe.dataset.wantPlay = "yes";
-            /* auto-start only once a tap somewhere in this view has
-               unlocked sound-on playback */
-            if (rvPlaybackUnlocked) rvPlayVideo(iframe);
+      /* ----- automatic playback -----
+         Exactly one reel is "current" — the first one (in feed
+         order) that is in view. It is driven to play; every other
+         player is paused and re-covered by its poster, so the feed
+         is never a row of black boxes and at most one video is
+         ever audible. The scan runs when the view opens, on scroll
+         (rAF-throttled), on resize, and every 700ms as a backstop
+         that also retries a drive the browser stalled. */
+      var rvScanQueued = false;
+      function rvScan(){
+        rvScanQueued = false;
+        if (!rvView.classList.contains("open")) return;
+        var current = null;
+        for (var i = 0; i < rvStages.length; i++){
+          if (rvInView(rvStages[i])){ current = rvStages[i]; break; }
+        }
+        if (current !== rvCurrentStage){
+          var prev = rvCurrentStage;
+          rvCurrentStage = current;
+          if (prev) rvPausePlayer(prev);
+        }
+        if (current){
+          if (rvApiFailed){
+            /* no YouTube API (blocked/offline): reveal the plain
+               embed for the on-screen reel — its own play button
+               is one tap, and the poster returns on scroll-away */
+            var bf = rvBuildFallback(current);
+            if (bf){
+              var bfac = rvFacadeOf(current);
+              if (bfac) bfac.classList.add("off");
+            }
           } else {
-            iframe.dataset.wantPlay = "no";
-            rvPauseVideo(iframe);
+            rvDrivePlayer(current);
           }
-        });
-      }, { threshold:[0, 0.60, 1] });
-
-      function rvObserveAllVideos(){
-        rvFeed.querySelectorAll("iframe").forEach(function(iframe){
-          if (iframe.dataset.observed === "yes") return;
-          iframe.dataset.observed = "yes";
-          rvVideoObserver.observe(iframe);
-        });
+        }
       }
+      function rvRequestScan(){
+        if (rvScanQueued) return;
+        rvScanQueued = true;
+        requestAnimationFrame(rvScan);
+      }
+      rvView.addEventListener("scroll", rvRequestScan, { passive:true });
+      window.addEventListener("resize", rvRequestScan);
+      setInterval(function(){
+        if (!rvView.classList.contains("open")) return;
+        rvMountPending();
+        if (!document.hidden) rvScan();
+      }, 700);
 
       function rvOpenReels(){
-        /* every card in the feed is a light thumbnail facade — no
-           video loads (or plays) until its card is tapped */
+        /* every card keeps its poster over a ready player — the
+           first reel on screen starts on its own (see rvScan) */
         rvView.classList.add("open");
         rvView.setAttribute("aria-hidden", "false");
         document.body.style.overflow = "hidden";
         rvView.scrollTop = 0;
-        rvObserveAllVideos();
+        rvCurrentStage = null;
+        rvScan();
         document.getElementById("rvBack").focus();
       }
       function rvCloseReels(){
         rvCloseUpload();
         rvPauseAllVideos();
+        rvCurrentStage = null;
         rvView.classList.remove("open");
         rvView.setAttribute("aria-hidden", "true");
         document.body.style.overflow = "";
@@ -1487,11 +1553,11 @@
         if (rvPlatform.value === "instagram"){
           rvUrlLabel.textContent = "Instagram Reel / Post Link";
           rvVideoUrl.placeholder = "https://www.instagram.com/reel/SHORTCODE/";
-          rvPlatformNote.textContent = "Public Instagram Reel/Post होना चाहिए। Instagram autoplay की गारंटी नहीं देता।";
+          rvPlatformNote.textContent = "Public Instagram Reel/Post होना चाहिए। Instagram embeds अपने आप नहीं चलते — reel पर tap करना होगा।";
         } else {
           rvUrlLabel.textContent = "YouTube Video Link";
           rvVideoUrl.placeholder = "https://www.youtube.com/watch?v=...";
-          rvPlatformNote.textContent = "YouTube वीडियो अपने आप चलाने के लिए autoplay का प्रयास होगा।";
+          rvPlatformNote.textContent = "YouTube वीडियो screen पर आते ही अपने आप चलने लगेगा।";
         }
       });
 
@@ -1534,49 +1600,306 @@
         rvMessage.style.display = "block";
       }
 
-      /* one video player element, built on demand — a card only
-         pays the cost of a real player once it is tapped */
-      function rvMakeIframe(src, type, title){
-        var iframe = document.createElement("iframe");
-        iframe.src = src;
-        iframe.title = title || (type === "instagram" ? "Instagram post" : "YouTube video");
-        iframe.setAttribute("allowfullscreen", "");
-        iframe.referrerPolicy = "strict-origin-when-cross-origin";
-        iframe.dataset.type = type;
-        if (type === "youtube"){
-          iframe.className = "rv-player";
-          iframe.setAttribute("allow",
-            "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share");
-          iframe.addEventListener("load", function(){
-            /* register for player events so the onReady handler can
-               start this reel the moment the player is truly ready */
-            try{
-              iframe.contentWindow.postMessage(JSON.stringify({ event:"listening" }),
-                "https://www.youtube.com");
-            }catch(e){}
-            if (iframe.dataset.wantPlay === "yes" && rvPlaybackUnlocked) rvPlayVideo(iframe);
-          });
+      /* ----- the player registry -----
+         YouTube players are built through the real IFrame API, so
+         the page KNOWS each player's state (playing / paused /
+         ended / current time) instead of guessing. The old
+         postMessage version could not do that: commands sent
+         before a player was listening vanished, nothing verified
+         or retried, and reels sat black. Each card is a STAGE —
+         the aspect box — with the player mounted inside it from
+         the start and the poster facade on top until the video is
+         CONFIRMED playing. */
+      var rvStages = [];        /* stage elements, in feed order */
+      var rvCurrentStage = null;
+      var rvApiReady = false;
+      var rvApiFailed = false;
+      var rvPendingMounts = []; /* {host, vid, title} awaiting the API */
+
+      function rvFacadeOf(stage){ return stage ? stage.querySelector(".rv-facade") : null; }
+      function rvFacadeTapText(stage, text){
+        var tap = stage ? stage.querySelector(".rv-facade .rv-tap") : null;
+        if (tap) tap.textContent = text;
+      }
+      function rvCoverPlayer(iframe){
+        var stage = iframe.closest(".rv-host");
+        var facade = rvFacadeOf(stage);
+        if (facade) facade.classList.remove("off");
+      }
+      function rvUncoverPlayer(iframe){
+        var stage = iframe.closest(".rv-host");
+        var facade = rvFacadeOf(stage);
+        if (facade) facade.classList.add("off");
+      }
+
+      /* Make a stage the current one: the previous reel is paused
+         and re-covered with its poster. */
+      function rvSetCurrent(stage){
+        if (rvCurrentStage && rvCurrentStage !== stage) rvPausePlayer(rvCurrentStage);
+        rvCurrentStage = stage;
+      }
+
+      function rvPausePlayer(player){
+        if (!player) return;
+        player.dataset.wantPlay = "no";
+        if (player.dataset.type !== "youtube") return;
+        var iframe = player.classList.contains("rv-host")
+          ? player.querySelector("iframe") : player;
+        if (!iframe) return;
+        iframe.dataset.wantPlay = "no";
+        var w = iframe._rvWrapper;
+        if (w && w.pauseVideo){
+          try{ w.pauseVideo(); }catch(e){}
         } else {
-          iframe.className = "rv-igplayer";
-          iframe.setAttribute("scrolling", "no");
-          iframe.style.overflow = "hidden";
+          /* API wrapper not bound yet (or plain fallback embed) */
+          rvYoutubeCommand(iframe, "pauseVideo");
         }
-        return iframe;
+        rvCoverPlayer(iframe);
+        /* Instagram exposes no playback control at all */
+      }
+      function rvPlayPlayer(player){ rvDrivePlayer(player); }
+
+      /* Drive one player toward playing-with-sound as far as the
+         browser allows, verifying as it goes:
+         - confirmed playing and audible → done (and the site is
+           unlocked for every later reel);
+         - playing but muted (the browser made YouTube start it
+           silently) → ask for sound once playback is unlocked;
+         - not playing → playVideo(); if the browser still refuses
+           a sound-on start, fall back to a MUTED start — motion
+           now, sound from the visitor's first interaction —
+           rather than leaving a black, frozen player. */
+      function rvDrivePlayer(player){
+        if (!player || player.dataset.type !== "youtube") return;
+        var stage = player.classList.contains("rv-host")
+          ? player : player.closest(".rv-host");
+        if (stage && stage.dataset.ended === "yes") return;
+        player.dataset.wantPlay = "yes";
+        var iframe = player.classList.contains("rv-host")
+          ? player.querySelector("iframe") : player;
+        if (!iframe) return; /* not mounted yet — onReady re-drives */
+        iframe.dataset.wantPlay = "yes";
+        var w = iframe._rvWrapper;
+        if (!w){
+          /* no API wrapper (fallback embed): its src carries no
+             autoplay, so a postMessage play is a best effort and
+             the visitor still has the player's own play button */
+          rvYoutubeCommand(iframe, "playVideo");
+          return;
+        }
+        try{
+          var state = w.getPlayerState();
+          if (state === 1 || state === 3){
+            if (w.isMuted && w.isMuted()){
+              if (rvPlaybackUnlocked){ w.unMute(); rvNoteAudible(iframe); }
+            } else {
+              rvNoteAudible(iframe);
+            }
+            return;
+          }
+          if (rvPlaybackUnlocked){
+            w.unMute();
+            w.playVideo();
+            if (!iframe.dataset.driveStamp){
+              var stamp = String(Date.now());
+              iframe.dataset.driveStamp = stamp;
+              setTimeout(function(){
+                if (iframe.dataset.driveStamp === stamp) delete iframe.dataset.driveStamp;
+                if (iframe.dataset.wantPlay !== "yes") return;
+                try{
+                  var s2 = w.getPlayerState();
+                  if (s2 !== 1 && s2 !== 3){ w.mute(); w.playVideo(); }
+                }catch(e){}
+              }, 1200);
+            }
+          } else {
+            w.mute();
+            w.playVideo();
+          }
+        }catch(e){}
+      }
+
+      /* A reel is confirmed playing WITH sound — remember it:
+         from here on, later reels are driven sound-first. (Where
+         the browser permits zero-tap sound, this fires on the very
+         first reel with no tap at all.) */
+      function rvNoteAudible(iframe){
+        try{
+          var w = iframe._rvWrapper;
+          if (w && w.isMuted && !w.isMuted()) rvPlaybackUnlocked = true;
+        }catch(e){}
+      }
+
+      /* Build a card's stage. YouTube gets an API host (the player
+         mounts when the API lands); Instagram keeps its plain
+         embed iframe — Instagram offers no API and its embeds
+         never autoplay, a limit of Instagram itself, so those
+         cards keep an honest tap-to-play shield (rvAddVideoCard). */
+      function rvMakeIframe(vid, src, type, title){
+        if (type === "instagram"){
+          var ig = document.createElement("iframe");
+          ig.src = src;
+          ig.title = title || "Instagram post";
+          ig.setAttribute("allowfullscreen", "");
+          ig.setAttribute("scrolling", "no");
+          ig.style.overflow = "hidden";
+          ig.referrerPolicy = "strict-origin-when-cross-origin";
+          ig.className = "rv-igplayer";
+          ig.dataset.type = "instagram";
+          return ig;
+        }
+        var host = document.createElement("div");
+        host.className = "rv-host";
+        host.style.cssText = "aspect-ratio:9/16;max-height:650px;min-height:520px";
+        host.dataset.type = "youtube";
+        host.dataset.wantPlay = "no";
+        host.dataset.ended = "no";
+        host.dataset.vid = vid || "";
+        host.dataset.srcPlain = src || "";
+        if (vid){
+          rvPendingMounts.push({ host:host, vid:vid, title:title });
+          rvMountPending();
+        }
+        return host;
+      }
+
+      function rvMountPending(){
+        if (!rvApiReady || typeof YT === "undefined" || !YT.Player) return;
+        var keep = [];
+        while (rvPendingMounts.length){
+          var job = rvPendingMounts.shift();
+          if (!document.contains(job.host)) continue;   /* card deleted */
+          if (!job.host.isConnected){ keep.push(job); continue; }
+          rvMountPlayer(job.host, job.vid, job.title);
+        }
+        for (var i = 0; i < keep.length; i++) rvPendingMounts.push(keep[i]);
+      }
+
+      function rvMountPlayer(host, vid, title){
+        var holder = document.createElement("div");
+        host.appendChild(holder);
+        try{
+          new YT.Player(holder, {
+            width: "100%",
+            height: "100%",
+            videoId: vid,
+            playerVars: { playsinline:1, rel:0, controls:1, autoplay:0, mute:1 },
+            events: {
+              onReady: function(ev){
+                var iframe = ev.target.getIframe();
+                iframe.classList.add("rv-player");
+                iframe.dataset.type = "youtube";
+                iframe._rvWrapper = ev.target;
+                try{ ev.target.mute(); }catch(e){}
+                if (host.dataset.wantPlay === "yes") rvDrivePlayer(host);
+                else rvRequestScan();
+              },
+              onStateChange: function(ev){
+                var iframe = ev.target.getIframe();
+                var stage = iframe.closest(".rv-host");
+                if (ev.data === YT.PlayerState.PLAYING){
+                  if (stage) stage.dataset.ended = "no";
+                  rvUncoverPlayer(iframe);
+                  /* frozen-frame watch: a video that reports
+                     PLAYING but whose clock never advances (the
+                     silent failure behind the black screens) is
+                     paused again and its poster returns — the card
+                     is never left sitting black */
+                  var watch = { last:-1, stuck:0 };
+                  var iv = setInterval(function(){
+                    if (!iframe.isConnected || iframe.dataset.wantPlay !== "yes"){
+                      clearInterval(iv);
+                      return;
+                    }
+                    var s = -2;
+                    try{ s = ev.target.getPlayerState(); }catch(e){}
+                    if (s !== YT.PlayerState.PLAYING){ clearInterval(iv); return; }
+                    var t = -1;
+                    try{ t = ev.target.getCurrentTime(); }catch(e){}
+                    if (t === watch.last) watch.stuck++;
+                    else { watch.stuck = 0; watch.last = t; }
+                    if (watch.stuck >= 4){
+                      clearInterval(iv);
+                      iframe.dataset.wantPlay = "no";
+                      try{ ev.target.pauseVideo(); }catch(e){}
+                      rvCoverPlayer(iframe);
+                    }
+                  }, 600);
+                } else if (ev.data === YT.PlayerState.ENDED){
+                  iframe.dataset.wantPlay = "no";
+                  if (stage){
+                    stage.dataset.ended = "yes";
+                    rvFacadeTapText(stage, "Tap to replay");
+                  }
+                  rvCoverPlayer(iframe);
+                } else if (ev.data === YT.PlayerState.PAUSED){
+                  /* paused while it should be playing and is on
+                     screen (an autoplay refusal that arrived as a
+                     state, a stall) — drive it again */
+                  if (iframe.dataset.wantPlay === "yes" && rvInView(iframe)){
+                    rvDrivePlayer(iframe);
+                  }
+                }
+              },
+              onError: function(ev){
+                /* unplayable video (removed / private / restricted):
+                   back to the poster with an honest note — the card
+                   never sits black and never blocks the feed */
+                var iframe = ev.target.getIframe();
+                var stage = iframe.closest(".rv-host");
+                iframe.dataset.wantPlay = "no";
+                if (stage){
+                  stage.dataset.ended = "yes";
+                  rvFacadeTapText(stage, "Video unavailable");
+                }
+                rvCoverPlayer(iframe);
+              }
+            }
+          });
+        }catch(e){
+          /* API object misbehaved for this one card — plain embed */
+          rvBuildFallback(host);
+        }
+      }
+
+      /* No-API fallback player: a plain embed iframe (used only
+         when the YouTube API cannot load at all — blocked domain,
+         no network). It has its own play button inside. */
+      function rvBuildFallback(stage){
+        if (!stage || !stage.classList.contains("rv-host")) return null;
+        var existing = stage.querySelector("iframe");
+        if (existing) return existing;
+        var src = stage.dataset.srcPlain;
+        if (!src) return null;
+        var f = document.createElement("iframe");
+        f.src = src;
+        f.className = "rv-player";
+        f.title = "YouTube video";
+        f.setAttribute("allowfullscreen", "");
+        f.setAttribute("allow",
+          "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share");
+        f.referrerPolicy = "strict-origin-when-cross-origin";
+        f.dataset.type = "youtube";
+        f.dataset.wantPlay = "no";
+        stage.appendChild(f);
+        return f;
       }
 
       function rvAddVideoCard(src, type, channel, title, originalUrl, record, atEnd){
         var card = document.createElement("article");
         card.className = "rv-card";
 
-        /* YouTube cards start as a thumbnail facade — just the
-           video's own poster photo and a play button — so a feed of
-           100+ videos stays light and nothing stutters; the real
-           player swaps in only when the card is tapped. Instagram
-           embeds have no poster photo to show, so they keep their
-           lazy-loading iframe. */
-        var liveIframe = null;
+        /* The player is mounted inside its stage from the start,
+           UNDER the poster facade — so a reel that scrolls into
+           view can start on its own with no tap, and the poster
+           (never a black box) stays on top until the video is
+           confirmed playing. The facade is still the tap target:
+           one tap makes this the current reel and drives it. */
+        var livePlayer = null;
         if (type === "youtube"){
           var vid = rvGetYouTubeId(originalUrl) || rvGetYouTubeId(src);
+          livePlayer = rvMakeIframe(vid, src, type, title);
+          card.appendChild(livePlayer);
           var facade = document.createElement("button");
           facade.type = "button";
           facade.className = "rv-facade";
@@ -1586,21 +1909,38 @@
             '<span class="rv-play"><svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></span>' +
             '<span class="rv-tap">Tap to play</span>';
           facade.addEventListener("click", function(){
-            /* ONE tap: the embed loads with autoplay=1 and sound on
-               (mute=0 in its src), and wantPlay tells the onReady /
-               load handlers to start it the moment it can play */
-            rvFeed.querySelectorAll("iframe").forEach(function(o){ o.dataset.wantPlay = "no"; });
-            rvPauseAllVideos();
-            liveIframe = rvMakeIframe(src, type, title);
-            liveIframe.dataset.wantPlay = "yes";
-            facade.replaceWith(liveIframe);
-            rvObserveAllVideos();
+            livePlayer.dataset.ended = "no";
+            rvFacadeTapText(livePlayer, "Tap to play");
+            rvSetCurrent(livePlayer);
+            if (rvApiFailed){
+              if (rvBuildFallback(livePlayer)) facade.classList.add("off");
+              return;
+            }
+            rvDrivePlayer(livePlayer);
           });
-          card.appendChild(facade);
+          livePlayer.appendChild(facade);
         } else {
-          liveIframe = rvMakeIframe(src, type, title);
-          liveIframe.setAttribute("loading", "lazy");
-          card.appendChild(liveIframe);
+          /* Instagram gives no poster and no scriptable player:
+             a click-catcher shield over the lazy embed keeps the
+             one-reel-at-a-time rule — the first tap makes it the
+             current reel, later taps pass through to Instagram */
+          livePlayer = document.createElement("div");
+          livePlayer.className = "rv-igstage";
+          var igFrame = rvMakeIframe(null, src, type, title);
+          igFrame.setAttribute("loading", "lazy");
+          var igShield = document.createElement("button");
+          igShield.type = "button";
+          igShield.className = "rv-shield";
+          igShield.setAttribute("aria-label", "Play video: " + (title || "Video"));
+          igShield.innerHTML =
+            '<span class="rv-play"><svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></span>' +
+            '<span class="rv-tap">Tap to play</span>';
+          igShield.addEventListener("click", function(){
+            rvSetCurrent(livePlayer);
+            igShield.classList.add("off");
+          });
+          livePlayer.append(igFrame, igShield);
+          card.appendChild(livePlayer);
         }
 
         var info = document.createElement("div");
@@ -1632,7 +1972,12 @@
         del.setAttribute("aria-label", "Remove video");
         del.textContent = "✕";
         del.addEventListener("click", function(){
-          if (liveIframe) rvPauseVideo(liveIframe);
+          if (livePlayer){
+            rvPausePlayer(livePlayer);
+            var si = rvStages.indexOf(livePlayer);
+            if (si !== -1) rvStages.splice(si, 1);
+            if (rvCurrentStage === livePlayer) rvCurrentStage = null;
+          }
           card.remove();
           if (record){
             var i = rvSavedVideos.indexOf(record);
@@ -1655,7 +2000,10 @@
           rvFeed.prepend(card);
         }
 
-        rvObserveAllVideos();
+        /* register the stage in feed order for the autoplay scan */
+        if (atEnd) rvStages.push(livePlayer);
+        else rvStages.unshift(livePlayer);
+        rvMountPending();
       }
 
       rvForm.addEventListener("submit", function(event){
@@ -1673,7 +2021,7 @@
             return;
           }
           var src = "https://www.youtube.com/embed/" + id +
-            "?playsinline=1&enablejsapi=1&autoplay=1&mute=0";
+            "?playsinline=1&enablejsapi=1";
           var ytRec = { type:"youtube", src:src, url:url, channel:channel, title:title };
           rvSavedVideos.push(ytRec);
           rvPersist();
@@ -1948,7 +2296,7 @@
       ];
       DANCE_SEED.forEach(function(v){
         var seedSrc = "https://www.youtube.com/embed/" + v.id +
-          "?playsinline=1&enablejsapi=1&autoplay=1&mute=0";
+          "?playsinline=1&enablejsapi=1";
         var seedUrl = "https://www.youtube.com/shorts/" + v.id;
         rvAddVideoCard(seedSrc, "youtube", v.channel, v.title, seedUrl, null, true);
       });
@@ -1965,17 +2313,23 @@
         }
       });
 
-      /* the demo card is a thumbnail facade like the rest: its
-         player is built only when the card is tapped */
+      /* the demo card is a stage like the rest: its API player
+         mounts under the poster and joins the autoplay scan */
       var rvDemoFacade = document.getElementById("rvDemoFacade");
-      if (rvDemoFacade){
+      var rvDemoStage = document.getElementById("rvDemoStage");
+      if (rvDemoFacade && rvDemoStage){
+        rvPendingMounts.push({ host:rvDemoStage, vid:"ScMzIvxBSi4", title:"YouTube video" });
+        rvStages.push(rvDemoStage);
+        rvMountPending();
         rvDemoFacade.addEventListener("click", function(){
-          rvFeed.querySelectorAll("iframe").forEach(function(o){ o.dataset.wantPlay = "no"; });
-          rvPauseAllVideos();
-          var demoIframe = rvMakeIframe(rvDemoFacade.getAttribute("data-src"), "youtube", "YouTube video");
-          demoIframe.dataset.wantPlay = "yes";
-          rvDemoFacade.replaceWith(demoIframe);
-          rvObserveAllVideos();
+          rvDemoStage.dataset.ended = "no";
+          rvFacadeTapText(rvDemoStage, "Tap to play");
+          rvSetCurrent(rvDemoStage);
+          if (rvApiFailed){
+            if (rvBuildFallback(rvDemoStage)) rvDemoFacade.classList.add("off");
+            return;
+          }
+          rvDrivePlayer(rvDemoStage);
         });
       }
 
@@ -2043,6 +2397,35 @@
       rvAddBtn.addEventListener("pointerup", rvEndDrag);
       rvAddBtn.addEventListener("pointercancel", rvEndDrag);
       rvAddBtn.addEventListener("lostpointercapture", rvEndDrag);
+
+      /* ----- YouTube IFrame API -----
+         Loaded once, after the feed is built; rvMountPending then
+         mounts every waiting player. If the API cannot load at all
+         (blocked domain, no network), cards fall back to plain
+         embeds (rvBuildFallback) — posters stay honest either way. */
+      var rvApiRequested = false;
+      function rvEnsureFallbacks(){
+        if (rvApiReady || rvApiFailed) return;
+        rvApiFailed = true;
+        rvRequestScan();
+      }
+      function rvLoadYouTubeApi(){
+        if (rvApiRequested) return;
+        rvApiRequested = true;
+        var tag = document.createElement("script");
+        tag.src = "https://www.youtube.com/iframe_api";
+        tag.onerror = function(){ rvEnsureFallbacks(); };
+        document.head.appendChild(tag);
+        setTimeout(function(){
+          if (!rvApiReady) rvEnsureFallbacks();
+        }, 6000);
+      }
+      window.onYouTubeIframeAPIReady = function(){
+        rvApiReady = true;
+        rvMountPending();
+        rvRequestScan();
+      };
+      rvLoadYouTubeApi();
 
       /* ----- login (top-right profile button) -----
          This page has no server, so the login ID is kept in THIS
