@@ -523,8 +523,9 @@
         position:fixed;top:12px;right:16px;width:60px;height:60px;
         border:0;background:none;padding:0;
         cursor:grab;touch-action:none;z-index:75;
-        -webkit-tap-highlight-color:transparent;
+        -webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;
         user-select:none;-webkit-user-select:none;
+        transition:transform .15s ease;
       }
       /* the button IS the user's own red clapperboard logo by
          itself — no orange circle, no ring, no round button behind
@@ -534,7 +535,10 @@
         width:100%;height:100%;
         filter:drop-shadow(0 8px 18px rgba(0,0,0,.35));
       }
-      .rv-add.dragging{cursor:grabbing;opacity:.85}
+      /* hold for 1s grabs the logo: it grows a touch and lifts
+         with a deeper shadow so the user can feel it is held */
+      .rv-add.dragging{cursor:grabbing;opacity:.92;transform:scale(1.12)}
+      .rv-add.dragging img{filter:drop-shadow(0 16px 28px rgba(0,0,0,.6))}
       .rv-modal{
         display:none;position:fixed;inset:0;z-index:90;background:rgba(0,0,0,.8);
         align-items:center;justify-content:center;padding:16px;
@@ -1613,7 +1617,37 @@
         });
       }
 
-      /* Hold + for one second to drag; tap to upload */
+      /* Hold the logo for one second to drag it anywhere on the
+         screen; a quick tap still opens the upload popup. The
+         dropped spot is saved in THIS browser (localStorage),
+         the same way the reels videos are kept, so the logo
+         stays where it was left on later visits. If storage is
+         unavailable, dragging still works for the session. */
+      var RV_POS_KEY = "fgReelsLogoPosV1";
+      function rvSaveLogoPos(){
+        var rect = rvAddBtn.getBoundingClientRect();
+        try{
+          window.localStorage.setItem(RV_POS_KEY, JSON.stringify({ left: rect.left, top: rect.top }));
+        }catch(e){}
+      }
+      function rvRestoreLogoPos(){
+        var p = null;
+        try{
+          var raw = window.localStorage.getItem(RV_POS_KEY);
+          if (raw) p = JSON.parse(raw);
+        }catch(e){ p = null; }
+        if (!p || typeof p.left !== "number" || typeof p.top !== "number") return;
+        /* the button is a fixed 60px square; keep the restored
+           spot fully on screen even if the window size changed */
+        var x = Math.max(0, Math.min(window.innerWidth - 60, p.left));
+        var y = Math.max(0, Math.min(window.innerHeight - 60, p.top));
+        rvAddBtn.style.left = x + "px";
+        rvAddBtn.style.top = y + "px";
+        rvAddBtn.style.right = "auto";
+      }
+      rvRestoreLogoPos();
+      rvAddBtn.addEventListener("contextmenu", function(e){ e.preventDefault(); });
+
       var rvHoldTimer = null;
       var rvIsDragging = false;
       var rvHoldTriggered = false;
@@ -1661,6 +1695,7 @@
         if (rvIsDragging){
           rvAddBtn.classList.remove("dragging");
           rvIsDragging = false;
+          rvSaveLogoPos();
         }
       }
       rvAddBtn.addEventListener("pointerup", rvEndDrag);
