@@ -1366,6 +1366,9 @@
         rvView.setAttribute("aria-hidden", "false");
         document.body.style.overflow = "hidden";
         rvView.scrollTop = 0;
+        /* the logo greets the visitor at the exact spot it was
+           last dropped, never back at the default corner */
+        rvRestoreLogoPos();
         document.getElementById("rvBack").focus();
       }
       function rvCloseReels(){
@@ -1534,6 +1537,12 @@
               rvPersist();
             }
           }
+          /* deleting a card must not disturb anything else: the
+             remaining cards keep their order (only this card is
+             removed, nothing re-renders), and the draggable logo
+             is put back at its saved spot so it never jumps to
+             the default corner */
+          rvRestoreLogoPos();
           rvShowSaved("Video hata diya");
         });
         card.appendChild(del);
@@ -1547,6 +1556,9 @@
         } else {
           rvFeed.prepend(card);
         }
+        /* every feed render re-applies the logo's saved spot, so
+           adding or restoring cards can never reset it either */
+        rvRestoreLogoPos();
       }
 
       rvForm.addEventListener("submit", function(event){
@@ -1596,10 +1608,13 @@
       /* Restore the saved videos on load, oldest first through the
          same prepend the form uses — so the feed shows them
          newest-first, exactly as they were added, above the demo
-         card. The embeds are lazy, so nothing heavy loads while
-         the shop is being browsed. */
+         card. The stored list is walked in its own order, never
+         reversed: the cards come back in exactly the order they
+         had, so a deletion never reshuffles the ones that remain.
+         The embeds are lazy, so nothing heavy loads while the
+         shop is being browsed. */
       rvLoadSaved();
-      rvSavedVideos.slice().reverse().forEach(function(rec){
+      rvSavedVideos.slice().forEach(function(rec){
         if (rec && rec.src && (rec.type === "youtube" || rec.type === "instagram")){
           rvAddVideoCard(rec.src, rec.type, rec.channel || "", rec.title || "", rec.url || "", rec);
         }
@@ -1613,6 +1628,7 @@
         rvDemoDel.addEventListener("click", function(){
           var demoCard = document.getElementById("rvDemoCard");
           if (demoCard) demoCard.remove();
+          rvRestoreLogoPos();
           rvShowSaved("Video hata diya");
         });
       }
