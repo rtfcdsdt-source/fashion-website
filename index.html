@@ -1500,26 +1500,11 @@
           card.appendChild(igFrame);
         }
 
-        var info = document.createElement("div");
-        info.className = "rv-info";
-
-        var ch = document.createElement("div");
-        ch.className = "rv-channel";
-        ch.textContent = channel || (type === "instagram" ? "Instagram Creator" : "YouTube Creator");
-
-        var titleEl = document.createElement("p");
-        titleEl.className = "rv-vtitle";
-        titleEl.textContent = title || "Video";
-
-        var link = document.createElement("a");
-        link.className = "rv-openlink";
-        link.href = originalUrl;
-        link.target = "_blank";
-        link.rel = "noopener noreferrer";
-        link.textContent = type === "instagram" ? "Instagram पर खोलें ↗" : "YouTube पर खोलें ↗";
-
-        info.append(ch, titleEl, link);
-        card.appendChild(info);
+        /* added cards show ONLY the player/thumbnail — no channel
+           line, no title line and no "open on YouTube" link under
+           it, and never placeholder words like "YouTube Creator"
+           or "Video"; tapping the player itself opens the video.
+           The ✕ below still removes the whole card. */
 
         /* ✕ removes the card — and, when it is a saved video, its
            stored entry too, so it stays gone after a refresh */
