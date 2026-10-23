@@ -598,20 +598,16 @@
       .rv-player{width:100%;background:#080808;border:0;display:block}
       .rv-igplayer{width:100%;border:0;display:block;background:#080808}
       /* the lightweight facade every card below the big frame
-         shows instead of a live player: the video's own
+         shows instead of a live player: just the video's own
          thumbnail photo (YouTube) or a plain dark panel
-         (Instagram / other links), with a play badge in the
-         middle. It carries the video's own rv-fit-* shape,
+         (Instagram / other links) — clean, with NO play badge
+         or any other overlay in the middle (owner's call:
+         the big round button sat ugly over the photo). It
+         carries the video's own rv-fit-* shape,
          so the card keeps its exact size — only the heavy
          player is gone, which is what stops the stutter. */
       .rv-facade{position:relative;width:100%;background:#0a0a0a;overflow:hidden;display:block}
       .rv-facade img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
-      .rv-facade-badge{
-        position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
-        width:52px;height:52px;border-radius:50%;pointer-events:none;
-        background:rgba(0,0,0,.62);border:1px solid rgba(255,255,255,.45);color:#fff;
-        display:flex;align-items:center;justify-content:center;font-size:19px;padding-left:3px;
-      }
       /* every video keeps its OWN size: the box takes the
          video's real shape — khada (9:16), chauda (16:9),
          portrait (4:5) ya barabar (1:1) — so a video of any
@@ -884,12 +880,11 @@
              session only. -->
         <article class="rv-card" id="rvDilCard">
           <button class="rv-del" id="rvDilDel" type="button" aria-label="Remove Dil De Mohalle video">✕</button>
-          <!-- the card starts as a lightweight facade (thumbnail
-               + play badge); the script mounts the real player
+          <!-- the card starts as a lightweight facade (just
+               its thumbnail photo, no overlay); the script mounts the real player
                only while this card holds the big top frame -->
           <div class="rv-facade rv-fit-tall">
             <img src="https://i.ytimg.com/vi/CPJMyx5tQTY/hqdefault.jpg" alt="" loading="lazy" />
-            <span class="rv-facade-badge" aria-hidden="true">▶</span>
           </div>
         </article>
         <!-- the ACTION BAR (Like / Views / Comment / Share /
@@ -1646,8 +1641,8 @@
       }
 
       /* ----- one live player, and only in the big frame -----
-         Every card carries a lightweight facade (thumbnail +
-         play badge — see rvMakeFacade further down); the real
+         Every card carries a lightweight facade (just its
+         thumbnail photo — see rvMakeFacade further down); the real
          embed player exists ONLY in the big top frame, which
          is what keeps the feed smooth and the data use low.
          Closing the view (or backgrounding the tab) drops the
@@ -1819,9 +1814,9 @@
          what made the reels stutter and eat data — a dozen
          live players on one page is more than a phone can
          carry. So every card below the big top frame is just
-         a LIGHTWEIGHT FACADE: for a YouTube link its
-         thumbnail photo with a play badge; for an Instagram
-         link a plain dark panel with the same badge (no
+         a LIGHTWEIGHT FACADE: for a YouTube link just its
+         thumbnail photo, clean with no overlay; for an Instagram
+         link a plain dark panel (no
          external image). The real embed iframe is mounted
          ONLY in the big top frame, and only while the view
          is open. Whenever a different video takes the big
@@ -1835,16 +1830,29 @@
         d.className = "rv-facade rv-fit-" + (card._rvFit || "wide");
         if (card._rvType === "youtube" && card._rvYtId){
           var img = document.createElement("img");
-          img.src = "https://i.ytimg.com/vi/" + card._rvYtId + "/hqdefault.jpg";
           img.alt = "";
           img.setAttribute("loading", "lazy");
+          /* a BUILT-IN card shows the video's BIG, clear
+             thumbnail (maxresdefault) instead of the small
+             one; some Shorts have no maxres version, so when
+             the big image fails to load it swaps ONCE to the
+             always-present hqdefault — the listener is
+             attached before the src is set and fires only
+             once, so it can never loop and the card never
+             sits with a broken image. Other cards (Dil,
+             shared, local) keep hqdefault exactly as before. */
+          var rvBuiltinFacade = !!(card._rvRecord && card._rvRecord.builtin);
+          if (rvBuiltinFacade){
+            var rvHqSrc = "https://i.ytimg.com/vi/" + card._rvYtId + "/hqdefault.jpg";
+            img.addEventListener("error", function(){
+              if (img.src !== rvHqSrc) img.src = rvHqSrc;
+            }, { once:true });
+            img.src = "https://i.ytimg.com/vi/" + card._rvYtId + "/maxresdefault.jpg";
+          } else {
+            img.src = "https://i.ytimg.com/vi/" + card._rvYtId + "/hqdefault.jpg";
+          }
           d.appendChild(img);
         }
-        var badge = document.createElement("span");
-        badge.className = "rv-facade-badge";
-        badge.setAttribute("aria-hidden", "true");
-        badge.textContent = "▶";
-        d.appendChild(badge);
         return d;
       }
       /* show the card's facade and drop any live player it
@@ -2174,6 +2182,19 @@
           pref.push(rec.sid);
           rvLsSet(RV_SORDER_KEY, pref);
           rvLsSet(RV_PSHARED_KEY, rec.sid);
+          rvLsSet(RV_PBUILTIN_KEY, null);
+          rvPromotedDil = false;
+        } else if (rec && rec.builtin){
+          /* a BUILT-IN video: its id becomes the last in this
+             phone's own built-in arrangement, and it is
+             remembered as the promoted built-in card — the
+             reload rebuild restores it in the big frame the
+             same way it restores a promoted shared card */
+          var bpref = rvBuiltinOrderPref().filter(function(s){ return s !== rec.ytid; });
+          bpref.push(rec.ytid);
+          rvLsSet(RV_BORDER_KEY, bpref);
+          rvLsSet(RV_PBUILTIN_KEY, rec.ytid);
+          rvLsSet(RV_PSHARED_KEY, null);
           rvPromotedDil = false;
         } else if (rec){
           /* a saved video: its entry becomes the last in the
@@ -2186,11 +2207,13 @@
           }
           rvPromotedDil = false;
           rvLsSet(RV_PSHARED_KEY, null);
+          rvLsSet(RV_PBUILTIN_KEY, null);
         } else if (card === rvDilCardEl){
           /* the baked-in Dil card has no saved entry — the
              small flag remembers its promotion instead */
           rvPromotedDil = true;
           rvLsSet(RV_PSHARED_KEY, null);
+          rvLsSet(RV_PBUILTIN_KEY, null);
         }
         rvSavePromoted();
         rvPersist();
@@ -2241,7 +2264,7 @@
         card.className = "rv-card";
 
         /* A card starts as its LIGHTWEIGHT FACADE — a
-           thumbnail photo with a play badge for YouTube, a
+           thumbnail photo for YouTube, a
            plain dark panel for Instagram — never a live
            player. The real embed is mounted only if and
            while this card holds the big top frame (see
@@ -2263,6 +2286,10 @@
             if (em) card._rvYtId = em[1];
           }
         }
+        /* the record is attached BEFORE the facade is made:
+           rvMakeFacade reads it (a built-in card's facade
+           uses the big maxres thumbnail, others hqdefault) */
+        card._rvRecord = record || null;
         card._rvFacadeEl = rvMakeFacade(card);
         card.appendChild(card._rvFacadeEl);
 
@@ -2279,7 +2306,10 @@
            The ✕ below still removes the whole card. */
 
         /* ✕ removes the card — and, when it is a saved video, its
-           stored entry too, so it stays gone after a refresh */
+           stored entry too, so it stays gone after a refresh.
+           A BUILT-IN card gets NO ✕ at all: the library is
+           permanent, nobody can remove it. */
+        if (!(record && record.builtin)){
         var del = document.createElement("button");
         del.className = "rv-del";
         del.type = "button";
@@ -2315,6 +2345,7 @@
           rvShowSaved("Video hata diya");
         });
         card.appendChild(del);
+        }
 
         /* ROTATION: every new card is the newest, so it takes
            the BIG top frame at its own full size — and the
@@ -2492,13 +2523,92 @@
          "Placeholder Video" demo card is deleted for good and
          never comes back. */
 
+      /* ================= BUILT-IN REELS (sabko dikhegi) =================
+         The site's permanent video library: 114 English
+         dance-song YouTube Shorts the owner approved, baked
+         into this page as data — they are part of the website
+         itself, so EVERY visitor sees them, with no server
+         list and no per-phone storage involved. In the merged
+         feed they sit between Dil De Mohalle (oldest) and the
+         shared reels: Dil → built-ins → shared → this phone's
+         own local reels (newest). They behave exactly like
+         the other global videos — same rotation, same packed
+         columns (all are tall Shorts), same tap-to-promote,
+         same global Like/Views/Comment/Share/Save counts
+         under the action-bar key "builtin-<youtube id>" —
+         with ONE difference: a built-in card carries NO ✕,
+         so nobody can remove the library. Like the shared
+         list, the only per-visitor state is the ARRANGEMENT
+         tap-promotions leave behind, kept on each phone the
+         same way (fgReelsBuiltinOrderV1, and the last
+         tap-promoted built-in in fgReelsPromotedBuiltinV1). */
+      var RV_BUILTIN_IDS = [
+        "gR9cJfVipkU", "ugHQqJY_i9M", "PvzTQZAOj-E", "PKgNrPQDf1I", "Sbr_DzGHLvE", "8L-r6WlDbNA",
+        "xMmYwTXrW8g", "GcVK_a4wX_A", "W59VTXIYzY0", "9JzeYt2L2Us", "CZp3AkNaTY0", "MHRG-HT-5ZU",
+        "XKbCYG1kuTU", "zlrGJzr_3RU", "FDh951FXb1E", "Va8cMq7I0OY", "O9DtUzL5_RQ", "VqyvIiDPr3g",
+        "XR77fMYgMQk", "FfEGKGt-pZk", "sclUSyLrEYE", "iEF2oIam4M0", "74N19HUc4L0", "FmUpqm1gLdI",
+        "OBA0I52ES50", "fuHvJ7xVAL0", "CyW-nYKLBa0", "flac-VGO7nc", "gJmbxRcppCw", "ZmY-_cDFawM",
+        "7WFLa-ci54k", "yQUGWo8pLBc", "jJNkrTK4ok4", "Cp6SzjgZuQg", "nLKLu0HQXO0", "0pzI5PoGao0",
+        "Y-2gvxB-FDo", "waiTrmClN0g", "XVYtBX_pdOo", "p9uo-SCnodU", "Rvl2tsks4Ys", "sech5EZKQnM",
+        "nPuMU5dPlgc", "3uoJt8X5jGg", "Mxr3ExdHfN8", "pod5XRkgTaw", "LzWB4-ybO-c", "1TkFt46zrzM",
+        "jbqdqCwOJDo", "QAOK-hmyBxE", "WcBKIj8osoE", "EKPF4ChCw6A", "SMlLdbWkEN4", "Wzf-JFVh0kM",
+        "h6mMnL2XmDw", "a4xIadbWqYY", "px0U1YEYkaU", "8L6PEl6uY0Y", "43fuHQr0GWw", "awnclFDuxs0",
+        "FqfFYOgdFw0", "9JiSf_f72zE", "N70MaoLdrZg", "ot-sypdnmYA", "g0Uf81Jr1gg", "d70HHZU4zeI",
+        "IbtKHcPssYg", "YFscKxcjfbM", "sg2f5tQ4qRs", "HHXzO1KrxeU", "8EFDoRH9T4g", "UyRTcDdCoGk",
+        "V5DuwSVlRIU", "ZPcbQVVLTQE", "H9zXykLnvkE", "U_ZJtjh82J8", "SkS7KBwhCsU", "84SKgjatRI8",
+        "n875wglxiR0", "YZFesyvKDrE", "h7D41aP3DFk", "FWrCtSgjJSo", "kUKsLPq43aI", "-eWiRtLcPwo",
+        "XCKz4gawPes", "5AqZC7zPuh0", "4erQS2tDdxU", "Wp4dEQqaSoQ", "e8xJuuSd0fs", "f3MMoyA1GCs",
+        "u6IZd5SmH-w", "bu4f3i9eGuo", "rh9tnASbePk", "RQYykWvrp9I", "uPQFwi_1kto", "0eTF7YVX5rA",
+        "GZ3EDQu5hR8", "jZRgOw67nFs", "1R_OHEm2ZG0", "W4acFfrAAEI", "TpZ5shFoNmM", "jr3UDYXO3XQ",
+        "0gi4wVYObk4", "eNYHzS6Ir-s", "rJmfrIhc4Kk", "KBhxCaMnL_M", "XgnJshWLzyE", "8q3JnKtCSJE",
+        "-Df3lcdSjfQ", "Aw2jlVF2ARk", "mieHb3DroWg", "rHTqrmI77OQ", "H0H0SzXUnrw", "AcAayADtFFs"
+      ];
+      var RV_BORDER_KEY = "fgReelsBuiltinOrderV1";
+      var RV_PBUILTIN_KEY = "fgReelsPromotedBuiltinV1";
+      var rvBuiltinCards = {};
+      /* one built-in Short as a feed record in the same shape
+         the local and shared lists use, plus its builtin mark
+         and its YouTube id; every one is a tall 9:16 Short */
+      function rvBuiltinRecord(ytid){
+        return { builtin:true, ytid:ytid, type:"youtube",
+                 src:"https://www.youtube.com/embed/" + ytid + "?playsinline=1&rel=0",
+                 url:"https://www.youtube.com/shorts/" + ytid,
+                 channel:"", title:"", fit:"tall" };
+      }
+      function rvBuiltinOrderPref(){
+        var v = rvLsGet(RV_BORDER_KEY);
+        return Array.isArray(v) ? v : [];
+      }
+      /* the built-ins in THIS visitor's arrangement: the
+         order their tap-promotions left them in, with any
+         untouched ones behind them in the baked-in order */
+      function rvOrderedBuiltinRecs(){
+        var known = {};
+        RV_BUILTIN_IDS.forEach(function(id){ known[id] = 1; });
+        var out = [], seen = {};
+        rvBuiltinOrderPref().forEach(function(id){
+          if (known[id] && !seen[id]){ seen[id] = 1; out.push(rvBuiltinRecord(id)); }
+        });
+        RV_BUILTIN_IDS.forEach(function(id){
+          if (!seen[id]){ seen[id] = 1; out.push(rvBuiltinRecord(id)); }
+        });
+        return out;
+      }
+      function rvPromotedBuiltinCard(){
+        var ytid = rvLsGet(RV_PBUILTIN_KEY);
+        if (ytid === null || ytid === undefined) return null;
+        return rvBuiltinCards[ytid] || null;
+      }
+      /* ================= end BUILT-IN REELS ================= */
+
       /* ================= SHARED REELS (sabko dikhegi) =================
          Videos the owner adds with his Secret Code live in a
          shared list on the server (GET/POST/DELETE /api/reels
          — see api/reels.js): they show to EVERY visitor,
          merged into this same feed in this order — Dil De
-         Mohalle (oldest) → the shared reels → this phone's
-         own local reels (newest) — and the rotation, the
+         Mohalle (oldest) → the built-in library → the shared
+         reels → this phone's own local reels (newest) — and
+         the rotation, the
          three-zone layout and tap-to-promote treat them
          exactly like local videos. What stays per-visitor is
          only the ARRANGEMENT of the shared list, kept on
@@ -2594,32 +2704,39 @@
         return rvSharedCards[sid] || null;
       }
       /* every successful add ends all tap-promotions: the
-         Dil flag (as before) and the promoted shared card */
+         Dil flag (as before), the promoted shared card and
+         the promoted built-in card */
       function rvClearPromotions(){
         if (rvPromotedDil){ rvPromotedDil = false; rvSavePromoted(); }
         rvLsSet(RV_PSHARED_KEY, null);
+        rvLsSet(RV_PBUILTIN_KEY, null);
       }
-      /* rebuild the whole feed from its three sources in
-         merge order — Dil (oldest), shared, local (newest) —
+      /* rebuild the whole feed from its four sources in
+         merge order — Dil (oldest), built-ins, shared, local
+         (newest) —
          replayed through the same rotation the upload form
          uses, then the remembered tap-promotions are put
          back (a promoted local video needs nothing: its
          entry sits at the end of the local list, so the
          replay restores it by itself). Runs once on load —
          the shared list is still empty then, so the feed is
-         exactly Dil + local as before — and again whenever
+         Dil + built-ins + local — and again whenever
          a fresh shared list actually changes the feed. */
       function rvRebuildFeed(){
         rvOrder.slice().forEach(function(card){ card.remove(); });
         rvOrder = [];
         rvColHeights = [0, 0, 0];
         rvSharedCards = {};
+        rvBuiltinCards = {};
         if (rvDilCardEl && !rvDilRemoved){
           rvDilCardEl._rvCol = -1;
           rvDilCardEl._rvZone = "big";
           rvFeed.insertBefore(rvDilCardEl, rvBandEl || rvColsEl);
           rvOrder.push(rvDilCardEl);
         }
+        rvOrderedBuiltinRecs().forEach(function(rec){
+          rvBuiltinCards[rec.ytid] = rvAddVideoCard(rec.src, rec.type, "", "", rec.url, rec);
+        });
         var ordered = rvOrderedSharedRecs();
         rvSharedShownKey = ordered.map(function(r){ return r.sid; }).join(",");
         ordered.forEach(function(rec){
@@ -2633,8 +2750,12 @@
         if (rvPromotedDil && rvDilCardEl && !rvDilRemoved && rvDilCardEl._rvZone !== "big"){
           rvRearrange(rvDilCardEl);
         } else {
-          var pc = rvPromotedSharedCard();
-          if (pc && pc._rvZone !== "big") rvRearrange(pc);
+          var pb = rvPromotedBuiltinCard();
+          if (pb && pb._rvZone !== "big") rvRearrange(pb);
+          else {
+            var pc = rvPromotedSharedCard();
+            if (pc && pc._rvZone !== "big") rvRearrange(pc);
+          }
         }
         rvSyncEmpty();
         rvSyncPromoteLayers();
@@ -2720,9 +2841,10 @@
          One row of five buttons directly under the BIG top
          frame, belonging to whichever video holds that frame.
          Video keys: shared videos are "shared-<db id>", the
-         baked-in Dil De Mohalle card is "dil", and a phone's
+         baked-in Dil De Mohalle card is "dil", the built-in
+         library is "builtin-<youtube id>", and a phone's
          own local videos are "local-<their local id>".
-         Counts for "shared-*" and "dil" are GLOBAL — one
+         Counts for "shared-*", "builtin-*" and "dil" are GLOBAL — one
          count for everyone, kept server-side through
          /api/reels?action=… ; for "local-*" everything stays
          on this phone (localStorage). This phone's own
@@ -2744,10 +2866,12 @@
       var rvActionCard = null;
 
       function rvIsGlobalKey(key){
-        return key === "dil" || (typeof key === "string" && key.indexOf("shared-") === 0);
+        return key === "dil" || (typeof key === "string" &&
+          (key.indexOf("shared-") === 0 || key.indexOf("builtin-") === 0));
       }
       /* the action-bar key for a card, from its record:
-         shared → "shared-<sid>", Dil → "dil", a saved local
+         shared → "shared-<sid>", built-in → "builtin-<youtube
+         id>", Dil → "dil", a saved local
          video → "local-<lid>" (older saved videos without a
          lid fall back to their YouTube id / link hash, so
          their key stays the same on every load) */
@@ -2756,6 +2880,7 @@
         if (card === rvDilCardEl) return "dil";
         var rec = card._rvRecord || null;
         if (rec && rec.shared) return "shared-" + rec.sid;
+        if (rec && rec.builtin) return "builtin-" + rec.ytid;
         if (rec && rec.lid) return "local-" + rec.lid;
         if (card._rvYtId) return "local-" + card._rvYtId;
         var s = (rec && (rec.url || rec.src)) || card._rvSrc || "";
@@ -3142,7 +3267,8 @@
       }
       /* ================= end ACTION BAR ================= */
 
-      /* Restore the feed on load: replay Dil, the shared
+      /* Restore the feed on load: replay Dil, the built-in
+         library, the shared
          list (still empty at this point — it is fetched when
          the view opens) and the saved local videos through
          the rotation, so the feed comes back with the NEWEST

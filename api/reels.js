@@ -60,7 +60,7 @@ function send(res, status, obj) {
 }
 
 function isGlobalKey(key) {
-  return typeof key === "string" && (key === "dil" || key.indexOf("shared-") === 0);
+  return typeof key === "string" && (key === "dil" || key.indexOf("shared-") === 0 || key.indexOf("builtin-") === 0);
 }
 
 function checkAdmin(req, res, body) {
