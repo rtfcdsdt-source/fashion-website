@@ -2532,8 +2532,8 @@
          feed they sit between Dil De Mohalle (oldest) and the
          shared reels: Dil → built-ins → shared → this phone's
          own local reels (newest). They behave exactly like
-         the other global videos — same rotation, same packed
-         columns (all are tall Shorts), same tap-to-promote,
+         the other global videos — same rotation, same
+         three-zone layout, same tap-to-promote,
          same global Like/Views/Comment/Share/Save counts
          under the action-bar key "builtin-<youtube id>" —
          with ONE difference: a built-in card carries NO ✕,
@@ -2541,7 +2541,13 @@
          list, the only per-visitor state is the ARRANGEMENT
          tap-promotions leave behind, kept on each phone the
          same way (fgReelsBuiltinOrderV1, and the last
-         tap-promoted built-in in fgReelsPromotedBuiltinV1). */
+         tap-promoted built-in in fgReelsPromotedBuiltinV1).
+         Woven INTO this same library — beech-beech mein,
+         never one block of their own — are 104 T-Series
+         Hindi film songs (16:9 full videos, wide): see
+         RV_TS_DANCE / RV_TS_ROMANTIC and the woven order
+         RV_WOVEN_IDS below, which is the order the feed is
+         actually built in. */
       var RV_BUILTIN_IDS = [
         "gR9cJfVipkU", "ugHQqJY_i9M", "PvzTQZAOj-E", "PKgNrPQDf1I", "Sbr_DzGHLvE", "8L-r6WlDbNA",
         "xMmYwTXrW8g", "GcVK_a4wX_A", "W59VTXIYzY0", "9JzeYt2L2Us", "CZp3AkNaTY0", "MHRG-HT-5ZU",
@@ -2565,11 +2571,92 @@
       ];
       var RV_BORDER_KEY = "fgReelsBuiltinOrderV1";
       var RV_PBUILTIN_KEY = "fgReelsPromotedBuiltinV1";
+      /* ============ T-SERIES SONGS (woven in-between) ============
+         104 Hindi film songs from the official T-Series
+         channel — full 16:9 videos, NOT Shorts — approved by
+         the owner as a verified list (2026-10-23). His one
+         condition: they must NOT sit in one single block or
+         line of their own; they are mixed IN-BETWEEN the
+         existing videos ("beech-beech mein"). So the
+         T-Series sequence first alternates the two lists,
+         starting with DANCE — D1, R1, D2, R2, ... — and the
+         romantic list's two extra entries close the sequence
+         in their listed order. That sequence is then woven
+         into the 114 Shorts above (their order untouched),
+         starting with a Short — Short1, T1, Short2, T2, ...
+         — and when the songs run out, the remaining 10 Shorts
+         follow at the end in order. RV_WOVEN_IDS is that
+         final baked-in order (218 ids); it — not the raw
+         Shorts list — is what the feed is built from, so the
+         songs sit scattered through the whole library. A
+         T-Series record is a built-in like any other (same
+         "builtin-<youtube id>" counts, same NO ✕), only wide:
+         it settles full-width in the band like any wide
+         video, and its facade uses the same big maxres
+         thumbnail with the one-time hqdefault fallback. */
+      var RV_TS_DANCE = [
+        "n2u81Ujc93g", "f6vY6tYvKGA", "_KhQT-LGb-4", "WIgpmoDBGss", "37GPUFucjxE", "1YBl3Zbt80A",
+        "EEX_XM6SxmY", "6wNFJIbTxNk", "yIIGQB6EMAM", "QDHsMmOvrN0", "D8I2D6VLQQc", "II2EO3Nw4m0",
+        "0WtRNGubWGA", "Jn5hsfbhWx4", "ldAgG1M4qZg", "lxB-ki-qE64", "q_0uF80IZXM", "l75z7FrYRXI",
+        "q2gICJFG6uw", "2kWLyInyjOE", "caoGNx1LF2Q", "PaDaoNnOQaM", "0gtDICWPTyA", "GBVbEaXp060",
+        "VzLG6OqOcn8", "05TA9jNnCdU", "yP9KiFTyBks", "x8F5dz8kv1w", "MXJCnccDLA0", "sYeBnmwiWzA",
+        "zF6sF85yV9s", "Mai3nNAKtd0", "_cPHiwPqbqo", "vjOKuvBjkS8", "xeqJU7PLseg", "GOkJguI8kYc",
+        "ruEQPQX90fI", "p6D8u6lEDjQ", "zE7Pwgl6sLA", "5XjpV9n25Yk", "dv_Qjzca56k", "Vkcki2dRCxM",
+        "_c5B2I5k7KM", "6DfaBq2rVoE", "vhErOKIjzQg", "1xYZeDReUz4", "mXkbWKr5ovU", "FF_RF7mrbkY",
+        "W9mrvDWUR9g", "-ASKgzrmDtc", "gSaaNGMPl_g"
+      ];
+      var RV_TS_ROMANTIC = [
+        "BBAyRBTfsOU", "sCbbMZ-q4-I", "IJq0yyWug1k", "hoNb6HuNmU0", "hejXc_FSYb8", "jIqRbFQl-ds",
+        "NYKazZTTRRU", "eHRrZ5DQCV4", "VdyBtGaspss", "bXNhPOMgavI", "krJsyb_yf7A", "3Dg006VuOMk",
+        "bhVH0C-6f8Q", "5V04DETPF0o", "NNqLB7znMLU", "RemShT6JAHw", "TmRgK-pXH9c", "7qNz2b2qJZ4",
+        "abCXAUnQfYU", "HrnrqYxYrbk", "_P9YXESg5Es", "mQiiw7uRngk", "QYO6AlxiRE4", "mt9xg0mmt28",
+        "V8zXLMIjlcw", "LrQarGrjC68", "sAjDONNZp_0", "T94PHkuydcw", "nCD2hj6zJEc", "PVxc5mIHVuQ",
+        "atVof3pjT-I", "K-Ts-NFR62o", "MRtRcTfszjY", "tyxswccv-VU", "1gqBb4Y7LJA", "AWrhU13nm_g",
+        "D8XFTglfSMg", "y2O44HDZWws", "FxAG_11PzCk", "fdubeMFwuGs", "VqFn3FvVjk4", "2mWaqsC3U7k",
+        "qTxpIeyo-_g", "0KozfDYK1EU", "-d9nvq3402M", "OX-h7MtkeOI", "Skp5roPkjys", "WRQHV3kDcyo",
+        "Njq4A5DAqRw", "B7SkAq_94J8", "6fBz-GMMhzg", "DIJW7rWPkSw", "ttIKsnxPrMY"
+      ];
+      /* the T-Series sequence: D1, R1, D2, R2, ... — once the
+         dance list ends, the romantic list's remaining entries
+         (R52, R53) close it in their listed order */
+      var RV_TSERIES_IDS = (function(){
+        var out = [];
+        var n = Math.max(RV_TS_DANCE.length, RV_TS_ROMANTIC.length);
+        for (var i = 0; i < n; i++){
+          if (i < RV_TS_DANCE.length) out.push(RV_TS_DANCE[i]);
+          if (i < RV_TS_ROMANTIC.length) out.push(RV_TS_ROMANTIC[i]);
+        }
+        return out;
+      })();
+      var RV_TS_SET = {};
+      RV_TSERIES_IDS.forEach(function(id){ RV_TS_SET[id] = 1; });
+      /* the woven library order: Short1, T1, Short2, T2, ...
+         — once the songs run out, the remaining Shorts follow
+         in order. This is the built-ins' baked-in order. */
+      var RV_WOVEN_IDS = (function(){
+        var out = [];
+        var n = Math.max(RV_BUILTIN_IDS.length, RV_TSERIES_IDS.length);
+        for (var i = 0; i < n; i++){
+          if (i < RV_BUILTIN_IDS.length) out.push(RV_BUILTIN_IDS[i]);
+          if (i < RV_TSERIES_IDS.length) out.push(RV_TSERIES_IDS[i]);
+        }
+        return out;
+      })();
+      /* ================= end T-SERIES SONGS ================= */
       var rvBuiltinCards = {};
-      /* one built-in Short as a feed record in the same shape
+      /* one built-in video as a feed record in the same shape
          the local and shared lists use, plus its builtin mark
-         and its YouTube id; every one is a tall 9:16 Short */
+         and its YouTube id. A Short is a tall 9:16 record with
+         a /shorts/ link; a woven T-Series song is a wide 16:9
+         record with a normal watch link — everything else
+         about the two is identical. */
       function rvBuiltinRecord(ytid){
+        if (RV_TS_SET[ytid]){
+          return { builtin:true, ytid:ytid, type:"youtube",
+                   src:"https://www.youtube.com/embed/" + ytid + "?playsinline=1&rel=0",
+                   url:"https://www.youtube.com/watch?v=" + ytid,
+                   channel:"", title:"", fit:"wide" };
+        }
         return { builtin:true, ytid:ytid, type:"youtube",
                  src:"https://www.youtube.com/embed/" + ytid + "?playsinline=1&rel=0",
                  url:"https://www.youtube.com/shorts/" + ytid,
@@ -2584,12 +2671,12 @@
          untouched ones behind them in the baked-in order */
       function rvOrderedBuiltinRecs(){
         var known = {};
-        RV_BUILTIN_IDS.forEach(function(id){ known[id] = 1; });
+        RV_WOVEN_IDS.forEach(function(id){ known[id] = 1; });
         var out = [], seen = {};
         rvBuiltinOrderPref().forEach(function(id){
           if (known[id] && !seen[id]){ seen[id] = 1; out.push(rvBuiltinRecord(id)); }
         });
-        RV_BUILTIN_IDS.forEach(function(id){
+        RV_WOVEN_IDS.forEach(function(id){
           if (!seen[id]){ seen[id] = 1; out.push(rvBuiltinRecord(id)); }
         });
         return out;
