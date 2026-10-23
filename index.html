@@ -627,6 +627,61 @@
          its column-mates */
       .rv-feed .rv-igplayer{min-height:0}
       .rv-openlink{display:inline-block;margin-top:10px;color:#ff9900;font-size:13px;text-decoration:none}
+      /* ---------- action bar under the BIG top frame ----------
+         ONE horizontal row of five white action buttons (Like,
+         Views, Comment, Share, Save), evenly spaced, each an
+         icon + small label + count beneath. The bar is a single
+         element the script keeps directly under whichever card
+         holds the big top frame — it never appears under the
+         band or the column cards. */
+      .rv-actionbar{
+        display:flex;justify-content:space-evenly;align-items:stretch;gap:2px;
+        background:#000;padding:10px 2px 4px;margin-top:2px;
+      }
+      .rv-actionbar[hidden]{display:none}
+      .rv-act{
+        flex:1 1 0;min-width:0;border:0;background:transparent;color:#fff;
+        display:flex;flex-direction:column;align-items:center;gap:1px;
+        padding:7px 2px 6px;border-radius:10px;cursor:pointer;
+        -webkit-tap-highlight-color:transparent;font-family:inherit;
+      }
+      .rv-act:active{background:#1d1d1d}
+      .rv-act svg{width:24px;height:24px;display:block}
+      .rv-act .rv-act-label{font-size:12px;font-weight:600;line-height:1.25}
+      .rv-act .rv-act-count{font-size:12px;color:#cfcfcf;line-height:1.25}
+      .rv-act.is-liked{color:#ff3355}
+      .rv-act.is-liked .rv-act-count{color:#ff8fa3}
+      .rv-act.is-saved{color:#ffb020}
+      .rv-act.is-saved .rv-act-count{color:#ffd27a}
+      /* comments sheet (inside the Reels view): list + name/text
+         fields + Post, styled like the upload popup */
+      .rv-comments-box{max-width:440px}
+      .rv-comments-head{display:flex;align-items:center;justify-content:space-between;margin:0 0 12px}
+      .rv-comments-head h2{margin:0;font-size:20px}
+      .rv-comments-close{
+        width:34px;height:34px;border-radius:50%;border:1px solid #444;
+        background:#262626;color:#fff;font-size:15px;line-height:1;cursor:pointer;flex:none;
+      }
+      .rv-comments-list{
+        max-height:38vh;overflow-y:auto;display:flex;flex-direction:column;gap:10px;
+        margin:0 0 6px;padding:2px 0;-webkit-overflow-scrolling:touch;
+      }
+      .rv-comment{background:#222;border:1px solid #333;border-radius:9px;padding:9px 11px}
+      .rv-comment-top{display:flex;align-items:baseline;gap:8px}
+      .rv-comment-name{font-weight:700;font-size:13.5px;color:#fff;overflow-wrap:anywhere}
+      .rv-comment-time{font-size:11.5px;color:#999;flex:none}
+      .rv-comment-del{
+        margin-left:auto;flex:none;width:24px;height:24px;border-radius:50%;
+        border:1px solid #444;background:#171717;color:#ff8fa3;font-size:12px;
+        line-height:1;cursor:pointer;padding:0;
+      }
+      .rv-comment-text{margin:4px 0 0;font-size:14px;line-height:1.5;color:#eee;overflow-wrap:anywhere;white-space:pre-wrap}
+      .rv-comments-empty{color:#999;font-size:13.5px;text-align:center;padding:16px 6px;margin:0}
+      .rv-comments-box textarea{
+        width:100%;padding:12px;border-radius:8px;border:1px solid #444;resize:vertical;
+        background:#090909;color:#fff;outline:none;font-size:14px;font-family:inherit;min-height:64px;
+      }
+      .rv-comments-box textarea:focus{border-color:#ff9900}
       .rv-add{
         position:fixed;top:12px;right:16px;width:60px;height:60px;
         border:0;background:none;padding:0;
@@ -837,6 +892,40 @@
             <span class="rv-facade-badge" aria-hidden="true">▶</span>
           </div>
         </article>
+        <!-- the ACTION BAR (Like / Views / Comment / Share /
+             Save): ONE row of five buttons that belongs to
+             whichever video currently holds the big top frame.
+             The script keeps this single element directly
+             under the big-frame card and re-renders it with
+             that video's numbers every time the frame changes
+             hands; it never shows under the band or columns. -->
+        <div class="rv-actionbar" id="rvActionBar" hidden>
+          <button class="rv-act" id="rvActLike" type="button" aria-label="Like this video">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path class="rv-heart-path" d="M19.8 5.1a5 5 0 0 0-7.1 0l-.7.7-.7-.7a5 5 0 1 0-7.1 7.1l7.8 7.8 7.8-7.8a5 5 0 0 0 0-7.1z"/></svg>
+            <span class="rv-act-label">Like</span>
+            <span class="rv-act-count" id="rvCountLike">0</span>
+          </button>
+          <button class="rv-act" id="rvActViews" type="button" aria-label="Views">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+            <span class="rv-act-label">Views</span>
+            <span class="rv-act-count" id="rvCountViews">0</span>
+          </button>
+          <button class="rv-act" id="rvActComment" type="button" aria-label="Comments">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5c-1.5 0-3-.4-4.2-1.1L3 20l1.1-5.3A8.5 8.5 0 1 1 21 11.5z"/></svg>
+            <span class="rv-act-label">Comment</span>
+            <span class="rv-act-count" id="rvCountComment">0</span>
+          </button>
+          <button class="rv-act" id="rvActShare" type="button" aria-label="Share this video">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 5.5 20 12l-7 6.5v-4.2C7.5 14.3 4.6 16 3 19c-.3-5.4 2.6-10.3 10-11.3z"/></svg>
+            <span class="rv-act-label">Share</span>
+            <span class="rv-act-count" id="rvCountShare">0</span>
+          </button>
+          <button class="rv-act" id="rvActSave" type="button" aria-label="Save this video">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path class="rv-bookmark-path" d="M6 3.5h12V21l-6-4.2L6 21z"/></svg>
+            <span class="rv-act-label">Save</span>
+            <span class="rv-act-count" id="rvCountSave">0</span>
+          </button>
+        </div>
         <!-- the full-width wide band, directly below the big
              top frame and above the columns: a wide video that
              rotates down out of the big frame is placed here
@@ -897,6 +986,33 @@
             <div class="rv-modal-actions">
               <button type="submit" class="rv-modal-btn rv-btn-submit">Add Video</button>
               <button type="button" id="rvCancelBtn" class="rv-modal-btn rv-btn-cancel">Cancel</button>
+            </div>
+          </form>
+        </div>
+      </div>
+      <!-- comments sheet for the video in the big top frame:
+           opened by the action bar's Comment button. Global
+           videos (shared / Dil) load and post through the API;
+           a phone's own local videos keep their comments on
+           this phone only. With the owner's code saved on this
+           phone, every global comment gets a ✕ that deletes it
+           for everyone. -->
+      <div class="rv-modal" id="rvCommentsModal">
+        <div class="rv-modal-box rv-comments-box">
+          <div class="rv-comments-head">
+            <h2>Comments</h2>
+            <button class="rv-comments-close" id="rvCommentsClose" type="button" aria-label="Close comments">✕</button>
+          </div>
+          <div class="rv-comments-list" id="rvCommentsList"></div>
+          <form id="rvCommentForm">
+            <label class="rv-field-label" for="rvCommentName">Your name</label>
+            <input id="rvCommentName" type="text" placeholder="Your name" maxlength="40" autocomplete="name">
+            <label class="rv-field-label" for="rvCommentText">Comment</label>
+            <textarea id="rvCommentText" placeholder="Apna comment likhein…" maxlength="300"></textarea>
+            <div class="rv-message" id="rvCommentMessage" role="status"></div>
+            <div class="rv-modal-actions">
+              <button type="submit" class="rv-modal-btn rv-btn-submit">Post</button>
+              <button type="button" id="rvCommentCancel" class="rv-modal-btn rv-btn-cancel">Cancel</button>
             </div>
           </form>
         </div>
@@ -1558,6 +1674,7 @@
            the feed exactly as it was */
         rvSyncPlayers();
         rvFetchShared();
+        if (typeof rvFetchActionStats === "function") rvFetchActionStats();
         /* the logo greets the visitor at the exact spot it was
            last dropped, never back at the default corner */
         rvRestoreLogoPos();
@@ -1565,6 +1682,7 @@
       }
       function rvCloseReels(){
         rvCloseUpload();
+        if (typeof rvCloseComments === "function") rvCloseComments();
         rvStopAllPlayers();
         rvView.classList.remove("open");
         rvView.setAttribute("aria-hidden", "true");
@@ -1601,7 +1719,11 @@
       });
       document.addEventListener("keydown", function(e){
         if (e.key !== "Escape") return;
-        if (rvModal.classList.contains("open")) rvCloseUpload();
+        var cm = document.getElementById("rvCommentsModal");
+        if (cm && cm.classList.contains("open")){
+          if (typeof rvCloseComments === "function") rvCloseComments();
+        }
+        else if (rvModal.classList.contains("open")) rvCloseUpload();
         else if (rvView.classList.contains("open")) rvCloseReels();
       });
 
@@ -1775,6 +1897,11 @@
           if (open && card === big) rvMountPlayer(card);
           else rvShowFacade(card);
         });
+        /* the action bar follows the big frame: every change
+           of hands (add, tap-to-promote, delete, rotation)
+           funnels through here, so the bar re-renders with
+           the new big video's numbers from this one hook */
+        if (typeof rvActionSync === "function") rvActionSync();
       }
 
       /* ----- below the big top frame: the wide band, then
@@ -2237,6 +2364,10 @@
       /* add a video to this phone's own local list, exactly
          as the upload form has always done */
       function rvAddLocalVideo(rec){
+        /* a stable per-phone id for this video, so the action
+           bar can key its likes/views/comments to it across
+           reloads ("local-<id>") */
+        if (!rec.lid) rec.lid = "v" + Date.now().toString(36) + Math.floor(Math.random() * 1e6).toString(36);
         rvSavedVideos.push(rec);
         rvPersist();
         return rvAddVideoCard(rec.src, rec.type, rec.channel, rec.title, rec.url, rec);
@@ -2584,6 +2715,432 @@
         });
       }
       /* ================= end SHARED REELS ================= */
+
+      /* ================= ACTION BAR (Like / Views / Comment / Share / Save) =================
+         One row of five buttons directly under the BIG top
+         frame, belonging to whichever video holds that frame.
+         Video keys: shared videos are "shared-<db id>", the
+         baked-in Dil De Mohalle card is "dil", and a phone's
+         own local videos are "local-<their local id>".
+         Counts for "shared-*" and "dil" are GLOBAL — one
+         count for everyone, kept server-side through
+         /api/reels?action=… ; for "local-*" everything stays
+         on this phone (localStorage). This phone's own
+         liked/saved/viewed marks are per-phone for every key.
+         Any API failure falls back to the last-known numbers
+         and never breaks the feed. */
+      var RV_LIKED_KEY = "fgReelLikedV1";
+      var RV_SAVEDSET_KEY = "fgReelSavedSetV1";
+      var RV_VIEWED_KEY = "fgReelViewedV1";
+      var RV_LSTATS_KEY = "fgReelLocalStatsV1";
+      var RV_LCOMMENTS_KEY = "fgReelLocalCommentsV1";
+      var RV_GCACHE_KEY = "fgReelStatsCacheV1";
+      var RV_GCCACHE_KEY = "fgReelCommentsCacheV1";
+      var rvActionBarEl = document.getElementById("rvActionBar");
+      var rvGlobalStats = rvLsGet(RV_GCACHE_KEY) || {};
+      var rvActionStatsLoaded = false;
+      var rvActionStatsLoading = false;
+      var rvActionKey = null;
+      var rvActionCard = null;
+
+      function rvIsGlobalKey(key){
+        return key === "dil" || (typeof key === "string" && key.indexOf("shared-") === 0);
+      }
+      /* the action-bar key for a card, from its record:
+         shared → "shared-<sid>", Dil → "dil", a saved local
+         video → "local-<lid>" (older saved videos without a
+         lid fall back to their YouTube id / link hash, so
+         their key stays the same on every load) */
+      function rvVideoKey(card){
+        if (!card) return null;
+        if (card === rvDilCardEl) return "dil";
+        var rec = card._rvRecord || null;
+        if (rec && rec.shared) return "shared-" + rec.sid;
+        if (rec && rec.lid) return "local-" + rec.lid;
+        if (card._rvYtId) return "local-" + card._rvYtId;
+        var s = (rec && (rec.url || rec.src)) || card._rvSrc || "";
+        var h = 0;
+        for (var i = 0; i < s.length; i++){ h = ((h << 5) - h + s.charCodeAt(i)) | 0; }
+        return "local-h" + (h >>> 0).toString(36);
+      }
+      function rvZeroCounts(){ return { views:0, likes:0, shares:0, saves:0, comments:0 }; }
+      function rvLocalStatsAll(){
+        var v = rvLsGet(RV_LSTATS_KEY);
+        return (v && typeof v === "object") ? v : {};
+      }
+      function rvLocalCommentsAll(){
+        var v = rvLsGet(RV_LCOMMENTS_KEY);
+        return (v && typeof v === "object") ? v : {};
+      }
+      function rvCountsFor(key){
+        if (!key) return rvZeroCounts();
+        if (rvIsGlobalKey(key)){
+          var g = rvGlobalStats[key];
+          var base = g ? { views:+g.views||0, likes:+g.likes||0, shares:+g.shares||0, saves:+g.saves||0, comments:+g.comments||0 } : rvZeroCounts();
+          return base;
+        }
+        var all = rvLocalStatsAll();
+        var l = all[key] || {};
+        var cc = rvLocalCommentsAll();
+        return {
+          views:+l.views||0, likes:+l.likes||0, shares:+l.shares||0, saves:+l.saves||0,
+          comments: Array.isArray(cc[key]) ? cc[key].length : 0
+        };
+      }
+      function rvAdjustCounts(key, field, delta){
+        if (!key) return;
+        if (rvIsGlobalKey(key)){
+          if (!rvGlobalStats[key]) rvGlobalStats[key] = rvZeroCounts();
+          rvGlobalStats[key][field] = Math.max(0, (+rvGlobalStats[key][field]||0) + delta);
+          rvLsSet(RV_GCACHE_KEY, rvGlobalStats);
+        } else {
+          var all = rvLocalStatsAll();
+          if (!all[key]) all[key] = rvZeroCounts();
+          all[key][field] = Math.max(0, (+all[key][field]||0) + delta);
+          rvLsSet(RV_LSTATS_KEY, all);
+        }
+      }
+      function rvSetHas(storeKey, key){
+        var v = rvLsGet(storeKey);
+        return Array.isArray(v) && v.indexOf(key) !== -1;
+      }
+      function rvSetToggle(storeKey, key, on){
+        var v = rvLsGet(storeKey);
+        if (!Array.isArray(v)) v = [];
+        var i = v.indexOf(key);
+        if (on && i === -1) v.push(key);
+        if (!on && i !== -1) v.splice(i, 1);
+        rvLsSet(storeKey, v);
+      }
+      /* ≥1000 → x.xK (1,240 would render as 1.2K, 48,200 as
+         48.2K); smaller counts plain */
+      function rvFmtCount(n){
+        n = Math.max(0, Math.floor(+n || 0));
+        if (n < 1000) return String(n);
+        var s = (n / 1000).toFixed(1);
+        if (s.slice(-2) === ".0") s = s.slice(0, -2);
+        return s + "K";
+      }
+      function rvSendEvent(key, type){
+        if (!rvIsGlobalKey(key) || typeof fetch !== "function") return;
+        fetch("/api/reels?action=event", {
+          method:"POST", cache:"no-store",
+          headers:{ "Content-Type":"application/json" },
+          body: JSON.stringify({ key:key, type:type })
+        }).catch(function(){});
+      }
+      function rvFetchActionStats(){
+        if (rvActionStatsLoading || typeof fetch !== "function") return;
+        rvActionStatsLoading = true;
+        fetch("/api/reels?action=stats", { cache:"no-store" }).then(function(r){
+          if (!r.ok) throw new Error("stats");
+          return r.json();
+        }).then(function(data){
+          if (data && data.ok && data.stats){
+            rvGlobalStats = data.stats;
+            rvLsSet(RV_GCACHE_KEY, rvGlobalStats);
+            rvActionStatsLoaded = true;
+            rvRenderActionBar();
+          }
+        }).catch(function(){})
+        .then(function(){ rvActionStatsLoading = false; });
+      }
+      /* paint the bar for the current key: counts, and this
+         phone's liked/saved states (filled heart / bookmark) */
+      function rvRenderActionBar(){
+        if (!rvActionBarEl || !rvActionKey) return;
+        var c = rvCountsFor(rvActionKey);
+        document.getElementById("rvCountLike").textContent = rvFmtCount(c.likes);
+        document.getElementById("rvCountViews").textContent = rvFmtCount(c.views);
+        document.getElementById("rvCountComment").textContent = rvFmtCount(c.comments);
+        document.getElementById("rvCountShare").textContent = rvFmtCount(c.shares);
+        document.getElementById("rvCountSave").textContent = rvFmtCount(c.saves);
+        var liked = rvSetHas(RV_LIKED_KEY, rvActionKey);
+        var saved = rvSetHas(RV_SAVEDSET_KEY, rvActionKey);
+        var likeBtn = document.getElementById("rvActLike");
+        var saveBtn = document.getElementById("rvActSave");
+        likeBtn.classList.toggle("is-liked", liked);
+        saveBtn.classList.toggle("is-saved", saved);
+        likeBtn.querySelector(".rv-heart-path").setAttribute("fill", liked ? "currentColor" : "none");
+        saveBtn.querySelector(".rv-bookmark-path").setAttribute("fill", saved ? "currentColor" : "none");
+        likeBtn.setAttribute("aria-pressed", String(liked));
+        saveBtn.setAttribute("aria-pressed", String(saved));
+      }
+      /* called from rvSyncPlayers on every arrangement
+         change: keep the single bar directly under the big
+         frame's card, switch it to that video, count its
+         one-per-phone view when its player mounts, and hide
+         it when the feed holds no video at all */
+      function rvActionSync(){
+        if (!rvActionBarEl) return;
+        var big = rvBigCard();
+        if (!big){
+          rvActionBarEl.hidden = true;
+          rvActionKey = null;
+          rvActionCard = null;
+          return;
+        }
+        if (big.nextSibling !== rvActionBarEl){
+          rvFeed.insertBefore(rvActionBarEl, big.nextSibling);
+        }
+        rvActionBarEl.hidden = false;
+        var key = rvVideoKey(big);
+        var changed = key !== rvActionKey;
+        rvActionKey = key;
+        rvActionCard = big;
+        /* one view per phone per video: a key already in the
+           viewed set never counts again, however often the
+           frames re-render or rotate */
+        if (key && rvView.classList.contains("open") && !rvSetHas(RV_VIEWED_KEY, key)){
+          rvSetToggle(RV_VIEWED_KEY, key, true);
+          rvAdjustCounts(key, "views", 1);
+          rvSendEvent(key, "view");
+        }
+        if (changed && rvIsGlobalKey(key) && !rvActionStatsLoaded) rvFetchActionStats();
+        rvRenderActionBar();
+      }
+      /* Like — a toggle: optimistic count, per-phone state,
+         and the event for global keys */
+      document.getElementById("rvActLike").addEventListener("click", function(){
+        if (!rvActionKey) return;
+        var liked = rvSetHas(RV_LIKED_KEY, rvActionKey);
+        rvSetToggle(RV_LIKED_KEY, rvActionKey, !liked);
+        rvAdjustCounts(rvActionKey, "likes", liked ? -1 : 1);
+        rvSendEvent(rvActionKey, liked ? "unlike" : "like");
+        rvRenderActionBar();
+      });
+      /* Views — a display count only; tapping it does nothing */
+      document.getElementById("rvActViews").addEventListener("click", function(){});
+      /* Save — a toggle, same pattern as Like (the saved state
+         + count live here; no separate Saved page this round) */
+      document.getElementById("rvActSave").addEventListener("click", function(){
+        if (!rvActionKey) return;
+        var saved = rvSetHas(RV_SAVEDSET_KEY, rvActionKey);
+        rvSetToggle(RV_SAVEDSET_KEY, rvActionKey, !saved);
+        rvAdjustCounts(rvActionKey, "saves", saved ? -1 : 1);
+        rvSendEvent(rvActionKey, saved ? "unsave" : "save");
+        rvRenderActionBar();
+        rvShowSaved(saved ? "Save hata diya" : "Video save ho gaya ✓");
+      });
+      /* Share — the phone's share sheet with the video's own
+         URL; without one, the link is copied and the saved
+         toast says so. Every share action counts +1. */
+      document.getElementById("rvActShare").addEventListener("click", function(){
+        if (!rvActionKey || !rvActionCard) return;
+        var card = rvActionCard;
+        var rec = card._rvRecord || null;
+        var url = (rec && rec.url) || (card === rvDilCardEl
+          ? "https://www.youtube.com/shorts/CPJMyx5tQTY"
+          : (card._rvSrc || ""));
+        rvAdjustCounts(rvActionKey, "shares", 1);
+        rvSendEvent(rvActionKey, "share");
+        rvRenderActionBar();
+        var title = card._rvTitle || "Fashion Goals — Video Reel";
+        if (navigator.share){
+          navigator.share({ title:title, url:url }).catch(function(){});
+        } else if (navigator.clipboard && navigator.clipboard.writeText){
+          navigator.clipboard.writeText(url).then(function(){
+            rvShowSaved("Link copy ho gaya ✓");
+          }).catch(function(){ rvShowSaved("Link copy nahi hua"); });
+        } else {
+          rvShowSaved("Link: " + url);
+        }
+      });
+
+      /* ---------- comments sheet ---------- */
+      var rvCommentsModal = document.getElementById("rvCommentsModal");
+      var rvCommentsList = document.getElementById("rvCommentsList");
+      var rvCommentForm = document.getElementById("rvCommentForm");
+      var rvCommentName = document.getElementById("rvCommentName");
+      var rvCommentText = document.getElementById("rvCommentText");
+      var rvCommentMessage = document.getElementById("rvCommentMessage");
+      var rvCommentsKey = null;
+      function rvRelTime(iso){
+        var t = Date.parse(iso || "");
+        if (isNaN(t)) return "";
+        var s = Math.max(0, Math.floor((Date.now() - t) / 1000));
+        if (s < 60) return "just now";
+        if (s < 3600) return Math.floor(s / 60) + "m ago";
+        if (s < 86400) return Math.floor(s / 3600) + "h ago";
+        if (s < 86400 * 30) return Math.floor(s / 86400) + "d ago";
+        try{ return new Date(t).toLocaleDateString("en-IN"); }catch(e){ return ""; }
+      }
+      function rvEsc(s){
+        return String(s == null ? "" : s)
+          .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;");
+      }
+      function rvRenderComments(list){
+        var isGlobal = rvIsGlobalKey(rvCommentsKey);
+        var canDelete = isGlobal && !!rvAdminCode();
+        if (!list.length){
+          rvCommentsList.innerHTML = '<p class="rv-comments-empty">Abhi koi comment nahi hai — pehla comment aap likhein।</p>';
+          return;
+        }
+        rvCommentsList.innerHTML = list.map(function(c){
+          return '<div class="rv-comment">' +
+            '<div class="rv-comment-top">' +
+              '<span class="rv-comment-name">' + rvEsc(c.name) + '</span>' +
+              '<span class="rv-comment-time">' + rvEsc(rvRelTime(c.created_at)) + '</span>' +
+              (canDelete && c.id != null
+                ? '<button class="rv-comment-del" type="button" data-del-comment="' + rvEsc(c.id) + '" aria-label="Delete comment">✕</button>'
+                : '') +
+            '</div>' +
+            '<p class="rv-comment-text">' + rvEsc(c.text) + '</p>' +
+          '</div>';
+        }).join("");
+        rvCommentsList.querySelectorAll("[data-del-comment]").forEach(function(btn){
+          btn.addEventListener("click", function(){
+            rvDeleteComment(btn.dataset.delComment);
+          });
+        });
+        rvCommentsList.scrollTop = rvCommentsList.scrollHeight;
+      }
+      function rvLoadComments(){
+        var key = rvCommentsKey;
+        if (!key) return;
+        if (!rvIsGlobalKey(key)){
+          var all = rvLocalCommentsAll();
+          rvRenderComments(Array.isArray(all[key]) ? all[key] : []);
+          return;
+        }
+        rvCommentsList.innerHTML = '<p class="rv-comments-empty">Comments load ho rahe hain…</p>';
+        if (typeof fetch !== "function"){ rvRenderComments([]); return; }
+        fetch("/api/reels?action=comments&key=" + encodeURIComponent(key), { cache:"no-store" })
+          .then(function(r){
+            if (!r.ok) throw new Error("comments");
+            return r.json();
+          })
+          .then(function(data){
+            if (rvCommentsKey !== key) return;
+            var list = (data && data.ok && Array.isArray(data.comments)) ? data.comments : [];
+            var cache = rvLsGet(RV_GCCACHE_KEY) || {};
+            cache[key] = list;
+            rvLsSet(RV_GCCACHE_KEY, cache);
+            /* keep the bar's comment count in step with the
+               server's list */
+            if (rvGlobalStats[key]) rvGlobalStats[key].comments = list.length;
+            rvRenderComments(list);
+            if (rvActionKey === key) rvRenderActionBar();
+          })
+          .catch(function(){
+            if (rvCommentsKey !== key) return;
+            /* offline / not configured: show the last-known
+               comments for this video, never an error wall */
+            var cache = rvLsGet(RV_GCCACHE_KEY) || {};
+            rvRenderComments(Array.isArray(cache[key]) ? cache[key] : []);
+          });
+      }
+      function rvOpenComments(){
+        if (!rvActionKey) return;
+        rvCommentsKey = rvActionKey;
+        rvCommentMessage.style.display = "none";
+        /* the name field starts from this phone's saved
+           profile name when there is one */
+        try{
+          var prof = JSON.parse(window.localStorage.getItem("fgProfile") || "null");
+          if (prof && prof.name && !rvCommentName.value) rvCommentName.value = prof.name;
+        }catch(e){}
+        rvCommentsModal.classList.add("open");
+        rvLoadComments();
+      }
+      function rvCloseComments(){
+        rvCommentsModal.classList.remove("open");
+        rvCommentsKey = null;
+      }
+      function rvCommentMsg(text){
+        rvCommentMessage.textContent = text;
+        rvCommentMessage.style.display = "block";
+      }
+      document.getElementById("rvActComment").addEventListener("click", rvOpenComments);
+      document.getElementById("rvCommentsClose").addEventListener("click", rvCloseComments);
+      document.getElementById("rvCommentCancel").addEventListener("click", rvCloseComments);
+      rvCommentsModal.addEventListener("click", function(e){
+        if (e.target === rvCommentsModal) rvCloseComments();
+      });
+      var rvCommentPosting = false;
+      rvCommentForm.addEventListener("submit", function(event){
+        event.preventDefault();
+        if (rvCommentPosting || !rvCommentsKey) return;
+        var name = rvCommentName.value.trim();
+        var text = rvCommentText.value.trim();
+        if (name.length < 1 || name.length > 40){
+          rvCommentMsg("Apna naam likhein (1–40 characters)।");
+          return;
+        }
+        if (text.length < 1 || text.length > 300){
+          rvCommentMsg("Comment likhein (1–300 characters)।");
+          return;
+        }
+        var key = rvCommentsKey;
+        if (!rvIsGlobalKey(key)){
+          /* a local video: the comment never leaves this phone */
+          var all = rvLocalCommentsAll();
+          if (!Array.isArray(all[key])) all[key] = [];
+          all[key].push({ id:"l" + Date.now().toString(36), name:name, text:text, created_at:new Date().toISOString() });
+          rvLsSet(RV_LCOMMENTS_KEY, all);
+          rvCommentText.value = "";
+          rvRenderComments(all[key]);
+          if (rvActionKey === key) rvRenderActionBar();
+          return;
+        }
+        rvCommentPosting = true;
+        rvCommentMsg("Comment post ho raha hai…");
+        fetch("/api/reels?action=comment", {
+          method:"POST", cache:"no-store",
+          headers:{ "Content-Type":"application/json" },
+          body: JSON.stringify({ key:key, name:name, text:text })
+        }).then(function(r){
+          return r.json().catch(function(){ return null; }).then(function(data){
+            return { status:r.status, data:data };
+          });
+        }).then(function(out){
+          rvCommentPosting = false;
+          if (out.data && out.data.ok && out.data.comment){
+            rvCommentText.value = "";
+            rvCommentMessage.style.display = "none";
+            rvAdjustCounts(key, "comments", 1);
+            if (rvActionKey === key) rvRenderActionBar();
+            rvLoadComments();
+          } else {
+            rvCommentMsg("Comment post nahi hua — dobara try karein।");
+          }
+        }).catch(function(){
+          rvCommentPosting = false;
+          rvCommentMsg("Comment post nahi hua — dobara try karein।");
+        });
+      });
+      /* owner-only: with this phone's saved admin code, a
+         global comment's ✕ deletes it for everyone */
+      function rvDeleteComment(id){
+        var key = rvCommentsKey;
+        var code = rvAdminCode();
+        if (!key || !code) return;
+        fetch("/api/reels?action=delete-comment", {
+          method:"POST", cache:"no-store",
+          headers:{ "Content-Type":"application/json" },
+          body: JSON.stringify({ code:code, id:+id || id })
+        }).then(function(r){
+          return r.json().catch(function(){ return null; }).then(function(data){
+            return { status:r.status, data:data };
+          });
+        }).then(function(out){
+          if (out.status === 401){
+            rvCommentMsg("Code galat hai — comment delete nahi hua।");
+            return;
+          }
+          if (out.data && out.data.ok){
+            rvAdjustCounts(key, "comments", -1);
+            if (rvActionKey === key) rvRenderActionBar();
+            rvLoadComments();
+          } else {
+            rvCommentMsg("Comment delete nahi hua — dobara try karein।");
+          }
+        }).catch(function(){
+          rvCommentMsg("Comment delete nahi hua — dobara try karein।");
+        });
+      }
+      /* ================= end ACTION BAR ================= */
 
       /* Restore the feed on load: replay Dil, the shared
          list (still empty at this point — it is fetched when
