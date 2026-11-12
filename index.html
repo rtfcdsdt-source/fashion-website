@@ -533,22 +533,87 @@
         border-radius:999px;padding:8px 14px;font-size:14px;font-weight:700;
       }
       .rv-back:active{background:#262626}
-      /* ---------- category chips — the Shop button's own line ----------
-         The category boxes sit in the SAME line as the ← Shop
-         button, to its right, inside the top bar — the Shop
-         button itself never moves. Every chip wears the Shop
-         button's own deep-black pill (same #171717 ground,
-         same #333 border, same white bold text); the chip for
-         the category on screen keeps that black ground and
-         gains a white border, so the row stays all-black like
-         the owner asked and the current category still reads
-         at a glance. The row scrolls sideways INSIDE itself
-         on a narrow phone (the page never scrolls sideways),
-         and the top bar's right padding keeps the chips clear
-         of the fixed logo button in the corner. */
+      /* ---------- search: the icon in the top bar + its page ----------
+         The magnifying-glass button sits at the RIGHT end
+         of the top bar — the one pinned bar every section
+         shares (All, Dance, Movies, Trailers, Gym, Music),
+         so the icon stands in the same place in all of
+         them, pushed to the bar's right corner by
+         margin-left:auto, clear of the Add-video logo
+         button's reserved corner beyond it. It wears the
+         Shop pill's own deep-black round style. Tapping it
+         opens the SEARCH PAGE below: a separate full-screen
+         page (fixed, above the reels view, below the
+         popups) whose top holds a back button and ONE
+         search box — and nothing else. Results appear
+         under the box only as the visitor types; with the
+         box empty the page shows no grid at all. */
+      .rv-searchbtn{
+        flex:none;margin-left:auto;width:38px;height:38px;border-radius:50%;
+        border:1px solid #333;background:#171717;color:#fff;cursor:pointer;
+        display:flex;align-items:center;justify-content:center;padding:0;
+        -webkit-tap-highlight-color:transparent;
+      }
+      .rv-searchbtn:active{background:#262626}
+      .rv-searchbtn svg{width:19px;height:19px;display:block}
+      .rv-searchview{
+        position:fixed;inset:0;z-index:85;background:#000;color:#fff;
+        font-family:Arial,Helvetica,sans-serif;display:none;
+        overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;
+      }
+      .rv-searchview.open{display:block}
+      .rv-searchbar{
+        position:sticky;top:0;z-index:2;background:#000;
+        display:flex;align-items:center;gap:10px;padding:12px 14px;
+      }
+      .rv-searchinput{
+        flex:1;min-width:0;padding:11px 16px;border-radius:999px;
+        border:1px solid #444;background:#171717;color:#fff;outline:none;
+        font-size:15px;font-family:inherit;
+      }
+      .rv-searchinput:focus{border-color:#888}
+      .rv-searchinput::placeholder{color:#999}
+      .rv-sresults{
+        width:100%;max-width:1120px;margin:0 auto;padding:4px 8px 24px;
+        display:flex;flex-direction:column;gap:8px;
+      }
+      .rv-sresult{
+        display:flex;align-items:center;gap:12px;width:100%;text-align:left;
+        background:#111;border:1px solid #252525;border-radius:12px;
+        padding:8px;cursor:pointer;color:#fff;font-family:inherit;
+        -webkit-tap-highlight-color:transparent;
+      }
+      .rv-sresult:active{background:#1c1c1c}
+      .rv-sr-thumb{
+        flex:none;width:112px;aspect-ratio:16/9;border-radius:8px;
+        overflow:hidden;background:#1a1a1a;
+      }
+      .rv-sr-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+      .rv-sr-title{font-size:14px;font-weight:700;line-height:1.4;overflow-wrap:anywhere;min-width:0}
+      .rv-sr-none{color:#999;text-align:center;font-size:14px;line-height:1.6;padding:36px 18px;margin:0}
+      .rv-sr-none[hidden]{display:none}
+      /* ---------- category chips — their own row under the top bar ----------
+         The category boxes sit in their OWN row directly under
+         the top bar, in the page's normal flow — NOT pinned.
+         The owner asked that on scroll ONLY the ← Shop pill
+         stays fixed at the top: the chips scroll away with
+         the content exactly like the big player frame does,
+         and they are back in their place when the visitor
+         scrolls back up. Every chip wears the Shop button's
+         own deep-black pill (same #171717 ground, same #333
+         border, same white bold text); the chip for the
+         category on screen keeps that black ground and gains
+         a white border, so the row stays all-black like the
+         owner asked and the current category still reads at
+         a glance. The row scrolls sideways INSIDE itself on
+         a narrow phone (the page never scrolls sideways).
+         This row is SHARED by every category — All, Dance,
+         Movies, Trailers, Gym, Music and any added later —
+         because there is exactly one of it, above both the
+         feed and the category views. */
       .rv-cats{
-        flex:1;min-width:0;display:flex;align-items:center;gap:8px;
-        overflow-x:auto;overflow-y:hidden;padding:6px 2px;
+        display:flex;align-items:center;gap:8px;background:#000;
+        overflow-x:auto;overflow-y:hidden;padding:4px 14px 10px;
         scrollbar-width:none;-webkit-overflow-scrolling:touch;
       }
       .rv-cats::-webkit-scrollbar{display:none}
@@ -562,13 +627,14 @@
       .rv-cat.is-active{background:#000;border-color:#fff}
       .rv-cat.is-active:active{background:#000}
       /* the Movies sub-genre row: a second row of the same
-         black pills, shown BELOW the top bar only while the
-         Movies category is on screen; it sticks under the
-         top bar while the movie list scrolls beneath it */
+         black pills, shown BELOW the category row only while
+         the Movies category is on screen. Like the category
+         row it is NOT pinned — it scrolls away with the
+         content and returns when the visitor scrolls back */
       .rv-subbar{
-        position:sticky;top:62px;z-index:6;background:#000;
+        z-index:6;background:#000;
         display:flex;align-items:center;gap:8px;
-        padding:2px 76px 10px 14px;
+        padding:2px 14px 10px;
         overflow-x:auto;overflow-y:hidden;
         scrollbar-width:none;-webkit-overflow-scrolling:touch;
       }
@@ -579,9 +645,10 @@
          pinned: they scroll away with the page exactly like
          All and Dance (a pinned pair was tried and the owner
          asked for the earlier scroll-away behaviour back).
-         Only the chip rows above them — the top bar and the
-         sub-genre row — stay fixed, on their solid black
-         backgrounds, so nothing ever shows through them. */
+         The chip rows above them scroll away too — the ONLY
+         thing pinned at the top is the ← Shop pill in the
+         top bar, on its solid black background, so nothing
+         ever shows through it. */
       /* the empty state for a category with nothing in it yet
          (Music): one quiet line where the
          feed would be — no invented videos stand in for it */
@@ -909,8 +976,14 @@
         cursor:grab;touch-action:none;z-index:75;
         -webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;
         user-select:none;-webkit-user-select:none;
-        transition:transform .15s ease;
+        transition:transform .15s ease,opacity .25s ease,visibility .25s ease;
       }
+      /* scrolled away: the owner asked that on scroll ONLY the
+         ← Shop pill stays — so once the view leaves the top,
+         the script adds .rv-away and this button fades out
+         wherever it was dropped; scrolling back to the top
+         removes the class and it is back in its place */
+      .rv-add.rv-away{opacity:0;visibility:hidden;pointer-events:none}
       /* the button IS the user's own red clapperboard logo by
          itself — no orange circle, no ring, no round button behind
          it — exactly like the bottom logo dock; tapping it opens
@@ -1057,29 +1130,43 @@
          the back button returns to the shop. Nothing here navigates
          away. -->
     <div class="reels-view" id="reelsView" role="dialog" aria-modal="true" aria-label="Video Reels" aria-hidden="true">
+      <!-- the top bar is the one thing pinned at the top
+           while the view scrolls (owner's order): it holds
+           the ← Shop pill at its left and, at its right
+           corner, the SEARCH icon — one shared bar, so the
+           icon stands in the same place in every section
+           (All, Dance, Movies, Trailers, Gym, Music).
+           Everything else — the category row and the
+           sub-genre row below, the Add-video logo button —
+           scrolls away with the content and returns when
+           the visitor scrolls back -->
       <div class="rv-topbar">
         <button class="rv-back" id="rvBack" type="button" aria-label="Back to Fashion Goals shop">← Shop</button>
-        <!-- category boxes in the Shop button's OWN line, to
-             its right: the Shop button stays fixed exactly
-             where it always was, and the boxes start from
-             that same line. Every box is the Shop button's
-             own deep-black pill. Tapping one filters the
-             feed below (see the CATEGORIES block in the
-             script); Movies also opens the sub-genre row
-             under this bar. -->
-        <nav class="rv-cats" id="rvCats" aria-label="Video categories">
-          <button class="rv-cat is-active" type="button" data-cat="all">All</button>
-          <button class="rv-cat" type="button" data-cat="dance">Dance</button>
-          <button class="rv-cat" type="button" data-cat="movies">Movies</button>
-          <button class="rv-cat" type="button" data-cat="trailers">Trailers</button>
-          <button class="rv-cat" type="button" data-cat="gym">Gym</button>
-          <button class="rv-cat" type="button" data-cat="music">Music</button>
-        </nav>
+        <button class="rv-searchbtn" id="rvSearchBtn" type="button" aria-label="Search videos">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20.5 20.5 16.6 16.6"/></svg>
+        </button>
       </div>
+      <!-- category boxes in their OWN row under the top bar,
+           in the normal flow so they scroll away with the
+           content. Every box is the Shop button's own
+           deep-black pill. Tapping one filters the feed
+           below (see the CATEGORIES block in the script);
+           Movies also opens the sub-genre row under this
+           one. This single shared row serves every category,
+           present and future. -->
+      <nav class="rv-cats" id="rvCats" aria-label="Video categories">
+        <button class="rv-cat is-active" type="button" data-cat="all">All</button>
+        <button class="rv-cat" type="button" data-cat="dance">Dance</button>
+        <button class="rv-cat" type="button" data-cat="movies">Movies</button>
+        <button class="rv-cat" type="button" data-cat="trailers">Trailers</button>
+        <button class="rv-cat" type="button" data-cat="gym">Gym</button>
+        <button class="rv-cat" type="button" data-cat="music">Music</button>
+      </nav>
       <!-- the Movies sub-genre row: hidden until the Movies
            box is tapped, then it shows BELOW the category
-           line — inside a genre there are only that genre's
-           movies, nothing else -->
+           row — inside a genre there are only that genre's
+           movies, nothing else. It scrolls away with the
+           content like everything except the Shop pill -->
       <div class="rv-subbar" id="rvSubBar" hidden>
         <button class="rv-cat is-active" type="button" data-genre="">All Movies</button>
         <button class="rv-cat" type="button" data-genre="Horror">Horror</button>
@@ -1184,6 +1271,25 @@
       <div class="rv-catview" id="rvGymView" hidden>
         <div class="rv-stage" id="rvGymStage"></div>
         <div class="rv-tgrid" id="rvGymGrid"></div>
+      </div>
+
+      <!-- the SEARCH PAGE: opened by the magnifying-glass
+           icon at the top bar's right corner. A separate
+           page of its own — at the top a back button and
+           ONE search box, and below it the matching videos
+           as tappable cards while the visitor types. While
+           the box is empty there is NO grid under it at
+           all: just the box. Tapping a result closes this
+           page and plays that video in the big top frame;
+           the back button returns to the videos as they
+           were. See the SEARCH block in the script. -->
+      <div class="rv-searchview" id="rvSearchView" role="dialog" aria-modal="true" aria-label="Search videos" aria-hidden="true">
+        <div class="rv-searchbar">
+          <button class="rv-back" id="rvSearchBack" type="button" aria-label="Back to videos">←</button>
+          <input class="rv-searchinput" id="rvSearchInput" type="search" placeholder="Search videos…" autocomplete="off" aria-label="Search videos by title" />
+        </div>
+        <div class="rv-sresults" id="rvSearchResults"></div>
+        <p class="rv-sr-none" id="rvSearchNone" hidden>Is naam ka koi video nahi mila।</p>
       </div>
 
       <div class="rv-modal" id="rvUploadModal">
@@ -1720,6 +1826,9 @@
         rvView.setAttribute("aria-hidden", "false");
         document.body.style.overflow = "hidden";
         rvView.scrollTop = 0;
+        /* back at the top, the Add-video logo button is back
+           in its place too (see the scroll listener below) */
+        rvAddBtn.classList.remove("rv-away");
         /* mount the big frame's real player, and fetch the
            SHARED reels list — if it brings anything new the
            feed rebuilds with it merged in; any failure leaves
@@ -1734,6 +1843,9 @@
       }
       function rvCloseReels(){
         rvCloseUpload();
+        /* the search page never outlives the reels view:
+           leaving for the shop closes it too */
+        if (typeof rvCloseSearch === "function") rvCloseSearch();
         /* a turned (landscape) frame is restored to its
            normal inline state before the view goes away, so
            the shop never inherits a rotated card or a locked
@@ -1751,6 +1863,22 @@
       document.getElementById("rvBack").addEventListener("click", rvCloseReels);
       /* the bottom clapperboard logo dock opens the reels view */
       document.getElementById("logoDock").addEventListener("click", rvOpenReels);
+
+      /* ----- scroll: ONLY the ← Shop pill stays -----
+         The category row and the Movies sub-genre row sit in
+         the normal flow, so they scroll away with the content
+         and return by themselves. The Add-video logo button
+         is position:fixed (it can be dragged anywhere), so it
+         cannot scroll with the page — instead it fades out
+         once the view leaves the top and comes back, in the
+         exact spot it was dropped, when the visitor scrolls
+         back to the top. ONE listener on the view itself, so
+         every category — All, Dance, Movies, Trailers, Gym,
+         Music and any added later — behaves the same. */
+      rvView.addEventListener("scroll", function(){
+        if (rvView.scrollTop > 24) rvAddBtn.classList.add("rv-away");
+        else rvAddBtn.classList.remove("rv-away");
+      }, { passive:true });
 
       function rvOpenUpload(){
         rvModal.classList.add("open");
@@ -3172,9 +3300,10 @@
       /* ================= end BUILT-IN REELS ================= */
 
       /* ================= CATEGORIES + MOVIES =================
-         The category boxes in the Shop button's own line
+         The category boxes in their own row under the top bar
          (All / Dance / Movies / Trailers / Gym / Music — see
-         .rv-cats in the styles and the top bar markup) filter
+         .rv-cats in the styles and the markup under the top
+         bar) filter
          THIS feed; nothing navigates away and no second page
          exists. The filter is one question — rvCardInCat —
          and rvRelayout is its only gate: a card the current
@@ -10214,6 +10343,114 @@
         }
       })();
       /* ================= end CATEGORIES + MOVIES ================= */
+
+      /* ================= SEARCH =================
+         The magnifying-glass button at the right corner of
+         the top bar — the one pinned bar every section
+         shares, so the icon is in the same place in All,
+         Dance, Movies, Trailers, Gym and Music — opens the
+         SEARCH PAGE: a separate full-screen page whose top
+         holds a back button and ONE search box, and nothing
+         else. As the visitor types, the videos whose TITLE
+         matches appear under the box as tappable cards;
+         while the box is empty the page shows nothing under
+         it at all — no pre-filled grid. Tapping a result
+         closes the page and plays that video in the big
+         top frame, through the very same promotion a tap
+         on a feed card makes. The searchable list is read
+         from the feed cards as they stand each time, so it
+         always covers the videos the visitor can actually
+         watch here — a card added with a title is found by
+         that title; the baked-in Dil De Mohalle card is
+         found by its own name, the one title the page
+         itself knows. Library cards that carry no title
+         have nothing to match against. */
+      var rvSearchViewEl = document.getElementById("rvSearchView");
+      var rvSearchInputEl = document.getElementById("rvSearchInput");
+      var rvSearchResultsEl = document.getElementById("rvSearchResults");
+      var rvSearchNoneEl = document.getElementById("rvSearchNone");
+      function rvSearchTitleOf(card){
+        if (card._rvTitle) return card._rvTitle;
+        if (card === rvDilCardEl) return "Dil De Mohalle";
+        return "";
+      }
+      function rvSearchRun(){
+        var q = (rvSearchInputEl.value || "").trim().toLowerCase();
+        rvSearchResultsEl.innerHTML = "";
+        if (!q){ rvSearchNoneEl.hidden = true; return; }
+        var shown = 0;
+        for (var i = 0; i < rvOrder.length && shown < 60; i++){
+          var card = rvOrder[i];
+          var title = rvSearchTitleOf(card);
+          if (!title || title.toLowerCase().indexOf(q) === -1) continue;
+          shown++;
+          (function(card, title){
+            var row = document.createElement("button");
+            row.type = "button";
+            row.className = "rv-sresult";
+            row.setAttribute("aria-label", "Play: " + title);
+            var thumb = document.createElement("span");
+            thumb.className = "rv-sr-thumb";
+            if (card._rvYtId){
+              var img = document.createElement("img");
+              img.src = "https://i.ytimg.com/vi/" + card._rvYtId + "/hqdefault.jpg";
+              img.alt = "";
+              img.loading = "lazy";
+              thumb.appendChild(img);
+            }
+            var t = document.createElement("span");
+            t.className = "rv-sr-title";
+            t.textContent = title;
+            row.appendChild(thumb);
+            row.appendChild(t);
+            row.addEventListener("click", function(){ rvSearchPlay(card); });
+            rvSearchResultsEl.appendChild(row);
+          })(card, title);
+        }
+        rvSearchNoneEl.hidden = shown > 0;
+      }
+      /* play a found video where videos play: close the
+         search page, bring up the feed category that holds
+         the video (All shows every feed video; a movie
+         needs the Movies category with no genre picked),
+         then promote the card into the big top frame
+         exactly like a tap on the card itself would */
+      function rvSearchPlay(card){
+        rvCloseSearch();
+        var rec = card._rvRecord || null;
+        if (rec && rec.movie){
+          if (rvCatState !== "movies") rvSetCat("movies");
+          if (rvGenreState) rvSetGenre("");
+        } else if (rvCatState === "movies" || rvCatState === "trailers" ||
+                   rvCatState === "gym" || rvCatState === "music"){
+          rvSetCat("all");
+        }
+        if (card._rvZone === "big"){
+          rvView.scrollTo({ top: 0, behavior: "smooth" });
+        } else {
+          rvTapPromote(card);
+        }
+      }
+      function rvOpenSearch(){
+        /* every opening starts empty: just the search box,
+           no results carried over from a previous visit */
+        rvSearchInputEl.value = "";
+        rvSearchResultsEl.innerHTML = "";
+        rvSearchNoneEl.hidden = true;
+        rvSearchViewEl.classList.add("open");
+        rvSearchViewEl.setAttribute("aria-hidden", "false");
+        rvSearchViewEl.scrollTop = 0;
+        rvSearchInputEl.focus();
+      }
+      function rvCloseSearch(){
+        if (!rvSearchViewEl.classList.contains("open")) return;
+        rvSearchViewEl.classList.remove("open");
+        rvSearchViewEl.setAttribute("aria-hidden", "true");
+      }
+      document.getElementById("rvSearchBtn").addEventListener("click", rvOpenSearch);
+      document.getElementById("rvSearchBack").addEventListener("click", rvCloseSearch);
+      rvSearchInputEl.addEventListener("input", rvSearchRun);
+      /* ================= end SEARCH ================= */
 
       /* ================= TRAILERS GRID =================
          The Trailers category works EXACTLY like All — the
