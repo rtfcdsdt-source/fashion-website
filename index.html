@@ -592,31 +592,44 @@
       .rv-sr-title{font-size:14px;font-weight:700;line-height:1.4;overflow-wrap:anywhere;min-width:0}
       .rv-sr-none{color:#999;text-align:center;font-size:14px;line-height:1.6;padding:36px 18px;margin:0}
       .rv-sr-none[hidden]{display:none}
-      /* ---------- category chips — their own row under the top bar ----------
-         The category boxes sit in their OWN row directly under
-         the top bar, in the page's normal flow — NOT pinned.
-         The owner asked that on scroll ONLY the ← Shop pill
-         stays fixed at the top: the chips scroll away with
-         the content exactly like the big player frame does,
-         and they are back in their place when the visitor
-         scrolls back up. Every chip wears the Shop button's
-         own deep-black pill (same #171717 ground, same #333
-         border, same white bold text); the chip for the
-         category on screen keeps that black ground and gains
-         a white border, so the row stays all-black like the
-         owner asked and the current category still reads at
-         a glance. The row scrolls sideways INSIDE itself on
-         a narrow phone (the page never scrolls sideways).
-         This row is SHARED by every category — All, Dance,
-         Movies, Trailers, Gym, Music and any added later —
-         because there is exactly one of it, above both the
-         feed and the category views. */
+      /* ---------- category chips — INSIDE the top bar ----------
+         The category boxes sit in the SAME row as the ← Shop
+         pill, right beside it, inside the one pinned top bar —
+         exactly as the owner's approved mockup showed: Shop at
+         the left, the chips next to it in the middle, the
+         search icon at the row's far right corner. The chips'
+         strip takes whatever width is left between the Shop
+         pill and the search icon and scrolls sideways INSIDE
+         itself on a narrow phone (swipe to reach every chip;
+         the page itself never scrolls sideways). On scroll the
+         strip gives way: once the view leaves the top, the
+         script adds .rv-chips-away to the reels view (same
+         scroll listener that fades the Add-video button) and
+         the strip shrinks and fades out, so ONLY the ← Shop
+         pill and the search icon stay pinned at the top;
+         scrolling back to the top removes the class and the
+         chips slide back into the row. Every chip wears the
+         Shop button's own deep-black pill (same #171717
+         ground, same #333 border, same white bold text); the
+         chip for the category on screen keeps that black
+         ground and gains a white border, so the row stays
+         all-black like the owner asked and the current
+         category still reads at a glance. This strip is
+         SHARED by every category — All, Dance, Movies,
+         Trailers, Gym, Music and any added later — because
+         there is exactly one of it, inside the one top bar
+         above both the feed and the category views. */
       .rv-cats{
-        display:flex;align-items:center;gap:8px;background:#000;
-        overflow-x:auto;overflow-y:hidden;padding:4px 14px 10px;
+        flex-grow:1;flex-shrink:1;flex-basis:0;min-width:0;
+        display:flex;align-items:center;gap:8px;background:transparent;
+        overflow-x:auto;overflow-y:hidden;padding:6px 2px;
         scrollbar-width:none;-webkit-overflow-scrolling:touch;
+        transition:flex-grow .28s ease,opacity .22s ease,visibility .22s ease;
       }
       .rv-cats::-webkit-scrollbar{display:none}
+      .reels-view.rv-chips-away .rv-cats{
+        flex-grow:0;opacity:0;visibility:hidden;pointer-events:none;
+      }
       .rv-cat{
         flex:none;border:1px solid #333;background:#171717;color:#fff;
         border-radius:999px;padding:8px 14px;font-size:14px;font-weight:700;
@@ -626,11 +639,11 @@
       .rv-cat:active{background:#262626}
       .rv-cat.is-active{background:#000;border-color:#fff}
       .rv-cat.is-active:active{background:#000}
-      /* the Movies sub-genre row: a second row of the same
-         black pills, shown BELOW the category row only while
-         the Movies category is on screen. Like the category
-         row it is NOT pinned — it scrolls away with the
-         content and returns when the visitor scrolls back */
+      /* the Movies sub-genre row: a row of the same black
+         pills, shown BELOW the top bar only while the Movies
+         category is on screen. It is NOT pinned — it scrolls
+         away with the content and returns when the visitor
+         scrolls back, exactly as it did before */
       .rv-subbar{
         z-index:6;background:#000;
         display:flex;align-items:center;gap:8px;
@@ -1131,40 +1144,44 @@
          away. -->
     <div class="reels-view" id="reelsView" role="dialog" aria-modal="true" aria-label="Video Reels" aria-hidden="true">
       <!-- the top bar is the one thing pinned at the top
-           while the view scrolls (owner's order): it holds
-           the ← Shop pill at its left and, at its right
-           corner, the SEARCH icon — one shared bar, so the
-           icon stands in the same place in every section
-           (All, Dance, Movies, Trailers, Gym, Music).
-           Everything else — the category row and the
-           sub-genre row below, the Add-video logo button —
-           scrolls away with the content and returns when
-           the visitor scrolls back -->
+           while the view scrolls (owner's order): ONE row
+           holding the ← Shop pill at its left, the category
+           boxes (All, Dance, Movies, Trailers, Gym, Music)
+           right beside it in the same line — a strip that
+           scrolls sideways inside itself on a narrow phone —
+           and, at the row's far right corner, the SEARCH
+           icon. One shared bar, so the row stands in the
+           same place in every section. On scroll the chips
+           fade out of the row and only the ← Shop pill and
+           the search icon stay pinned; scrolling back to
+           the top brings the chips back into the row. The
+           sub-genre row below the bar and the Add-video logo
+           button scroll / fade away with the content and
+           return when the visitor scrolls back, as before -->
       <div class="rv-topbar">
         <button class="rv-back" id="rvBack" type="button" aria-label="Back to Fashion Goals shop">← Shop</button>
+        <!-- category boxes in the SAME line as the Shop pill,
+             inside the top bar. Every box is the Shop button's
+             own deep-black pill. Tapping one filters the feed
+             below (see the CATEGORIES block in the script);
+             Movies also opens the sub-genre row under the bar.
+             This single shared strip serves every category,
+             present and future. -->
+        <nav class="rv-cats" id="rvCats" aria-label="Video categories">
+          <button class="rv-cat is-active" type="button" data-cat="all">All</button>
+          <button class="rv-cat" type="button" data-cat="dance">Dance</button>
+          <button class="rv-cat" type="button" data-cat="movies">Movies</button>
+          <button class="rv-cat" type="button" data-cat="trailers">Trailers</button>
+          <button class="rv-cat" type="button" data-cat="gym">Gym</button>
+          <button class="rv-cat" type="button" data-cat="music">Music</button>
+        </nav>
         <button class="rv-searchbtn" id="rvSearchBtn" type="button" aria-label="Search videos">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20.5 20.5 16.6 16.6"/></svg>
         </button>
       </div>
-      <!-- category boxes in their OWN row under the top bar,
-           in the normal flow so they scroll away with the
-           content. Every box is the Shop button's own
-           deep-black pill. Tapping one filters the feed
-           below (see the CATEGORIES block in the script);
-           Movies also opens the sub-genre row under this
-           one. This single shared row serves every category,
-           present and future. -->
-      <nav class="rv-cats" id="rvCats" aria-label="Video categories">
-        <button class="rv-cat is-active" type="button" data-cat="all">All</button>
-        <button class="rv-cat" type="button" data-cat="dance">Dance</button>
-        <button class="rv-cat" type="button" data-cat="movies">Movies</button>
-        <button class="rv-cat" type="button" data-cat="trailers">Trailers</button>
-        <button class="rv-cat" type="button" data-cat="gym">Gym</button>
-        <button class="rv-cat" type="button" data-cat="music">Music</button>
-      </nav>
       <!-- the Movies sub-genre row: hidden until the Movies
-           box is tapped, then it shows BELOW the category
-           row — inside a genre there are only that genre's
+           box is tapped, then it shows BELOW the top bar —
+           inside a genre there are only that genre's
            movies, nothing else. It scrolls away with the
            content like everything except the Shop pill -->
       <div class="rv-subbar" id="rvSubBar" hidden>
@@ -1827,8 +1844,10 @@
         document.body.style.overflow = "hidden";
         rvView.scrollTop = 0;
         /* back at the top, the Add-video logo button is back
-           in its place too (see the scroll listener below) */
+           in its place too, and the category chips are back
+           in the top bar's row (see the scroll listener below) */
         rvAddBtn.classList.remove("rv-away");
+        rvView.classList.remove("rv-chips-away");
         /* mount the big frame's real player, and fetch the
            SHARED reels list — if it brings anything new the
            feed rebuilds with it merged in; any failure leaves
@@ -1864,20 +1883,34 @@
       /* the bottom clapperboard logo dock opens the reels view */
       document.getElementById("logoDock").addEventListener("click", rvOpenReels);
 
-      /* ----- scroll: ONLY the ← Shop pill stays -----
-         The category row and the Movies sub-genre row sit in
-         the normal flow, so they scroll away with the content
-         and return by themselves. The Add-video logo button
-         is position:fixed (it can be dragged anywhere), so it
-         cannot scroll with the page — instead it fades out
-         once the view leaves the top and comes back, in the
-         exact spot it was dropped, when the visitor scrolls
-         back to the top. ONE listener on the view itself, so
-         every category — All, Dance, Movies, Trailers, Gym,
-         Music and any added later — behaves the same. */
+      /* ----- scroll: ONLY the ← Shop pill + search stay -----
+         The category chips now sit INSIDE the pinned top bar,
+         in the same row as the ← Shop pill, so they cannot
+         scroll away with the content by themselves — instead
+         this listener adds .rv-chips-away to the view once it
+         leaves the top and the chips shrink and fade out of
+         the row (see the .rv-cats styles), leaving ONLY the
+         ← Shop pill and the search icon pinned at the top;
+         scrolling back to the top removes the class and the
+         chips return to the row. The Movies sub-genre row
+         sits in the normal flow below the bar, so it scrolls
+         away with the content and returns by itself, as
+         before. The Add-video logo button is position:fixed
+         (it can be dragged anywhere), so it cannot scroll
+         with the page — instead it fades out on the same
+         threshold and comes back, in the exact spot it was
+         dropped, when the visitor scrolls back to the top.
+         ONE listener on the view itself, so every category —
+         All, Dance, Movies, Trailers, Gym, Music and any
+         added later — behaves the same. */
       rvView.addEventListener("scroll", function(){
-        if (rvView.scrollTop > 24) rvAddBtn.classList.add("rv-away");
-        else rvAddBtn.classList.remove("rv-away");
+        if (rvView.scrollTop > 24){
+          rvAddBtn.classList.add("rv-away");
+          rvView.classList.add("rv-chips-away");
+        } else {
+          rvAddBtn.classList.remove("rv-away");
+          rvView.classList.remove("rv-chips-away");
+        }
       }, { passive:true });
 
       function rvOpenUpload(){
