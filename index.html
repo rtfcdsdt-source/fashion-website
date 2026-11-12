@@ -552,31 +552,14 @@
       }
       .rv-subbar::-webkit-scrollbar{display:none}
       .rv-subbar[hidden]{display:none}
-      /* ---------- Movies only: the big frame stays PINNED ----------
-         While the Movies category is on screen (any sub-genre),
-         the big top frame does not scroll away: it sticks
-         directly under the two sticky chip rows, and its
-         action row (Like / Views / Comment / Share / Save)
-         sticks directly under the frame, so the pair stays
-         put, YouTube-style, while the movie list scrolls
-         beneath them. The script measures the two sticky
-         offsets (chip rows height, then frame height) into
-         the --rv-mstick-top / --rv-mbar-top variables on the
-         view — see rvMoviesStickySync — so the pair sits
-         flush at every width. The .rv-movies-mode class is
-         on the view ONLY in the Movies category: in All,
-         Dance, Trailers, Gym and Music nothing here applies
-         and the frame scrolls away exactly as before. The
-         turned (landscape) frame is excluded — it is fixed
-         over the whole screen by its own rule and must not
-         be fought by this one. */
-      .reels-view.rv-movies-mode .rv-feed>.rv-card:first-of-type:not(.rv-rotated){
-        position:sticky;top:var(--rv-mstick-top,111px);z-index:5;
-      }
-      .reels-view.rv-movies-mode .rv-actionbar{
-        position:sticky;top:var(--rv-mbar-top,111px);z-index:5;margin-top:0;
-        box-shadow:0 14px 16px -12px rgba(0,0,0,.95);
-      }
+      /* ---------- Movies: the big frame scrolls away ----------
+         The Movies big frame and its action row are NOT
+         pinned: they scroll away with the page exactly like
+         All and Dance (a pinned pair was tried and the owner
+         asked for the earlier scroll-away behaviour back).
+         Only the chip rows above them — the top bar and the
+         sub-genre row — stay fixed, on their solid black
+         backgrounds, so nothing ever shows through them. */
       /* the empty state for a category with nothing in it yet
          (Music): one quiet line where the
          feed would be — no invented videos stand in for it */
@@ -586,14 +569,34 @@
       }
       .rv-soon span{display:block;font-size:13px;font-weight:400;color:#777}
       .rv-soon[hidden]{display:none}
-      /* ---------- Trailers: a plain grid, nothing else ----------
-         While the Trailers category is on screen the feed
-         steps aside (the script hides it) and this grid is
-         the whole view: three columns of tall trailer-reel
-         cards, with one wide trailer card spanning the full
-         row woven after every three — the All grid's own
-         rhythm. No big frame, no action bar, no extra rows:
-         just the cards, and tapping one plays it in place. */
+      /* ---------- Trailers / Gym: big frame + action row + grid ----------
+         While the Trailers or Gym category is on screen the
+         feed steps aside (the script hides it) and that
+         category's own view (.rv-catview) is the whole view,
+         arranged EXACTLY like All: at the top ONE BIG FRAME
+         (the .rv-stage) holding the category's current video
+         at its full own size, directly below it the same
+         Like / Views / Comment / Share / Save action row,
+         and below that the grid — three columns of tall reel
+         cards, with one wide card spanning the full row
+         woven after every three, the All grid's own rhythm.
+         Tapping ANY grid card — a tall reel just as much as
+         a wide video — loads that video into the big frame
+         and plays it BIG there; nothing ever plays small
+         inside its own grid card. The big frame is NOT
+         pinned: it scrolls away with the page, exactly like
+         All (no category pins its player). */
+      .rv-catview[hidden]{display:none}
+      .rv-stage{
+        width:100%;max-width:1120px;margin:0 auto;padding:8px 8px 0;
+      }
+      /* the stage card is a big top frame, so its player and
+         facade take the same let-out sizes the feed's
+         first-of-type card gets (see .rv-feed>.rv-card rules
+         further down) */
+      .rv-stage>.rv-card .rv-fit-tall{width:min(100%,54vh);width:min(100%,54dvh)}
+      .rv-stage>.rv-card .rv-fit-portrait{width:min(100%,68vh);width:min(100%,68dvh)}
+      .rv-stage>.rv-card .rv-fit-square{width:min(100%,80vh);width:min(100%,80dvh)}
       .rv-tgrid{
         width:100%;max-width:1120px;margin:0 auto;padding:8px;
         display:grid;grid-template-columns:repeat(3,1fr);gap:8px;align-items:start;
@@ -1170,19 +1173,27 @@
            while that box is selected — nothing is
            invented to fill it -->
       <p class="rv-soon" id="rvSoon" hidden>Coming soon<span>Is category me videos jald aayenge।</span></p>
-      <!-- the Trailers grid: shown INSTEAD of the feed while
-           the Trailers box is selected — a plain grid of
-           trailer cards and nothing else: no sub-chips, no
-           big frame, no action bar (see the TRAILERS GRID
-           block in the script). The script fills it in
-           chunks as the visitor scrolls. -->
-      <div class="rv-tgrid" id="rvTrailerGrid" hidden></div>
-      <!-- the Gym grid: shown INSTEAD of the feed while the
-           Gym box is selected — a plain grid of gym cards and
-           nothing else, exactly like the Trailers grid above
-           (see the GYM GRID block in the script). The script
-           fills it in chunks as the visitor scrolls. -->
-      <div class="rv-tgrid" id="rvGymGrid" hidden></div>
+      <!-- the Trailers view: shown INSTEAD of the feed while
+           the Trailers box is selected — arranged exactly
+           like All: the stage at the top (the script puts the
+           big player frame there, with the one action bar
+           directly under it), then the grid of trailer cards
+           below. No sub-chips (see the TRAILERS GRID block in
+           the script). The script fills the grid in chunks as
+           the visitor scrolls. -->
+      <div class="rv-catview" id="rvTrailerView" hidden>
+        <div class="rv-stage" id="rvTrailerStage"></div>
+        <div class="rv-tgrid" id="rvTrailerGrid"></div>
+      </div>
+      <!-- the Gym view: shown INSTEAD of the feed while the
+           Gym box is selected — the same All-like arrangement
+           as the Trailers view above: big frame + action row
+           on top, the grid of gym cards below (see the GYM
+           GRID block in the script). -->
+      <div class="rv-catview" id="rvGymView" hidden>
+        <div class="rv-stage" id="rvGymStage"></div>
+        <div class="rv-tgrid" id="rvGymGrid"></div>
+      </div>
 
       <div class="rv-modal" id="rvUploadModal">
         <div class="rv-modal-box">
@@ -1933,9 +1944,6 @@
            feed rebuilds with it merged in; any failure leaves
            the feed exactly as it was */
         rvSyncPlayers();
-        /* if the view reopens still on the Movies category,
-           refresh the pinned frame's measured offsets */
-        if (typeof rvMoviesStickySync === "function") rvMoviesStickySync();
         rvFetchShared();
         if (typeof rvFetchActionStats === "function") rvFetchActionStats();
         /* the logo greets the visitor at the exact spot it was
@@ -10349,46 +10357,16 @@
          sync funnel put the right cards, the right big frame
          and the right single player on screen, and the view
          starts again from the top */
-      /* ----- Movies only: measure the pinned frame's offsets -----
-         The .rv-movies-mode styles pin the big frame and its
-         action row with position:sticky; their top offsets
-         depend on the chip rows' height and on the frame's
-         own height, so they are measured here and handed to
-         the styles as variables on the view. Called on every
-         category / genre change (through rvApplyCat), on
-         every big-frame change of hands (through
-         rvActionSync), when the view opens and on resize —
-         so the pinned pair always sits flush under the chip
-         rows, whatever movie holds the frame. Outside the
-         Movies category it does nothing at all. */
-      function rvMoviesStickySync(){
-        if (!rvView || !rvView.classList.contains("rv-movies-mode")) return;
-        var topbar = rvView.querySelector(".rv-topbar");
-        var sub = document.getElementById("rvSubBar");
-        var big = rvBigCard();
-        if (!topbar || !big) return;
-        var top = topbar.offsetHeight + ((sub && !sub.hidden) ? sub.offsetHeight : 0);
-        var h = big.offsetHeight;
-        if (!top || !h) return; /* view closed: keep the last good offsets */
-        rvView.style.setProperty("--rv-mstick-top", top + "px");
-        rvView.style.setProperty("--rv-mbar-top", (top + h) + "px");
-      }
-      window.addEventListener("resize", rvMoviesStickySync);
       function rvApplyCat(){
         if (typeof rvRotateExit === "function") rvRotateExit();
         rvRelayout();
         rvSyncPromoteLayers();
         rvSyncEmpty();
-        rvMoviesStickySync();
         rvView.scrollTo({ top: 0 });
       }
       function rvSetCat(cat){
         rvCatState = cat;
         if (cat !== "movies") rvGenreState = "";
-        /* the pinned frame exists ONLY in the Movies
-           category (sub-genres included); every other
-           category drops the class and scrolls as before */
-        rvView.classList.toggle("rv-movies-mode", cat === "movies");
         var btns = document.querySelectorAll("#rvCats .rv-cat");
         for (var i = 0; i < btns.length; i++){
           btns[i].classList.toggle("is-active",
@@ -10399,29 +10377,35 @@
         if (cat === "movies") rvPaintGenreChips();
         var soon = document.getElementById("rvSoon");
         if (soon) soon.hidden = !rvIsSoonCat();
-        /* TRAILERS / GYM: the feed steps aside for the plain
-           grid of the category on screen, which is the whole
-           view while that category is up; any video still
-           playing in either grid is stopped the moment
-           another category takes over */
-        var tgrid = document.getElementById("rvTrailerGrid");
-        var ggrid = document.getElementById("rvGymGrid");
+        /* TRAILERS / GYM: the feed steps aside for the
+           category's own view — big frame + action row on
+           top, grid below, exactly like All (see the stage
+           helpers in the TRAILERS GRID block); any video
+           still playing in the other category's view is
+           stopped the moment another category takes over.
+           The stage itself is mounted and the action bar is
+           handed over by rvActionSync, which rvApplyCat
+           reaches through the usual sync funnel — it routes
+           to the stage while one of these categories is on
+           screen (see the ACTION BAR block). */
+        var tview = document.getElementById("rvTrailerView");
+        var gview = document.getElementById("rvGymView");
         if (cat === "trailers"){
           if (typeof rvGymStop === "function") rvGymStop();
           if (rvFeed) rvFeed.hidden = true;
-          if (ggrid) ggrid.hidden = true;
-          if (tgrid){ tgrid.hidden = false; rvTrailerEnsure(); }
+          if (gview) gview.hidden = true;
+          if (tview){ tview.hidden = false; rvTrailerEnsure(); rvTrailerStageEnsure(); }
         } else if (cat === "gym"){
           if (typeof rvTrailerStop === "function") rvTrailerStop();
           if (rvFeed) rvFeed.hidden = true;
-          if (tgrid) tgrid.hidden = true;
-          if (ggrid){ ggrid.hidden = false; rvGymEnsure(); }
+          if (tview) tview.hidden = true;
+          if (gview){ gview.hidden = false; rvGymEnsure(); rvGymStageEnsure(); }
         } else {
           if (typeof rvTrailerStop === "function") rvTrailerStop();
           if (typeof rvGymStop === "function") rvGymStop();
           if (rvFeed) rvFeed.hidden = false;
-          if (tgrid) tgrid.hidden = true;
-          if (ggrid) ggrid.hidden = true;
+          if (tview) tview.hidden = true;
+          if (gview) gview.hidden = true;
         }
         rvApplyCat();
       }
@@ -10451,21 +10435,31 @@
       /* ================= end CATEGORIES + MOVIES ================= */
 
       /* ================= TRAILERS GRID =================
-         The Trailers category is a PLAIN GRID ONLY — the
-         owner's call, exactly like the All grid: rows of
-         three tall trailer-reel cards (9:16) with one wide
-         trailer card (16:9) woven after every three, the
-         same "teen aur ek" rhythm the built-in library is
-         woven with; when the reels run out, the remaining
-         trailers follow in order. NOTHING else is in the
-         view: no sub-chips, no big player frame, no
-         Like/Views bar, no extra rows.
+         The Trailers category works EXACTLY like All — the
+         owner's call: rows of three tall trailer-reel cards
+         (9:16) with one wide trailer card (16:9) woven after
+         every three, the same "teen aur ek" rhythm the
+         built-in library is woven with; when the reels run
+         out, the remaining trailers follow in order. Above
+         the grid sits ONE BIG FRAME (the stage) holding the
+         current trailer at its full own size, with the one
+         Like / Views / Comment / Share / Save action row
+         directly under it — the feed's own action bar,
+         handed over while this category is on screen (see
+         rvStageActionSync and the guard in rvActionSync).
+         There are no sub-chips. The frame is NOT pinned: it
+         scrolls away with the page, exactly like All.
+         Tapping ANY grid card — a tall reel just as much as
+         a wide trailer — loads that video into the big
+         frame and plays it BIG there, the same
+         tap-to-promote behaviour as All / Dance; nothing
+         ever plays small inside its own grid card.
          The grid is NOT part of the feed: these cards never
          enter rvOrder, so All / Dance / Movies never see
          them and the feed's rotation, big frame and action
          bar are exactly as they were; rvSetCat simply hides
-         the feed and shows this grid while Trailers is the
-         category on screen.
+         the feed and shows this category's view while
+         Trailers is the category on screen.
          11,802 cards would be far too heavy to build at
          once, so the grid renders in chunks as the visitor
          scrolls (an intersection sentinel at its end pulls
@@ -10474,12 +10468,9 @@
          else. Every card is the SAME facade the feed uses
          (rvMakeFacade — big maxres thumbnail, the one-time
          hqdefault fallback and the grey-placeholder guard
-         included), and tapping a card plays that video by
-         swapping its facade for the real embed player IN
-         THE CARD, the same facade-for-player swap the big
-         frame uses. One trailer plays at a time: tapping
-         another card, switching category or leaving the
-         view puts the facade back. */
+         included). The stage's live player is the only one
+         in the view: switching category, closing the view
+         or hiding the tab puts its facade back. */
       var RV_TRAILER_WOVEN = (function(){
         var reels = RV_TRAILER_REEL_IDS.split(" ");
         var wide = RV_TRAILER_IDS.split(" ");
@@ -10496,6 +10487,109 @@
       var RV_TRAILER_CHUNK = 60;
       var rvTrailerBuilt = 0;      /* grid cards rendered so far */
       var rvTrailerPlaying = null; /* the grid card now holding the player */
+
+      /* ================= CATEGORY STAGES (Trailers + Gym) =================
+         Shared by the Trailers view below and the Gym view
+         further down: each of those categories gets a STAGE
+         — one big frame at the top of its view, exactly like
+         All's big top frame. The stage holds ONE card at a
+         time (the category's current video), built like a
+         feed card — same facade, same player swap — and the
+         feed's ONE action bar sits directly under it while
+         the category is on screen (rvActionSync routes to
+         rvStageActionSync below while rvCatState is
+         "trailers" or "gym", and takes the bar back for the
+         feed the moment a feed category returns). The stage
+         card is never in rvOrder: the feed's rotation and
+         counts are untouched, and the stage video's own
+         Like / Views / Comment / Share / Save numbers live
+         under its own key ("trailer-<id>" / "gym-<id>" —
+         see rvVideoKey), kept on this phone like the
+         Movies numbers. */
+      function rvStageCard(st, item){
+        var card = document.createElement("article");
+        card.className = "rv-card";
+        card._rvType = "youtube";
+        card._rvYtId = item.id;
+        card._rvFit = item.fit;
+        card._rvSrc = "https://www.youtube.com/embed/" + item.id + "?playsinline=1&rel=0";
+        card._rvTitle = st.title;
+        var rec = { ytid: item.id, url: "https://www.youtube.com/watch?v=" + item.id };
+        rec[st.kind] = true;
+        card._rvRecord = rec;
+        card._rvFacadeEl = rvMakeFacade(card);
+        card.appendChild(card._rvFacadeEl);
+        return card;
+      }
+      /* put a video on the stage: a fresh stage card takes
+         the frame (the old one is dropped whole), its real
+         player mounts, and — when the move came from a tap
+         on a grid card — it starts playing up in the big
+         frame, exactly like a tap-to-promote in the feed;
+         the view then scrolls up to the frame, like an add
+         or a promotion does there */
+      function rvStageSet(st, item, autoplay){
+        if (!st || !st.stageEl || !item) return;
+        st.item = item;
+        if (st.card) st.card.remove();
+        st.card = rvStageCard(st, item);
+        st.stageEl.insertBefore(st.card, st.stageEl.firstChild);
+        if (typeof rvStageActionSync === "function") rvStageActionSync();
+        if (autoplay) rvAutoplayCard(st.card);
+        rvView.scrollTo({ top: 0, behavior: "smooth" });
+      }
+      /* the stage the current category owns, or null while
+         a feed category (All / Dance / Movies / Music) is on
+         screen */
+      function rvStageCurrent(){
+        if (rvCatState === "trailers") return rvTrailerStageState;
+        if (rvCatState === "gym") return rvGymStageState;
+        return null;
+      }
+      /* the stage half of the action-bar funnel (see the
+         guard in rvActionSync): keep the ONE bar directly
+         under the stage card, switch it to the stage video,
+         count its one-per-phone view when its player
+         mounts, and mount the player itself while the view
+         is open — the exact mirror of what rvActionSync
+         does for the feed's big frame */
+      function rvStageActionSync(){
+        var st = rvStageCurrent();
+        if (!st || !st.card || !rvActionBarEl) return;
+        if (st.card.nextSibling !== rvActionBarEl){
+          st.stageEl.insertBefore(rvActionBarEl, st.card.nextSibling);
+        }
+        rvActionBarEl.hidden = false;
+        if (rvView.classList.contains("open")) rvMountPlayer(st.card);
+        var key = rvVideoKey(st.card);
+        var changed = key !== rvActionKey;
+        rvActionKey = key;
+        rvActionCard = st.card;
+        /* one view per phone per video — the same rule the
+           feed's bar applies */
+        if (key && rvView.classList.contains("open") && !rvSetHas(RV_VIEWED_KEY, key)){
+          rvSetToggle(RV_VIEWED_KEY, key, true);
+          rvAdjustCounts(key, "views", 1);
+          rvSendEvent(key, "view");
+        }
+        if (changed && rvIsGlobalKey(key) && !rvActionStatsLoaded) rvFetchActionStats();
+        rvRenderActionBar();
+      }
+      /* build the Trailers stage the first time the
+         category is tapped: the first trailer in the grid's
+         own order takes the big frame, paused like the
+         feed's big frame, until a grid card is tapped */
+      var rvTrailerStageState = {
+        stageEl: document.getElementById("rvTrailerStage"),
+        card: null, item: null, kind: "trailer", title: "Movie trailer"
+      };
+      function rvTrailerStageEnsure(){
+        var st = rvTrailerStageState;
+        if (!st.stageEl || st.card) return;
+        st.item = RV_TRAILER_WOVEN[0];
+        st.card = rvStageCard(st, st.item);
+        st.stageEl.insertBefore(st.card, st.stageEl.firstChild);
+      }
       function rvTrailerCard(item){
         var card = document.createElement("article");
         card.className = "rv-card rv-tcard" + (item.fit === "wide" ? " rv-twide" : "");
@@ -10546,70 +10640,72 @@
           });
         }
       }
-      /* put the playing card's facade back: a trailer's
-         player lives only while its card is the one playing */
+      /* put the stage card's facade back: the stage's
+         player lives only while the Trailers view is the
+         one on screen — switching category, closing the
+         view or hiding the tab drops it, and rvStageActionSync
+         mounts it again when the view returns */
       function rvTrailerStop(){
         var card = rvTrailerPlaying;
         rvTrailerPlaying = null;
-        if (!card) return;
-        var f = card.querySelector("iframe");
-        if (f) f.remove();
-        if (card._rvFacadeEl && !card.contains(card._rvFacadeEl)){
-          card.insertBefore(card._rvFacadeEl, card.firstChild);
+        if (card){
+          var f = card.querySelector("iframe");
+          if (f) f.remove();
+          if (card._rvFacadeEl && !card.contains(card._rvFacadeEl)){
+            card.insertBefore(card._rvFacadeEl, card.firstChild);
+          }
         }
+        var st = rvTrailerStageState;
+        if (st && st.card) rvShowFacade(st.card);
       }
+      /* tapping ANY grid card — a tall reel just as much
+         as a wide trailer — loads that video into the big
+         frame at the top and plays it BIG there; the grid
+         card itself keeps its facade, nothing ever plays
+         small inside the grid */
       (function(){
         var grid = document.getElementById("rvTrailerGrid");
         if (!grid) return;
         grid.addEventListener("click", function(ev){
           var t = ev.target;
           var card = (t && t.closest) ? t.closest(".rv-tcard") : null;
-          if (!card || card === rvTrailerPlaying) return;
-          rvTrailerStop();
-          var frame = document.createElement("iframe");
-          frame.className = "rv-player rv-fit-" + (card._rvFit || "wide");
-          frame.src = "https://www.youtube.com/embed/" + card._rvYtId +
-                      "?playsinline=1&rel=0&autoplay=1";
-          frame.title = "Movie trailer";
-          frame.setAttribute("allowfullscreen", "");
-          frame.setAttribute("allow",
-            "accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share");
-          frame.referrerPolicy = "strict-origin-when-cross-origin";
-          if (card._rvFacadeEl && card.contains(card._rvFacadeEl)){
-            card.replaceChild(frame, card._rvFacadeEl);
-          } else {
-            card.insertBefore(frame, card.firstChild);
-          }
-          rvTrailerPlaying = card;
+          if (!card) return;
+          rvStageSet(rvTrailerStageState,
+            { id: card._rvYtId, fit: card._rvFit || "wide" }, true);
         });
       })();
       /* ================= end TRAILERS GRID ================= */
 
       /* ================= GYM GRID =================
-         The Gym category is a PLAIN GRID ONLY — exactly
-         like the Trailers grid the owner approved: rows of
+         The Gym category works EXACTLY like All — the same
+         arrangement as the Trailers view above: rows of
          three tall gym-reel cards (9:16) with one wide gym
          video card (16:9) woven after every three, the same
          "teen aur ek" rhythm; when the reels run out, the
-         remaining gym videos follow in order. NOTHING else
-         is in the view: no sub-chips, no big player frame,
-         no Like/Views bar, no extra rows.
+         remaining gym videos follow in order. Above the
+         grid sits ONE BIG FRAME (the stage — see CATEGORY
+         STAGES in the Trailers block) holding the current
+         gym video at its full own size, with the one
+         Like / Views / Comment / Share / Save action row
+         directly under it. There are no sub-chips, and the
+         frame is NOT pinned: it scrolls away with the page,
+         exactly like All. Tapping ANY grid card — a tall
+         reel just as much as a wide video — loads that
+         video into the big frame and plays it BIG there;
+         nothing ever plays small inside its own grid card.
          The grid is NOT part of the feed: these cards never
          enter rvOrder, so All / Dance / Movies never see
          them; rvSetCat simply hides the feed and shows this
-         grid while Gym is the category on screen.
+         category's view while Gym is the category on screen.
          28,190 cards would be far too heavy to build at
          once, so the grid renders in chunks as the visitor
          scrolls — the same intersection-sentinel pattern as
          the Trailers grid — and every card is the SAME
-         facade the feed uses (rvMakeFacade — big maxres
-         thumbnail, the one-time hqdefault fallback and the
-         grey-placeholder guard included). Tapping a card
-         plays that video by swapping its facade for the
-         real embed player IN THE CARD. One gym video plays
-         at a time: tapping another card, switching
-         category, closing the view or hiding the tab puts
-         the facade back. */
+         facade the feed uses (rvMakeFacade — the one-time
+         hqdefault fallback and the grey-placeholder guard
+         included). The stage's live player is the only one
+         in the view: switching category, closing the view
+         or hiding the tab puts its facade back. */
       var RV_GYM_WOVEN = (function(){
         var reels = RV_GYM_REEL_IDS.split(" ");
         var wide = RV_GYM_IDS.split(" ");
@@ -10626,6 +10722,21 @@
       var RV_GYM_CHUNK = 60;
       var rvGymBuilt = 0;      /* grid cards rendered so far */
       var rvGymPlaying = null; /* the grid card now holding the player */
+      /* the Gym stage (see CATEGORY STAGES in the Trailers
+         block): built the first time the category is
+         tapped — the first gym video in the grid's own
+         order takes the big frame */
+      var rvGymStageState = {
+        stageEl: document.getElementById("rvGymStage"),
+        card: null, item: null, kind: "gym", title: "Gym video"
+      };
+      function rvGymStageEnsure(){
+        var st = rvGymStageState;
+        if (!st.stageEl || st.card) return;
+        st.item = RV_GYM_WOVEN[0];
+        st.card = rvStageCard(st, st.item);
+        st.stageEl.insertBefore(st.card, st.stageEl.firstChild);
+      }
       function rvGymCard(item){
         var card = document.createElement("article");
         card.className = "rv-card rv-tcard" + (item.fit === "wide" ? " rv-twide" : "");
@@ -10676,41 +10787,38 @@
           });
         }
       }
-      /* put the playing card's facade back: a gym video's
-         player lives only while its card is the one playing */
+      /* put the stage card's facade back: the stage's
+         player lives only while the Gym view is the one on
+         screen — switching category, closing the view or
+         hiding the tab drops it, and rvStageActionSync
+         mounts it again when the view returns */
       function rvGymStop(){
         var card = rvGymPlaying;
         rvGymPlaying = null;
-        if (!card) return;
-        var f = card.querySelector("iframe");
-        if (f) f.remove();
-        if (card._rvFacadeEl && !card.contains(card._rvFacadeEl)){
-          card.insertBefore(card._rvFacadeEl, card.firstChild);
+        if (card){
+          var f = card.querySelector("iframe");
+          if (f) f.remove();
+          if (card._rvFacadeEl && !card.contains(card._rvFacadeEl)){
+            card.insertBefore(card._rvFacadeEl, card.firstChild);
+          }
         }
+        var st = rvGymStageState;
+        if (st && st.card) rvShowFacade(st.card);
       }
+      /* tapping ANY grid card — a tall reel just as much
+         as a wide video — loads that video into the big
+         frame at the top and plays it BIG there; the grid
+         card itself keeps its facade, nothing ever plays
+         small inside the grid */
       (function(){
         var grid = document.getElementById("rvGymGrid");
         if (!grid) return;
         grid.addEventListener("click", function(ev){
           var t = ev.target;
           var card = (t && t.closest) ? t.closest(".rv-tcard") : null;
-          if (!card || card === rvGymPlaying) return;
-          rvGymStop();
-          var frame = document.createElement("iframe");
-          frame.className = "rv-player rv-fit-" + (card._rvFit || "wide");
-          frame.src = "https://www.youtube.com/embed/" + card._rvYtId +
-                      "?playsinline=1&rel=0&autoplay=1";
-          frame.title = "Gym video";
-          frame.setAttribute("allowfullscreen", "");
-          frame.setAttribute("allow",
-            "accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share");
-          frame.referrerPolicy = "strict-origin-when-cross-origin";
-          if (card._rvFacadeEl && card.contains(card._rvFacadeEl)){
-            card.replaceChild(frame, card._rvFacadeEl);
-          } else {
-            card.insertBefore(frame, card.firstChild);
-          }
-          rvGymPlaying = card;
+          if (!card) return;
+          rvStageSet(rvGymStageState,
+            { id: card._rvYtId, fit: card._rvFit || "wide" }, true);
         });
       })();
       /* ================= end GYM GRID ================= */
@@ -10969,6 +11077,10 @@
          baked-in Dil De Mohalle card is "dil", the built-in
          library is "builtin-<youtube id>", and a phone's
          own local videos are "local-<their local id>".
+         Movies are "movie-<youtube id>", and the Trailers /
+         Gym stage videos are "trailer-<youtube id>" /
+         "gym-<youtube id>" — like movies, those counts stay
+         on this phone.
          Counts for "shared-*", "builtin-*" and "dil" are GLOBAL — one
          count for everyone, kept server-side through
          /api/reels?action=… ; for "local-*" everything stays
@@ -11007,6 +11119,8 @@
         if (rec && rec.shared) return "shared-" + rec.sid;
         if (rec && rec.builtin) return "builtin-" + rec.ytid;
         if (rec && rec.movie) return "movie-" + rec.ytid;
+        if (rec && rec.trailer) return "trailer-" + rec.ytid;
+        if (rec && rec.gym) return "gym-" + rec.ytid;
         if (rec && rec.lid) return "local-" + rec.lid;
         if (card._rvYtId) return "local-" + card._rvYtId;
         var s = (rec && (rec.url || rec.src)) || card._rvSrc || "";
@@ -11124,6 +11238,18 @@
          it when the feed holds no video at all */
       function rvActionSync(){
         if (!rvActionBarEl) return;
+        /* TRAILERS / GYM: while one of those categories is
+           on screen, the ONE bar belongs to that category's
+           big frame (its stage), not to the hidden feed's —
+           the stage sync keeps it under the stage card and
+           pointed at the stage video, and the feed's own
+           sync below takes it back the moment a feed
+           category returns */
+        if ((rvCatState === "trailers" || rvCatState === "gym") &&
+            typeof rvStageActionSync === "function"){
+          rvStageActionSync();
+          return;
+        }
         var big = rvBigCard();
         if (!big){
           rvActionBarEl.hidden = true;
@@ -11149,9 +11275,6 @@
         }
         if (changed && rvIsGlobalKey(key) && !rvActionStatsLoaded) rvFetchActionStats();
         rvRenderActionBar();
-        /* a new holder can mean a new frame height: re-measure
-           the Movies pinned-frame offsets (a no-op elsewhere) */
-        if (typeof rvMoviesStickySync === "function") rvMoviesStickySync();
       }
       /* Like — a toggle: optimistic count, per-phone state,
          and the event for global keys */
