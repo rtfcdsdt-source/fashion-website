@@ -552,6 +552,31 @@
       }
       .rv-subbar::-webkit-scrollbar{display:none}
       .rv-subbar[hidden]{display:none}
+      /* ---------- Movies only: the big frame stays PINNED ----------
+         While the Movies category is on screen (any sub-genre),
+         the big top frame does not scroll away: it sticks
+         directly under the two sticky chip rows, and its
+         action row (Like / Views / Comment / Share / Save)
+         sticks directly under the frame, so the pair stays
+         put, YouTube-style, while the movie list scrolls
+         beneath them. The script measures the two sticky
+         offsets (chip rows height, then frame height) into
+         the --rv-mstick-top / --rv-mbar-top variables on the
+         view — see rvMoviesStickySync — so the pair sits
+         flush at every width. The .rv-movies-mode class is
+         on the view ONLY in the Movies category: in All,
+         Dance, Trailers, Gym and Music nothing here applies
+         and the frame scrolls away exactly as before. The
+         turned (landscape) frame is excluded — it is fixed
+         over the whole screen by its own rule and must not
+         be fought by this one. */
+      .reels-view.rv-movies-mode .rv-feed>.rv-card:first-of-type:not(.rv-rotated){
+        position:sticky;top:var(--rv-mstick-top,111px);z-index:5;
+      }
+      .reels-view.rv-movies-mode .rv-actionbar{
+        position:sticky;top:var(--rv-mbar-top,111px);z-index:5;
+        box-shadow:0 14px 16px -12px rgba(0,0,0,.95);
+      }
       /* the empty state for a category with nothing in it yet
          (Trailers / Gym / Music): one quiet line where the
          feed would be — no invented videos stand in for them */
@@ -1875,6 +1900,9 @@
            feed rebuilds with it merged in; any failure leaves
            the feed exactly as it was */
         rvSyncPlayers();
+        /* if the view reopens still on the Movies category,
+           refresh the pinned frame's measured offsets */
+        if (typeof rvMoviesStickySync === "function") rvMoviesStickySync();
         rvFetchShared();
         if (typeof rvFetchActionStats === "function") rvFetchActionStats();
         /* the logo greets the visitor at the exact spot it was
@@ -3579,16 +3607,46 @@
          sync funnel put the right cards, the right big frame
          and the right single player on screen, and the view
          starts again from the top */
+      /* ----- Movies only: measure the pinned frame's offsets -----
+         The .rv-movies-mode styles pin the big frame and its
+         action row with position:sticky; their top offsets
+         depend on the chip rows' height and on the frame's
+         own height, so they are measured here and handed to
+         the styles as variables on the view. Called on every
+         category / genre change (through rvApplyCat), on
+         every big-frame change of hands (through
+         rvActionSync), when the view opens and on resize —
+         so the pinned pair always sits flush under the chip
+         rows, whatever movie holds the frame. Outside the
+         Movies category it does nothing at all. */
+      function rvMoviesStickySync(){
+        if (!rvView || !rvView.classList.contains("rv-movies-mode")) return;
+        var topbar = rvView.querySelector(".rv-topbar");
+        var sub = document.getElementById("rvSubBar");
+        var big = rvBigCard();
+        if (!topbar || !big) return;
+        var top = topbar.offsetHeight + ((sub && !sub.hidden) ? sub.offsetHeight : 0);
+        var h = big.offsetHeight;
+        if (!top || !h) return; /* view closed: keep the last good offsets */
+        rvView.style.setProperty("--rv-mstick-top", top + "px");
+        rvView.style.setProperty("--rv-mbar-top", (top + h) + "px");
+      }
+      window.addEventListener("resize", rvMoviesStickySync);
       function rvApplyCat(){
         if (typeof rvRotateExit === "function") rvRotateExit();
         rvRelayout();
         rvSyncPromoteLayers();
         rvSyncEmpty();
+        rvMoviesStickySync();
         rvView.scrollTo({ top: 0 });
       }
       function rvSetCat(cat){
         rvCatState = cat;
         if (cat !== "movies") rvGenreState = "";
+        /* the pinned frame exists ONLY in the Movies
+           category (sub-genres included); every other
+           category drops the class and scrolls as before */
+        rvView.classList.toggle("rv-movies-mode", cat === "movies");
         var btns = document.querySelectorAll("#rvCats .rv-cat");
         for (var i = 0; i < btns.length; i++){
           btns[i].classList.toggle("is-active",
@@ -4060,6 +4118,9 @@
         }
         if (changed && rvIsGlobalKey(key) && !rvActionStatsLoaded) rvFetchActionStats();
         rvRenderActionBar();
+        /* a new holder can mean a new frame height: re-measure
+           the Movies pinned-frame offsets (a no-op elsewhere) */
+        if (typeof rvMoviesStickySync === "function") rvMoviesStickySync();
       }
       /* Like — a toggle: optimistic count, per-phone state,
          and the event for global keys */
