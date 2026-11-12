@@ -279,20 +279,20 @@
         -webkit-tap-highlight-color:transparent;
       }
       .scard-photo img{width:100%;height:100%;object-fit:cover}
-      /* small shop (shopping bag) icon pinned INSIDE each photo
-         frame, at its bottom-right corner: tapping it opens the
-         same photo viewer a tap on the photo itself opens (it
-         carries the same data-open hook the render wires up) */
-      .scard-bag{
+      /* small red "Shop" pill pinned INSIDE each photo frame, at
+         its bottom-right corner: tapping it opens the same photo
+         viewer a tap on the photo itself opens (it carries the
+         same data-open hook the render wires up) */
+      .scard-shop{
         position:absolute;right:10px;bottom:10px;z-index:2;
-        width:42px;height:42px;border-radius:999px;border:0;padding:0;
-        background:rgba(20,17,13,.72);color:#ffffff;
-        display:grid;place-items:center;cursor:pointer;
+        border-radius:999px;border:0;padding:8px 16px;
+        background:#E7000C;color:#ffffff;
+        font:inherit;font-weight:700;font-size:13.5px;line-height:1;
+        cursor:pointer;
         box-shadow:0 4px 14px rgba(0,0,0,.35);
         -webkit-tap-highlight-color:transparent;
       }
-      .scard-bag svg{width:21px;height:21px;display:block}
-      .scard-bag:active{background:rgba(20,17,13,.92)}
+      .scard-shop:active{background:#c4000b}
       .card{
         break-inside:avoid;margin:0 0 10px;background:var(--surface);
         border:1px solid var(--line);border-radius:10px;overflow:hidden;
@@ -1632,9 +1632,7 @@
             '<button class="scard-photo" data-open="' + it.id + '" aria-label="View ' + it.title + '">' +
               '<img src="' + it.img + '" alt="' + it.alt + '" width="880" height="1100" loading="lazy" />' +
             '</button>' +
-            '<button class="scard-bag" data-open="' + it.id + '" aria-label="Shop — view ' + it.title + '">' +
-              '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5.5 8h13l-1.1 11.1a2 2 0 0 1-2 1.9H8.6a2 2 0 0 1-2-1.9L5.5 8z"/><path d="M9 10.6V6.5a3 3 0 0 1 6 0v4.1"/></svg>' +
-            '</button>' +
+            '<button class="scard-shop" data-open="' + it.id + '" aria-label="Shop — view ' + it.title + '">Shop</button>' +
           '</article>';
         }).join("");
 
