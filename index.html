@@ -1951,6 +1951,52 @@ const SHOP_PRODUCTS=[["B0BRKJFK55","Lymio Men's Polyester Half Sleeve Printed Ca
       var modalCard = document.getElementById("modalCard");
       var lastFocus = null;
 
+      /* windowed viewer feed: openModal renders only the first
+         few sections and keeps the remaining ordered ids aside;
+         scrolling near the bottom appends the next chunk, so the
+         viewer ends up holding the exact same feed in the exact
+         same order — it just isn't all built up front */
+      var modalPendingIds = [];
+      var modalRenderedCount = 0;
+      function wireModalSection(sec){
+        var mPhoto = sec.querySelector(".m-photo");
+        var mImg = mPhoto.querySelector("img");
+        var markLoaded = function(){
+          mImg.classList.add("loaded");
+          mPhoto.classList.remove("loading");
+        };
+        if (mImg.complete && mImg.naturalWidth) markLoaded();
+        else {
+          mImg.addEventListener("load", markLoaded);
+          mImg.addEventListener("error", markLoaded);
+        }
+      }
+      function appendModalSections(count){
+        if (!modalPendingIds.length) return;
+        var batch = modalPendingIds.splice(0, count);
+        var html = "";
+        batch.forEach(function(pid){
+          var p = itemById(pid);
+          if (p) html += sectionHTML(p, false);
+        });
+        if (!html) return;
+        modalCard.insertAdjacentHTML("beforeend", html);
+        var secs = modalCard.querySelectorAll(".m-item");
+        for (var i = modalRenderedCount; i < secs.length; i++){
+          wireModalSection(secs[i]);
+          setupDescToggles(secs[i]);
+        }
+        modalRenderedCount = secs.length;
+      }
+      function onModalScroll(){
+        var guard = 0;
+        while (modalPendingIds.length && guard < 60 &&
+               modalCard.scrollHeight - modalCard.scrollTop - modalCard.clientHeight < 900){
+          appendModalSections(20);
+          guard++;
+        }
+      }
+
       /* one full photo section of the viewer feed: the photo at
          its natural ratio, its name and a short description —
          photo-only, no price and no links */
@@ -1994,38 +2040,39 @@ const SHOP_PRODUCTS=[["B0BRKJFK55","Lymio Men's Polyester Half Sleeve Printed Ca
         var start = ids.indexOf(id);
         if (start < 0){ ids = [id]; start = 0; }
         var ordered = ids.slice(start).concat(ids.slice(0, start));
+        /* render only the tapped item and the next 9 sections now;
+           the rest stay pending and are appended by onModalScroll
+           as the visitor nears the bottom of the viewer */
+        modalPendingIds = ordered.slice(10);
         var html = '<div class="m-closebar"><button class="modal-close" id="modalClose" aria-label="Close"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M5 5l14 14M19 5L5 19"/></svg></button></div>';
-        ordered.forEach(function(pid, i){
+        ordered.slice(0, 10).forEach(function(pid, i){
           var p = itemById(pid);
           if (p) html += sectionHTML(p, i === 0);
         });
         modalCard.innerHTML = html;
         modalCard.querySelectorAll(".m-item").forEach(function(sec){
-          var mPhoto = sec.querySelector(".m-photo");
-          var mImg = mPhoto.querySelector("img");
-          var markLoaded = function(){
-            mImg.classList.add("loaded");
-            mPhoto.classList.remove("loading");
-          };
-          if (mImg.complete && mImg.naturalWidth) markLoaded();
-          else {
-            mImg.addEventListener("load", markLoaded);
-            mImg.addEventListener("error", markLoaded);
-          }
+          wireModalSection(sec);
         });
+        modalRenderedCount = modalCard.querySelectorAll(".m-item").length;
         document.getElementById("modalClose").addEventListener("click", closeModal);
         backdrop.classList.add("open");
+        /* the shop page's own video pauses while the viewer covers
+           it, and resumes when the viewer closes — unless the
+           visitor paused it themselves; the one helper decides,
+           called now that the viewer is marked open */
+        if (typeof updateShopPePlayback === "function") updateShopPePlayback();
         backdrop.setAttribute("aria-hidden","false");
         document.body.style.overflow = "hidden";
         modalCard.scrollTop = 0;
+        modalCard.addEventListener("scroll", onModalScroll);
         document.getElementById("modalClose").focus();
         setupDescToggles();
       }
       /* Long descriptions in every viewer section start clamped to
          3 lines with a Read more / Show less toggle; short ones that
          fit show in full, no button. */
-      function setupDescToggles(){
-        modalCard.querySelectorAll(".m-body").forEach(function(body){
+      function setupDescToggles(root){
+        (root || modalCard).querySelectorAll(".m-body").forEach(function(body){
           var descEl = body.querySelector(".desc");
           var btn = body.querySelector(".desc-toggle");
           if (!descEl || !btn) return;
@@ -2047,9 +2094,13 @@ const SHOP_PRODUCTS=[["B0BRKJFK55","Lymio Men's Polyester Half Sleeve Printed Ca
       }
 
       function closeModal(){
+        modalCard.removeEventListener("scroll", onModalScroll);
+        modalPendingIds = [];
+        modalRenderedCount = 0;
         backdrop.classList.remove("open");
         backdrop.setAttribute("aria-hidden","true");
         document.body.style.overflow = "";
+        if (typeof updateShopPePlayback === "function") updateShopPePlayback();
         if (lastFocus) lastFocus.focus();
       }
       backdrop.addEventListener("click", function(e){ if (e.target === backdrop) closeModal(); });
@@ -2176,8 +2227,9 @@ const SHOP_PRODUCTS=[["B0BRKJFK55","Lymio Men's Polyester Half Sleeve Printed Ca
            the feed exactly as it was */
         rvSyncPlayers();
         /* the shop page's own video pauses while the reels
-           view covers it, and resumes when the shop returns */
-        if (typeof shopPeCoverPause === "function") shopPeCoverPause();
+           view covers it, and resumes when the shop returns;
+           the one helper decides */
+        if (typeof updateShopPePlayback === "function") updateShopPePlayback();
         rvFetchShared();
         if (typeof rvFetchActionStats === "function") rvFetchActionStats();
         /* the logo greets the visitor at the exact spot it was
@@ -2200,8 +2252,11 @@ const SHOP_PRODUCTS=[["B0BRKJFK55","Lymio Men's Polyester Half Sleeve Printed Ca
         if (typeof rvTrailerStop === "function") rvTrailerStop();
         if (typeof rvGymStop === "function") rvGymStop();
         if (typeof rvMusicStop === "function") rvMusicStop();
-        if (typeof shopPeCoverResume === "function") shopPeCoverResume();
         rvView.classList.remove("open");
+        /* with the reels view off the shop again, the one helper
+           re-decides the shop video (it restarts only if it is
+           back on screen too and the visitor never paused it) */
+        if (typeof updateShopPePlayback === "function") updateShopPePlayback();
         rvView.setAttribute("aria-hidden", "true");
         document.body.style.overflow = "";
         document.getElementById("logoDock").focus();
@@ -10739,57 +10794,90 @@ const SHOP_PRODUCTS=[["B0BRKJFK55","Lymio Men's Polyester Half Sleeve Printed Ca
          normal player. It plays at its native quality: the
          file is referenced as-is, never re-encoded, and the
          16:9 frame is filled edge to edge. While the reels
-         view covers the shop, and while the tab is hidden,
-         the reel pauses; it resumes when it is uncovered
-         again, unless the visitor paused it themselves. */
+         view or the photo viewer covers the shop, while the
+         tab is hidden, and while the reel itself is scrolled
+         off screen, it pauses; it resumes when it is
+         uncovered, visible and back on screen again, unless
+         the visitor paused it themselves. One helper —
+         updateShopPePlayback — owns every one of those
+         decisions. */
       var shopPeVideoEl = document.getElementById("shopPeVideo");
       var shopPeUserPaused = false;  /* the visitor stopped it on purpose */
       var shopPeWasPlaying = false;  /* it was running when something covered it */
+      var shopPeOnScreen = true;     /* the observer below keeps this current */
       function shopPePlay(){
         if (!shopPeVideoEl) return;
         var p = shopPeVideoEl.play();
         if (p && p.catch) p.catch(function(){});
       }
-      function shopPeCoverPause(){
-        if (shopPeVideoEl && !shopPeVideoEl.paused){
+      /* THE one play/pause decision for the shop reel. It runs
+         only when ALL of these hold: (a) at least a quarter of
+         it is on screen (the IntersectionObserver state),
+         (b) the photo viewer modal is closed, (c) the reels
+         view is not covering the shop, and (d) the tab is
+         visible. Every trigger — scrolling the video off or
+         back on screen, the viewer opening or closing, the
+         reels view covering or uncovering the shop, the tab
+         hiding or showing — calls this helper and nothing
+         else decides. A visitor who paused the reel by
+         tapping it (shopPeUserPaused) is never overridden:
+         only their next tap starts it again. */
+      function updateShopPePlayback(){
+        if (!shopPeVideoEl) return;
+        var modalEl = document.getElementById("modalBackdrop");
+        var reelsEl = document.getElementById("reelsView");
+        var shouldPlay = shopPeOnScreen
+          && !(modalEl && modalEl.classList.contains("open"))
+          && !(reelsEl && reelsEl.classList.contains("open"))
+          && !document.hidden
+          && !shopPeUserPaused;
+        if (shouldPlay){
+          shopPeWasPlaying = false;
+          if (shopPeVideoEl.paused) shopPePlay();
+        } else if (!shopPeVideoEl.paused){
           shopPeWasPlaying = true;
           shopPeVideoEl.pause();
         }
       }
-      function shopPeCoverResume(){
-        if (shopPeVideoEl && shopPeWasPlaying && !shopPeUserPaused){
-          shopPeWasPlaying = false;
-          shopPePlay();
-        }
-      }
+      /* the old cover/uncover names now just ask the helper,
+         so no caller anywhere decides play/pause on its own */
+      function shopPeCoverPause(){ updateShopPePlayback(); }
+      function shopPeCoverResume(){ updateShopPePlayback(); }
       if (shopPeVideoEl){
         /* start muted (the markup carries the attribute too):
            an unmuted autoplay would be refused by the browser */
         shopPeVideoEl.muted = true;
-        shopPePlay();
+        /* scrolling the reel off screen pauses it; scrolling
+           back so a quarter of it shows again restarts it —
+           both through the one helper */
+        if ("IntersectionObserver" in window){
+          new IntersectionObserver(function(entries){
+            shopPeOnScreen = entries[0].isIntersecting;
+            updateShopPePlayback();
+          }, { threshold: 0.25 }).observe(shopPeVideoEl);
+        }
+        updateShopPePlayback();
         /* tap behaviour: the first tap turns the sound ON;
            after that a tap pauses, the next plays again —
-           like a normal player */
+           like a normal player. The tap records the visitor's
+           own choice in shopPeUserPaused, and the helper
+           carries it out (a tap can only land while the reel
+           is on screen and uncovered, so the helper agrees). */
         shopPeVideoEl.addEventListener("click", function(){
           if (shopPeVideoEl.muted){
             shopPeVideoEl.muted = false;
             shopPeUserPaused = false;
-            shopPePlay();
           } else if (shopPeVideoEl.paused){
             shopPeUserPaused = false;
-            shopPePlay();
           } else {
             shopPeUserPaused = true;
-            shopPeVideoEl.pause();
           }
+          updateShopPePlayback();
         });
       }
       /* a hidden tab never keeps the shop reel running;
          coming back resumes it (unless the visitor paused it) */
-      document.addEventListener("visibilitychange", function(){
-        if (document.hidden) shopPeCoverPause();
-        else shopPeCoverResume();
-      });
+      document.addEventListener("visibilitychange", updateShopPePlayback);
       /* ================= end PETER ENGLAND VIDEO — SHOP PAGE TOP ================= */
 
       /* ================= SEARCH =================
