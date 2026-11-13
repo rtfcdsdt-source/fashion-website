@@ -926,7 +926,7 @@
         height:340px;overflow:hidden;touch-action:manipulation;
       }
       .rv-gtgt{
-        position:absolute;width:54px;height:54px;border-radius:50%;border:0;padding:0;
+        position:absolute;width:70px;height:70px;border-radius:50%;border:0;padding:0;
         cursor:pointer;-webkit-tap-highlight-color:transparent;
         background:radial-gradient(circle,#fff 0 17%,#E7000C 18% 38%,#fff 39% 58%,#E7000C 59% 100%);
       }
@@ -11033,19 +11033,36 @@ const SHOP_PRODUCTS=[["B0BRKJFK55","Lymio Men's Polyester Half Sleeve Printed Ca
          wall or yourself. Swipe on the board or use the
          arrow buttons; the snake speeds up as it eats. */
       var gSn = { cv:null, ctx:null, body:[], dir:{x:1,y:0}, nd:{x:1,y:0},
-                  food:{x:5,y:5}, score:0, speed:170, timer:0, run:false };
+                  food:{x:5,y:5}, score:0, speed:280, timer:0, run:false };
       var G_SN_N = 16, G_SN_CELL = 20;
       function gSnakeReset(){
         gSnakeStop();
         gSn.body = [{x:8,y:8},{x:7,y:8},{x:6,y:8}];
         gSn.dir = {x:1,y:0}; gSn.nd = {x:1,y:0};
-        gSn.score = 0; gSn.speed = 170;
-        gSnakeFood(); gSnakeDraw();
+        gSn.score = 0; gSn.speed = 280;
+        gSnakeFood(true); gSnakeDraw();
         rvGameScore("Score: 0");
         var m = document.getElementById("gSnakeMsg");
         if (m) m.textContent = "Swipe ya arrow dabao — ▶ Start karo!";
       }
-      function gSnakeFood(){
+      function gSnakeFood(near){
+        /* the FIRST food of a run lands within a few cells
+           of the head, so the snake can always reach one
+           before any wall; later food is anywhere. */
+        if (near && gSn.body.length){
+          var h = gSn.body[0];
+          for (var t = 0; t < 80; t++){
+            var fx = h.x + ((Math.random()*7)|0) - 3;
+            var fy = h.y + ((Math.random()*7)|0) - 3;
+            if (fx < 0 || fy < 0 || fx >= G_SN_N || fy >= G_SN_N) continue;
+            var dist = Math.abs(fx - h.x) + Math.abs(fy - h.y);
+            if (dist < 2 || dist > 4) continue;
+            var onBody = false;
+            for (var k = 0; k < gSn.body.length; k++)
+              if (gSn.body[k].x === fx && gSn.body[k].y === fy) onBody = true;
+            if (!onBody){ gSn.food = { x:fx, y:fy }; return; }
+          }
+        }
         while (true){
           gSn.food = { x:(Math.random()*G_SN_N)|0, y:(Math.random()*G_SN_N)|0 };
           var hit = false;
@@ -11085,10 +11102,10 @@ const SHOP_PRODUCTS=[["B0BRKJFK55","Lymio Men's Polyester Half Sleeve Printed Ca
         }
         gSn.body.unshift(h);
         if (h.x === gSn.food.x && h.y === gSn.food.y){
-          gSn.score += 10;
+          gSn.score += 1;
           rvGameScore("Score: " + gSn.score);
           gSnakeFood();
-          if (gSn.speed > 75) gSn.speed -= 7; /* the tick loop picks the new speed up itself */
+          if (gSn.speed > 120) gSn.speed = Math.max(120, gSn.speed - 10); /* speeds up only after a food */
         } else gSn.body.pop();
         gSnakeDraw();
       }
@@ -11105,8 +11122,8 @@ const SHOP_PRODUCTS=[["B0BRKJFK55","Lymio Men's Polyester Half Sleeve Printed Ca
         gSnakeStop();
         gSn.body = [{x:8,y:8},{x:7,y:8},{x:6,y:8}];
         gSn.dir = {x:1,y:0}; gSn.nd = {x:1,y:0};
-        gSn.score = 0; gSn.speed = 170;
-        gSnakeFood(); gSnakeDraw();
+        gSn.score = 0; gSn.speed = 280;
+        gSnakeFood(true); gSnakeDraw();
         rvGameScore("Score: 0");
         var m = document.getElementById("gSnakeMsg");
         if (m) m.textContent = "";
@@ -11298,7 +11315,7 @@ const SHOP_PRODUCTS=[["B0BRKJFK55","Lymio Men's Polyester Half Sleeve Printed Ca
         var t = document.createElement("button");
         t.type = "button"; t.className = "rv-gtgt";
         t.setAttribute("aria-label", "Target");
-        var fw = gSh.field.clientWidth - 60, fh = gSh.field.clientHeight - 60;
+        var fw = gSh.field.clientWidth - 78, fh = gSh.field.clientHeight - 78;
         t.style.left = (4 + Math.random() * Math.max(fw, 10)) + "px";
         t.style.top = (4 + Math.random() * Math.max(fh, 10)) + "px";
         t.addEventListener("click", function(){
@@ -11308,7 +11325,7 @@ const SHOP_PRODUCTS=[["B0BRKJFK55","Lymio Men's Polyester Half Sleeve Printed Ca
           t.remove();
         });
         gSh.field.appendChild(t);
-        setTimeout(function(){ if (t.parentNode) t.remove(); }, 1150);
+        setTimeout(function(){ if (t.parentNode) t.remove(); }, 2500);
       }
       function gShootStart(){
         gShootStop();
