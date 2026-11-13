@@ -767,8 +767,8 @@
          ground and gains a white border, so the row stays
          all-black like the owner asked and the current
          category still reads at a glance. This strip is
-         SHARED by every category — All, Dance, Movies,
-         Trailers, Gym, Music and any added later — because
+         SHARED by every category — All, Movies,
+         Trailers, Gym, Music, Games and any added later — because
          there is exactly one of it, inside the one top bar
          above both the feed and the category views. */
       .rv-cats{
@@ -808,7 +808,7 @@
       /* ---------- Movies: the big frame scrolls away ----------
          The Movies big frame and its action row are NOT
          pinned: they scroll away with the page exactly like
-         All and Dance (a pinned pair was tried and the owner
+         All (a pinned pair was tried and the owner
          asked for the earlier scroll-away behaviour back).
          The chip rows above them scroll away too — the ONLY
          thing left at the top is the ← Shop pill, floating
@@ -942,24 +942,26 @@
       /* the feed has TWO parts, top to bottom:
          (1) sabse upar EK BADA frame — one video sits alone
          at the top in one big frame at its full own size.
-         (2) Below it, ONE MIXED FLOW in the videos' own
-         order: each run of consecutive non-wide videos (tall
-         9:16, portrait 4:5, square 1:1) is packed into a
-         block of THREE COLUMNS (Pinterest-style) — every card
-         drops into its block's currently shortest column, so
-         the frames stack tight with NO empty black gaps —
-         and each WIDE 16:9 video is a block of its own,
-         sitting at its exact spot in the order BETWEEN the
-         column blocks around it, at the feed's full width
-         and its own full original size: it never shrinks
-         into a small column card, and wide videos are never
-         gathered together into a band of their own. So the
-         flow reads: a chunk of Shorts in columns, one wide
-         song card, more Shorts, one wide song card, all the
-         way down. Every frame still holds its video in that
-         video's OWN size (the rv-fit-* shapes below), so a
-         tall Short stands tall in its column and a wide
-         video lies wide in its own block. The big top frame
+         (2) Below it, ONE WOVEN GRID in the videos' own
+         order — the SAME arrangement the Trailers / Gym /
+         Music category grids use: each run of consecutive
+         non-wide videos (tall 9:16, portrait 4:5, square
+         1:1) fills a three-column grid row by row, strictly
+         in list order (three tall cards across, then the
+         next three under them), and each WIDE 16:9 video is
+         a block of its own, sitting at its exact spot in
+         the order BETWEEN the grid blocks around it, at the
+         feed's full width and its own full original size:
+         it never shrinks into a small grid card, and wide
+         videos are never gathered together into a band of
+         their own. So the flow reads: three Shorts across,
+         one wide card under them, three more Shorts, one
+         wide card, all the way down — the "teen aur ek"
+         weave the whole site now shares. Every frame still
+         holds its video in that video's OWN size (the
+         rv-fit-* shapes below), so a tall Short stands tall
+         in its grid cell and a wide video lies wide in its
+         own block. The big top frame
          ROTATES: it always holds the NEWEST video. The
          moment a new video is added it takes the big frame,
          and the video that sat there until then automatically
@@ -975,24 +977,23 @@
         position:relative;
         width:100%;max-width:1120px;margin:0 auto;padding:8px;
       }
-      /* one block of three packed columns in the mixed flow
-         below the big top frame: each column is a plain
-         vertical stack, and the script always appends the
-         next video of the run to the block's shortest column
-         (measured by the videos' own shapes), so the columns
-         stay balanced and gap-free at every width */
-      .rv-cols{
+      /* one block of the woven grid below the big top
+         frame: a plain three-column CSS grid, exactly the
+         Trailers grid's own box (.rv-tgrid) minus the page
+         padding that grid carries — the script appends the
+         run's cards to it strictly in list order, so they
+         fill row by row, three across, every row aligned */
+      .rv-wgrid{
         display:grid;grid-template-columns:repeat(3,1fr);gap:8px;align-items:start;
         margin-top:8px;
       }
-      .rv-col{display:flex;flex-direction:column;gap:8px;min-width:0}
-      .rv-col>.rv-card{width:100%}
+      .rv-wgrid>.rv-card{width:100%;min-width:0}
       /* a WIDE video in the mixed flow: the card sits directly
          in the feed as its own full-width block at its exact
          order position — the feed's full width and its own
          full original size (rv-fit-wide already spans the
          whole card) — with the same breathing room above it
-         as a columns block gets */
+         as a grid block gets */
       .rv-feed>.rv-card.rv-flow-wide{margin-top:8px}
       /* the big top frame: the first card spans the whole
          feed width, alone in its row, and its player is let
@@ -1080,10 +1081,10 @@
       .rv-fit-tall{aspect-ratio:9/16;width:min(100%,46vh);width:min(100%,46dvh);margin:0 auto}
       .rv-fit-portrait{aspect-ratio:4/5;width:min(100%,62vh);width:min(100%,62dvh);margin:0 auto}
       .rv-fit-square{aspect-ratio:1/1;width:min(100%,68vh);width:min(100%,68dvh);margin:0 auto}
-      /* in the packed columns an Instagram embed takes
+      /* in the woven grid an Instagram embed takes
          its frame's own shape like every other video — no
          fixed minimum height forcing one frame taller than
-         its column-mates */
+         its grid-mates */
       .rv-feed .rv-igplayer{min-height:0}
       .rv-openlink{display:inline-block;margin-top:10px;color:#ff9900;font-size:13px;text-decoration:none}
       /* ---------- action bar under the BIG top frame ----------
@@ -1284,13 +1285,12 @@
       @media(min-width:600px){
         .rv-feed{padding-top:15px}
       }
-      /* the three packed columns are the layout at EVERY
-         width, phone included — wider screens only get a
-         roomier gap between the frames */
+      /* the woven grid is the layout at EVERY width,
+         phone included — wider screens only get a roomier
+         gap between the frames */
       @media(min-width:900px){
         .rv-feed{padding:16px}
-        .rv-cols{gap:18px;margin-top:18px}
-        .rv-col{gap:18px}
+        .rv-wgrid{gap:18px;margin-top:18px}
         .rv-feed>.rv-card.rv-flow-wide{margin-top:18px}
       }
       @media (prefers-reduced-motion: reduce){
@@ -1406,7 +1406,7 @@
       <!-- the top bar is the one thing pinned at the top
            while the view scrolls (owner's order): ONE row
            holding the ← Shop pill at its left, the category
-           boxes (All, Dance, Movies, Trailers, Gym, Music)
+           boxes (All, Movies, Trailers, Gym, Music, Games)
            right beside it in the same line — a strip that
            scrolls sideways inside itself on a narrow phone —
            and, at the row's far right corner, the SEARCH
@@ -1430,7 +1430,6 @@
              present and future. -->
         <nav class="rv-cats" id="rvCats" aria-label="Video categories">
           <button class="rv-cat is-active" type="button" data-cat="all">All</button>
-          <button class="rv-cat" type="button" data-cat="dance">Dance</button>
           <button class="rv-cat" type="button" data-cat="movies">Movies</button>
           <button class="rv-cat" type="button" data-cat="trailers">Trailers</button>
           <button class="rv-cat" type="button" data-cat="gym">Gym</button>
@@ -1467,7 +1466,7 @@
              card in the rotation: it holds the big full-size
              frame at the top of the feed until the first video
              is added with the logo button — then it too shifts
-             down into the three packed columns, and it returns
+             down into the woven grid below, and it returns
              to the big frame if every added video is removed.
              Like the old demo card, its ✕ removes it for this
              session only. -->
@@ -1514,16 +1513,15 @@
             <span class="rv-act-count" id="rvCountSave">0</span>
           </button>
         </div>
-        <!-- below the big top frame there is ONE MIXED FLOW,
-             built by the script in the videos' own order:
-             each run of consecutive non-wide videos becomes a
-             block of three packed columns (each video in its
-             own true size, packed into the block's shortest
-             column, so no empty gaps are left between the
-             frames), and each wide 16:9 video is a full-width
-             block of its own at its exact spot in the order —
-             wide videos are never grouped together into a
-             band of their own -->
+        <!-- below the big top frame there is ONE WOVEN GRID,
+             built by the script in the videos' own order —
+             the Trailers arrangement: each run of consecutive
+             non-wide videos becomes a three-column grid block
+             filled row by row in order (each video in its own
+             true size), and each wide 16:9 video is a
+             full-width block of its own at its exact spot in
+             the order — wide videos are never grouped
+             together into a band of their own -->
       </main>
       <!-- empty state for a category that has no videos yet
            (Music): shown INSTEAD of the feed
@@ -2443,7 +2441,7 @@ const SHOP_PRODUCTS=[["B0BRKJFK55","Lymio Men's Polyester Half Sleeve Printed Ca
          threshold and comes back, in the exact spot it was
          dropped, when the visitor scrolls back to the top.
          ONE listener on the view itself, so every category —
-         All, Dance, Movies, Trailers, Gym, Music and any
+         All, Movies, Trailers, Gym, Music, Games and any
          added later — behaves the same. */
       rvView.addEventListener("scroll", function(){
         if (rvView.scrollTop > 24){
@@ -2892,33 +2890,31 @@ const SHOP_PRODUCTS=[["B0BRKJFK55","Lymio Men's Polyester Half Sleeve Printed Ca
         }
       }
 
-      /* ----- below the big top frame: ONE MIXED FLOW -----
+      /* ----- below the big top frame: ONE WOVEN GRID -----
          A card's place follows its saved size class (card
          ._rvFit, from the upload form's "Video ka Size" pick
          or the auto-detect) and its position in the order —
          nothing else. Everything below the big frame is laid
-         out by rvRelayout as a single flow in list order:
-         each run of consecutive NON-wide cards (tall 9:16,
-         portrait 4:5, square 1:1) is packed into a block of
-         THREE vertical columns (Pinterest-style), each card
-         appended to the block's column that is currently
-         SHORTEST, so the frames pack tight with no empty
-         gaps; and each WIDE card is a block of its own — the
-         card sits directly in the feed at its full width and
-         full original size, at its exact spot in the order,
-         between the column blocks around it. Wide cards are
+         out by rvRelayout as a single flow in list order,
+         in the SAME arrangement the Trailers / Gym / Music
+         category grids use (the owner's call: All was
+         scattered under the old Pinterest packing, so All
+         now wears the Trailers weave): each run of
+         consecutive NON-wide cards (tall 9:16, portrait 4:5,
+         square 1:1) fills a three-column grid block row by
+         row, strictly in order — three cards across, then
+         the next three under them, every row aligned; and
+         each WIDE card is a block of its own — the card sits
+         directly in the feed at its full width and full
+         original size, at its exact spot in the order,
+         between the grid blocks around it. Wide cards are
          NEVER gathered into a band of their own: a wide song
-         woven between Shorts shows exactly there — a chunk
-         of Shorts in columns, one wide card, more Shorts,
-         one wide card, all the way down the feed. A block's
-         column heights are measured from the videos' own
-         shapes (height ÷ width of each fit), never from
-         rendered pixels — the restore below runs while the
-         view is still hidden, and shape maths gives the exact
-         same packing on every load. The saved list stays the
-         source of truth for order: a reload replays it in add
-         order through the same rotation, so the same mixed
-         flow comes back. */
+         woven between Shorts shows exactly there — three
+         Shorts in a row, one wide card, three more Shorts,
+         one wide card, all the way down the feed. The saved
+         list stays the source of truth for order: a reload
+         replays it in add order through the same rotation,
+         so the same woven grid comes back. */
       var RV_RATIO = { wide: 9/16, tall: 16/9, portrait: 5/4, square: 1 };
       /* while a bulk rebuild replays many adds at once, the
          per-add relayout is suspended (rvFlowSuspend > 0)
@@ -2940,9 +2936,7 @@ const SHOP_PRODUCTS=[["B0BRKJFK55","Lymio Men's Polyester Half Sleeve Printed Ca
          and when every added video is gone, Dil De Mohalle
          (the oldest) is the last one left, so it returns to
          the big frame by itself. Each card remembers its
-         place in card._rvZone: "big" or "flow" (with
-         card._rvCol holding its column index while it sits
-         inside a columns block, -1 elsewhere). */
+         place in card._rvZone: "big" or "flow". */
       var rvOrder = [];
       /* the card currently holding the big top frame among the
          DIRECT children of the feed; null while the slot is
@@ -2954,19 +2948,13 @@ const SHOP_PRODUCTS=[["B0BRKJFK55","Lymio Men's Polyester Half Sleeve Printed Ca
         }
         return null;
       }
-      /* one fresh block of three packed columns, holding one
-         run of consecutive non-wide cards in the mixed flow */
+      /* one fresh block of the woven grid, holding one run
+         of consecutive non-wide cards in the flow below the
+         big frame — a plain three-column grid the cards
+         fill in list order, row by row */
       function rvNewColsBlock(){
         var block = document.createElement("div");
-        block.className = "rv-cols rv-flow-block";
-        var cols = [];
-        for (var i = 0; i < 3; i++){
-          var col = document.createElement("div");
-          col.className = "rv-col";
-          block.appendChild(col);
-          cols.push(col);
-        }
-        block._rvCols = cols;
+        block.className = "rv-wgrid rv-flow-block";
         return block;
       }
       /* lay out the whole feed from rvOrder — the ONE place
@@ -2976,16 +2964,16 @@ const SHOP_PRODUCTS=[["B0BRKJFK55","Lymio Men's Polyester Half Sleeve Printed Ca
          (the CSS :first-of-type rule gives it the big-frame
          size). Every other card is then placed below it by
          walking the list in order: each run of consecutive
-         non-wide cards is packed into a fresh three-column
-         block (each card into the block's currently shortest
-         column, measured by the cards' own shapes), and each
-         WIDE card is appended directly to the feed as a
-         full-width block of its own at its exact order
-         position — never grouped with other wide cards.
-         Every change of arrangement (an add's rotation, a
-         delete, a tap-to-promote, a rebuild) funnels through
-         here, so what is on screen is always exactly the
-         saved order, mixed. */
+         non-wide cards fills a fresh three-column grid
+         block in strict list order (row by row, three
+         across — the Trailers weave), and each WIDE card is
+         appended directly to the feed as a full-width block
+         of its own at its exact order position — never
+         grouped with other wide cards. Every change of
+         arrangement (an add's rotation, a delete, a
+         tap-to-promote, a rebuild) funnels through here, so
+         what is on screen is always exactly the saved
+         order, woven. */
       function rvRelayout(){
         if (rvFlowSuspend > 0 || !rvFeed) return;
         /* CATEGORIES: the big frame goes to the newest card
@@ -3016,14 +3004,13 @@ const SHOP_PRODUCTS=[["B0BRKJFK55","Lymio Men's Polyester Half Sleeve Printed Ca
           var bar = document.getElementById("rvActionBar");
           rvFeed.insertBefore(big, (bar && bar.parentNode === rvFeed) ? bar : null);
         }
-        /* the mixed flow below, walked in list order */
-        var block = null, heights = null;
+        /* the woven grid below, walked in list order */
+        var block = null;
         rvOrder.forEach(function(card){
           if (card === big) return;
           if (!rvCardInCat(card)) return;
           if (card._rvFit === "wide"){
             block = null;
-            heights = null;
             card._rvCol = -1;
             card._rvZone = "flow";
             card.classList.add("rv-flow-wide");
@@ -3031,18 +3018,12 @@ const SHOP_PRODUCTS=[["B0BRKJFK55","Lymio Men's Polyester Half Sleeve Printed Ca
           } else {
             if (!block){
               block = rvNewColsBlock();
-              heights = [0, 0, 0];
               rvFeed.appendChild(block);
             }
-            var ci = 0;
-            for (var k = 1; k < 3; k++){
-              if (heights[k] < heights[ci]) ci = k;
-            }
-            card._rvCol = ci;
+            card._rvCol = -1;
             card._rvZone = "flow";
             card.classList.remove("rv-flow-wide");
-            heights[ci] += card._rvRatio || 0;
-            block._rvCols[ci].appendChild(card);
+            block.appendChild(card);
           }
         });
       }
@@ -3236,7 +3217,7 @@ const SHOP_PRODUCTS=[["B0BRKJFK55","Lymio Men's Polyester Half Sleeve Printed Ca
         rvDilCardEl._rvCol = -1;
         rvDilCardEl._rvZone = "big";
         /* Dil De Mohalle is a tall Short, so when it is demoted
-           it packs into a columns block of the mixed flow like
+           it takes its place in the woven grid below like
            any other tall video */
         rvDilCardEl._rvFit = "tall";
         rvDilCardEl._rvRatio = RV_RATIO.tall;
@@ -3876,7 +3857,7 @@ const SHOP_PRODUCTS=[["B0BRKJFK55","Lymio Men's Polyester Half Sleeve Printed Ca
 
       /* ================= CATEGORIES + MOVIES =================
          The category boxes in their own row under the top bar
-         (All / Dance / Movies / Trailers / Gym / Music — see
+         (All / Movies / Trailers / Gym / Music / Games — see
          .rv-cats in the styles and the markup under the top
          bar) filter
          THIS feed; nothing navigates away and no second page
@@ -3890,7 +3871,8 @@ const SHOP_PRODUCTS=[["B0BRKJFK55","Lymio Men's Polyester Half Sleeve Printed Ca
          through rvSyncPromoteLayers exactly as before, so a
          category tap behaves like any other rearrangement.
            · All — everything: the dance feed and the movies.
-           · Dance — the feed as it always was, no movies.
+             (The Dance chip is gone on the owner's call; the
+             dance videos themselves all stay, here in All.)
            · Movies — ONLY movies: the permanent library of
              official full-length YouTube movies below, and
              the sub-genre row under the top bar (Horror,
@@ -10813,19 +10795,22 @@ const SHOP_PRODUCTS=[["B0BRKJFK55","Lymio Men's Polyester Half Sleeve Printed Ca
         return out;
       }
       /* ----- the category filter itself ----- */
-      var rvCatState = "all";   /* all | dance | movies | trailers | gym | music */
+      var rvCatState = "all";   /* all | movies | trailers | gym | music | games */
       var rvGenreState = "";    /* "" = all movies; else one genre's display name */
       function rvIsSoonCat(){
         /* no category is "coming soon" any more — Music
            has its own view now, like Trailers and Gym */
         return false;
       }
-      /* the ONE question rvRelayout asks of every card */
+      /* the ONE question rvRelayout asks of every card.
+         There is no Dance category any more (the owner's
+         call): the chip is gone, and every dance video
+         simply lives in All, exactly as it always did —
+         no video was removed, only the separate filter */
       function rvCardInCat(card){
         if (rvCatState === "all") return true;
         var rec = card._rvRecord || null;
         var isMovie = !!(rec && rec.movie);
-        if (rvCatState === "dance") return !isMovie;
         if (rvCatState === "movies"){
           return isMovie && (!rvGenreState || rec.genre === rvGenreState);
         }
