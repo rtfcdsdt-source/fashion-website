@@ -2297,9 +2297,19 @@ const SHOP_PRODUCTS=[["B0BRKJFK55","Lymio Men's Polyester Half Sleeve Printed Ca
                 }
                 if (upiPanel) upiPanel.hidden = false;
                 /* open the UPI app through a throwaway link click,
-                   still inside this tap's user gesture */
+                   still inside this tap's user gesture — and always
+                   in a NEW tab, never this one: a same-tab upi://
+                   navigation attempt is what used to wedge the
+                   viewer afterwards (payment pills stopped
+                   switching, the X stopped closing, and viewers
+                   broke after a reload). With _blank the UPI app
+                   still opens on the phone, and on desktop any
+                   protocol error lands in the throwaway tab, so
+                   this page's tab is never navigated away. */
                 var upiLink = document.createElement("a");
                 upiLink.href = "upi://pay?pa=85953186081@ibl&pn=Fashion%20Goals&am=700&cu=INR&tn=" + encodeURIComponent("Fashion Goals order " + title + " Size " + selSize) + "&tr=" + orderId;
+                upiLink.target = "_blank";
+                upiLink.rel = "noopener";
                 document.body.appendChild(upiLink);
                 upiLink.click();
                 document.body.removeChild(upiLink);
@@ -2425,7 +2435,10 @@ const SHOP_PRODUCTS=[["B0BRKJFK55","Lymio Men's Polyester Half Sleeve Printed Ca
           wireModalSection(sec);
         });
         modalRenderedCount = modalCard.querySelectorAll(".m-item").length;
-        document.getElementById("modalClose").addEventListener("click", closeModal);
+        /* the X button needs no per-open listener: one delegated
+           handler on the card (registered once, below closeModal)
+           catches its clicks no matter how often the viewer's
+           contents are re-rendered */
         backdrop.classList.add("open");
         /* the shop page's own video pauses while the viewer covers
            it, and resumes when the viewer closes — unless the
@@ -2464,16 +2477,67 @@ const SHOP_PRODUCTS=[["B0BRKJFK55","Lymio Men's Polyester Half Sleeve Printed Ca
         });
       }
 
+      /* put every rendered featured section back to its
+         fresh-open payment state: Advance preselected, "Pay ₹700"
+         on the buy pill, the advance note showing, the
+         after-payment panel hidden and the address boxes back to
+         the values saved in localStorage — so closing always
+         leaves the viewer clean for the next open */
+      function resetModalPayState(){
+        modalCard.querySelectorAll(".m-item").forEach(function(sec){
+          var panel = sec.querySelector(".m-upi");
+          if (panel) panel.hidden = true;
+          var payRow = sec.querySelector(".m-pay");
+          if (payRow){
+            payRow.querySelectorAll(".pay-chip").forEach(function(c){
+              var on = c.getAttribute("data-pay") === "advance";
+              c.classList.toggle("sel", on);
+              c.setAttribute("aria-pressed", on ? "true" : "false");
+            });
+          }
+          var label = sec.querySelector(".m-buy-label");
+          if (label) label.textContent = "Pay ₹700";
+          var note = sec.querySelector(".m-buy-note");
+          if (note) note.textContent = "Advance payment par order confirm hoga.";
+          var addrBox = sec.querySelector(".m-addr");
+          if (addrBox){
+            try {
+              var nameIn = addrBox.querySelector(".addr-name");
+              var mobIn = addrBox.querySelector(".addr-mobile");
+              var pinIn = addrBox.querySelector(".addr-pin");
+              var addrIn = addrBox.querySelector(".addr-full");
+              if (nameIn) nameIn.value = localStorage.getItem("fg-addr-name") || "";
+              if (mobIn) mobIn.value = localStorage.getItem("fg-addr-mobile") || "";
+              if (pinIn) pinIn.value = localStorage.getItem("fg-addr-pin") || "";
+              if (addrIn) addrIn.value = localStorage.getItem("fg-addr-addr") || "";
+            } catch(e){}
+            var hint = addrBox.querySelector(".m-addr-hint");
+            if (hint) hint.hidden = true;
+          }
+        });
+      }
+
       function closeModal(){
         modalCard.removeEventListener("scroll", onModalScroll);
         modalPendingIds = [];
         modalRenderedCount = 0;
+        /* the viewer is closed FIRST, before anything else runs —
+           and everything after runs guarded, so nothing the shop
+           video helper or the state reset does can ever throw
+           part-way and leave the viewer stuck open */
         backdrop.classList.remove("open");
         backdrop.setAttribute("aria-hidden","true");
         document.body.style.overflow = "";
-        if (typeof updateShopPePlayback === "function") updateShopPePlayback();
+        try { if (typeof updateShopPePlayback === "function") updateShopPePlayback(); } catch(e){}
+        try { resetModalPayState(); } catch(e){}
         if (lastFocus) lastFocus.focus();
       }
+      /* one delegated X handler for the whole viewer: the button
+         itself is rebuilt on every open, this listener is not, so
+         the X can never lose its handler to a re-render */
+      modalCard.addEventListener("click", function(e){
+        if (e.target && e.target.closest && e.target.closest(".modal-close")) closeModal();
+      });
       backdrop.addEventListener("click", function(e){ if (e.target === backdrop) closeModal(); });
       document.addEventListener("keydown", function(e){
         if (e.key === "Escape" && backdrop.classList.contains("open")) closeModal();
