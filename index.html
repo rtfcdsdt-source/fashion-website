@@ -526,11 +526,14 @@
          black panel with a red frame (the site's red/black style),
          a big animated checkmark that draws itself, and colourful
          confetti pieces (created by the script when the panel is
-         shown) that fall for about 4 seconds and are re-created
+         shown) that fall CONTINUOUSLY in a loop (about 4 seconds
+         per fall, infinite iteration, staggered negative delays)
+         for as long as the panel stays open, and are re-created
          when the tab regains visibility/focus while the panel is
          still open — the WhatsApp tap covers the site, so the
-         customer sees the fall again on returning. The pieces stay
-         in the DOM until the panel's X removes them. */
+         customer sees confetti falling the instant they return.
+         The pieces stay in the DOM until the panel's X removes
+         them. */
       .modal .m-congrats{position:relative;overflow:hidden;border:2px solid #E7000C;border-radius:14px;background:#0b0b0b;color:#fff;padding:18px 40px 16px 16px;display:flex;flex-direction:column;gap:5px;box-shadow:0 10px 30px rgba(231,0,12,.25);animation:cgPop .35s ease}
       .modal .m-congrats[hidden]{display:none}
       @keyframes cgPop{0%{transform:scale(.92);opacity:0}100%{transform:scale(1);opacity:1}}
@@ -540,7 +543,7 @@
       .modal .cg-check path{stroke:#fff;stroke-width:4.5;stroke-dasharray:40;stroke-dashoffset:40;animation:cgDraw .4s .5s ease forwards}
       @keyframes cgDraw{to{stroke-dashoffset:0}}
       .modal .cg-confetti{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:1}
-      .modal .cg-confetti i{position:absolute;top:-14px;width:8px;height:13px;background:#E7000C;opacity:0;animation:cgFall 4s linear forwards}
+      .modal .cg-confetti i{position:absolute;top:-14px;width:8px;height:13px;background:#E7000C;opacity:0;animation:cgFall 4s linear infinite;animation-iteration-count:infinite}
       .modal .cg-confetti i:nth-child(1){left:4%;background:#E7000C;animation-delay:0s}
       .modal .cg-confetti i:nth-child(2){left:9%;background:#FFD166;width:7px;height:7px;border-radius:50%;animation-delay:.14s}
       .modal .cg-confetti i:nth-child(3){left:14%;background:#06D6A0;animation-delay:.28s}
@@ -2645,15 +2648,17 @@ const SHOP_PRODUCTS=[["B0BRKJFK55","Lymio Men's Polyester Half Sleeve Printed Ca
              WhatsApp tap opens WhatsApp in front of the site, so a
              one-shot burst on open would already be over when the
              customer returns. Each piece falls for about 4 seconds
-             (CSS cgFall 4s) and starts scattered mid-fall — a random
-             top offset plus a random negative animation-delay — so
-             the panel is full of confetti the instant it appears or
-             is replayed, with no empty wait. The pieces stay
-             in the DOM for the whole life of the panel; they are
-             only removed, and the replay listeners only removed,
-             when the panel's X closes it. The container is
-             pointer-events:none, so the pieces never block the
-             panel text or the X. */
+             (CSS cgFall 4s) and LOOPS with infinite iteration for
+             as long as the panel stays open, starting scattered
+             mid-fall — a random negative animation-delay spanning
+             the piece's whole fall cycle — so pieces are always
+             mid-fall at any moment: on first open, the instant the
+             customer returns from WhatsApp, and seconds later too,
+             with no empty wait. The pieces stay in the DOM for the
+             whole life of the panel; they are only removed, and
+             the replay listeners only removed, when the panel's X
+             closes it. The container is pointer-events:none, so
+             the pieces never block the panel text or the X. */
           var confettiBox = congrats ? congrats.querySelector(".cg-confetti") : null;
           var confettiColors = ["#E7000C", "#FFD166", "#06D6A0", "#118AB2", "#FF6B9D", "#ffffff", "#FF9F1C", "#7C3AED"];
           var confettiActive = false;
@@ -2672,17 +2677,20 @@ const SHOP_PRODUCTS=[["B0BRKJFK55","Lymio Men's Polyester Half Sleeve Printed Ca
               } else {
                 piece.style.width = "8px"; piece.style.height = "13px";
               }
-              piece.style.animationDuration = (3.8 + (ci % 5) * 0.12) + "s";
-              /* Scatter each piece mid-fall: a random starting top
-                 (0–70% of the panel height) plus a random negative
-                 animation-delay places it part-way through its fall
-                 the moment it is created. The panel is therefore
-                 already full of falling confetti on first open AND
-                 on every visibilitychange/focus replay — no ~2s of
-                 plain black while pieces travel down from the top
-                 edge after the customer returns from WhatsApp. */
-              piece.style.top = (Math.random() * 70) + "%";
-              piece.style.animationDelay = (-Math.random() * 3) + "s";
+              var fallSecs = 3.8 + (ci % 5) * 0.12;
+              piece.style.animationDuration = fallSecs + "s";
+              /* Loop the fall forever while the panel is open, and
+                 scatter each piece mid-fall: a random negative
+                 animation-delay spanning the piece's whole cycle
+                 places it part-way through its fall the moment it
+                 is created, and with infinite iteration it wraps
+                 back to the top and keeps falling — so the panel
+                 is full of falling confetti on first open, on every
+                 visibilitychange/focus replay, and at every moment
+                 in between, including the instant the customer
+                 returns from WhatsApp. */
+              piece.style.animationIterationCount = "infinite";
+              piece.style.animationDelay = (-Math.random() * fallSecs) + "s";
               confettiBox.appendChild(piece);
             }
             confettiActive = true;
