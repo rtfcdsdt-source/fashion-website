@@ -2645,7 +2645,10 @@ const SHOP_PRODUCTS=[["B0BRKJFK55","Lymio Men's Polyester Half Sleeve Printed Ca
              WhatsApp tap opens WhatsApp in front of the site, so a
              one-shot burst on open would already be over when the
              customer returns. Each piece falls for about 4 seconds
-             (CSS cgFall 4s + a staggered delay) and the pieces stay
+             (CSS cgFall 4s) and starts scattered mid-fall — a random
+             top offset plus a random negative animation-delay — so
+             the panel is full of confetti the instant it appears or
+             is replayed, with no empty wait. The pieces stay
              in the DOM for the whole life of the panel; they are
              only removed, and the replay listeners only removed,
              when the panel's X closes it. The container is
@@ -2670,7 +2673,16 @@ const SHOP_PRODUCTS=[["B0BRKJFK55","Lymio Men's Polyester Half Sleeve Printed Ca
                 piece.style.width = "8px"; piece.style.height = "13px";
               }
               piece.style.animationDuration = (3.8 + (ci % 5) * 0.12) + "s";
-              piece.style.animationDelay = ((ci % 10) * 0.07) + "s";
+              /* Scatter each piece mid-fall: a random starting top
+                 (0–70% of the panel height) plus a random negative
+                 animation-delay places it part-way through its fall
+                 the moment it is created. The panel is therefore
+                 already full of falling confetti on first open AND
+                 on every visibilitychange/focus replay — no ~2s of
+                 plain black while pieces travel down from the top
+                 edge after the customer returns from WhatsApp. */
+              piece.style.top = (Math.random() * 70) + "%";
+              piece.style.animationDelay = (-Math.random() * 3) + "s";
               confettiBox.appendChild(piece);
             }
             confettiActive = true;
