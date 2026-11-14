@@ -550,6 +550,11 @@
       .modal .m-addr .m-addr-row label{flex:1;min-width:0}
       .modal .m-addr-hint{color:#c81e1e;font-size:13.5px;font-weight:700;margin:0;line-height:1.45}
       .modal .m-addr-hint[hidden]{display:none}
+      /* delivery / return / refund policy (featured items only,
+         below the payment pills and address form, above Buy Now) */
+      .modal .m-policy{border:1px solid var(--line);border-radius:10px;background:var(--bg);padding:12px 14px;display:flex;flex-direction:column;gap:6px}
+      .modal .m-policy h4{font-family:"Playfair Display",Georgia,serif;font-size:17px;margin:0 0 2px}
+      .modal .m-policy p{margin:0;font-size:13.5px;line-height:1.55;color:var(--ink)}
       .modal .m-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:2px}
       .modal .m-actions .shop{padding:12px 22px;font-size:15px}
       /* ---------- viewer extras: share / wishlist / gallery / reviews ----------
@@ -2797,6 +2802,16 @@ const SHOP_PRODUCTS=[["B0BRKJFK55","Lymio Men's Polyester Half Sleeve Printed Ca
                 '</div>' +
                 '<label>Pura address<textarea class="addr-full" autocomplete="street-address" rows="2" placeholder="House no, gali, area, sheher"></textarea></label>' +
                 '<p class="m-addr-hint" hidden>Pehle apna naam, mobile aur address bharo.</p>' +
+              '</div>' +
+              '<div class="m-policy">' +
+                '<h4>Delivery &amp; Return</h4>' +
+                '<p>🚚 <b>Delivery:</b> order confirm hone ke baad 6–8 din mein</p>' +
+                '<p>↩️ <b>Return:</b> delivery ke 3 din ke andar, FREE return</p>' +
+                '<p>💰 <b>Refund:</b> 48 ghante mein, usi account mein jis se payment kiya tha</p>' +
+                '<p><b>Return ki shart:</b> product bina use kiye ho, tag laga ho, original packing mein ho.</p>' +
+                '<p><b>Return kaise karein:</b> WhatsApp par message bhejo — wahi number jis par order gaya tha — return pickup ki jaankari wahin milegi.</p>' +
+                '<p><b>COD order:</b> COD wale apni UPI ID WhatsApp par dein — refund usi UPI ID par 48 ghante mein aayega.</p>' +
+                '<p><b>Galat ya damage product:</b> aaye to bhi free return + poora refund — wahi 3 din, wahi 48 ghante.</p>' +
               '</div>' +
               '<a class="m-buy" target="_blank" rel="noopener" href="https://wa.me/918595318608?text=' + encodeURIComponent("Namaste! Mujhe ye product chahiye: " + it.title + " — Fashion Goals website se. Size: M. Price: ₹700. Main advance payment karke order confirm karunga.") + '"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2 22l5.25-1.38a9.9 9.9 0 0 0 4.79 1.22c5.46 0 9.9-4.45 9.9-9.91C21.95 6.45 17.5 2 12.04 2zm0 18.13a8.2 8.2 0 0 1-4.19-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.2 8.2 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.25-8.24 4.54 0 8.24 3.7 8.24 8.24 0 4.55-3.7 8.24-8.25 8.24zm4.52-6.16c-.25-.13-1.47-.72-1.69-.81-.23-.08-.39-.13-.56.13-.16.25-.64.8-.78.97-.15.16-.29.18-.54.06-.25-.13-1.05-.39-1.99-1.23-.74-.66-1.23-1.47-1.38-1.72-.14-.25-.01-.38.11-.51.11-.11.25-.29.37-.43.12-.15.16-.25.25-.41.08-.17.04-.31-.02-.43-.06-.13-.56-1.35-.77-1.84-.2-.48-.41-.42-.56-.43h-.48c-.17 0-.43.06-.66.31-.22.25-.86.85-.86 2.07 0 1.22.89 2.4 1.01 2.56.13.17 1.75 2.67 4.23 3.74.59.26 1.05.41 1.41.52.6.19 1.13.16 1.56.1.48-.07 1.47-.6 1.67-1.18.21-.58.21-1.07.15-1.18-.06-.1-.23-.16-.48-.29z"/></svg><span class="m-buy-label">Pay ₹700</span></a><p class="m-buy-note">Advance payment par order confirm hoga.</p><div class="m-upi" hidden><p class="m-upi-msg">Payment kar diya? Ab WhatsApp par order bhejein.</p><p class="m-upi-id">UPI ID: 85953186081@ibl</p><a class="m-upi-wa" target="_blank" rel="noopener" href="#"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2 22l5.25-1.38a9.9 9.9 0 0 0 4.79 1.22c5.46 0 9.9-4.45 9.9-9.91C21.95 6.45 17.5 2 12.04 2zm0 18.13a8.2 8.2 0 0 1-4.19-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.2 8.2 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.25-8.24 4.54 0 8.24 3.7 8.24 8.24 0 4.55-3.7 8.24-8.25 8.24zm4.52-6.16c-.25-.13-1.47-.72-1.69-.81-.23-.08-.39-.13-.56.13-.16.25-.64.8-.78.97-.15.16-.29.18-.54.06-.25-.13-1.05-.39-1.99-1.23-.74-.66-1.23-1.47-1.38-1.72-.14-.25-.01-.38.11-.51.11-.11.25-.29.37-.43.12-.15.16-.25.25-.41.08-.17.04-.31-.02-.43-.06-.13-.56-1.35-.77-1.84-.2-.48-.41-.42-.56-.43h-.48c-.17 0-.43.06-.66.31-.22.25-.86.85-.86 2.07 0 1.22.89 2.4 1.01 2.56.13.17 1.75 2.67 4.23 3.74.59.26 1.05.41 1.41.52.6.19 1.13.16 1.56.1.48-.07 1.47-.6 1.67-1.18.21-.58.21-1.07.15-1.18-.06-.1-.23-.16-.48-.29z"/></svg>WhatsApp par Order Bhejein</a></div>' : '') + reviewHTML +
             '<button class="desc-toggle" type="button" aria-expanded="false" hidden>Read more <svg class="chev" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 9 7 7 7-7"/></svg></button>' +
