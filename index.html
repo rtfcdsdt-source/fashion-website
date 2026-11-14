@@ -510,6 +510,14 @@
       .modal .m-buy{display:inline-flex;align-items:center;gap:9px;align-self:flex-start;background:#25D366;color:#fff;font-weight:700;font-size:16px;line-height:1;padding:13px 28px;border-radius:999px;text-decoration:none}
       .modal .m-buy:active{background:#1eb856}
       .modal .m-buy-note{font-size:13px;font-weight:600;color:var(--ink-soft);margin:-4px 0 0;line-height:1.5}
+      /* after an Advance "Pay ₹700" tap: panel with the UPI ID and a
+         WhatsApp order button carrying the same Order ID */
+      .modal .m-upi{display:flex;flex-direction:column;align-items:flex-start;gap:9px}
+      .modal .m-upi[hidden]{display:none}
+      .modal .m-upi-msg{font-size:15px;font-weight:700;margin:0;line-height:1.45}
+      .modal .m-upi-id{font-size:14.5px;font-weight:700;margin:0;line-height:1.45;-webkit-user-select:all;user-select:all}
+      .modal .m-upi-wa{display:inline-flex;align-items:center;gap:9px;background:#25D366;color:#fff;font-weight:700;font-size:16px;line-height:1;padding:13px 28px;border-radius:999px;text-decoration:none}
+      .modal .m-upi-wa:active{background:#1eb856}
       .modal .m-size{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
       .modal .m-size .m-size-label{font-size:14px;font-weight:700;margin-right:2px}
       .modal .m-size .size-chip{
@@ -2168,15 +2176,21 @@ const SHOP_PRODUCTS=[["B0BRKJFK55","Lymio Men's Polyester Half Sleeve Printed Ca
           mImg.addEventListener("load", markLoaded);
           mImg.addEventListener("error", markLoaded);
         }
-        /* featured items only: size chips pick the size; the Buy Now
-           pill opens WhatsApp only once the delivery address form is
-           filled in correctly, and the message then carries the
-           product, chosen size, fixed ₹700 price and the address.
+        /* featured items only: size chips pick the size; the buy
+           pill works only once the delivery address form is filled
+           in correctly. COD goes straight to WhatsApp with the
+           product, chosen size, fixed ₹700 price and the address;
+           Advance ("Pay ₹700") opens the customer's UPI app with
+           ₹700 pre-filled and then shows a panel whose WhatsApp
+           button carries the same details plus the Order ID.
            The filled name/mobile/address/pincode are remembered in
            localStorage (nothing else) so they prefill next time. */
         var sizeRow = sec.querySelector(".m-size");
         if (sizeRow){
           var buyLink = sec.querySelector(".m-buy");
+          var buyLabel = buyLink ? buyLink.querySelector(".m-buy-label") : null;
+          var upiPanel = sec.querySelector(".m-upi");
+          var upiWa = upiPanel ? upiPanel.querySelector(".m-upi-wa") : null;
           var titleEl = sec.querySelector("h3");
           var selSize = "M";
           var addrBox = sec.querySelector(".m-addr");
@@ -2230,6 +2244,12 @@ const SHOP_PRODUCTS=[["B0BRKJFK55","Lymio Men's Polyester Half Sleeve Printed Ca
                 chip.setAttribute("aria-pressed", "true");
                 selPay = chip.getAttribute("data-pay") || "advance";
                 if (buyNote) buyNote.textContent = selPay === "cod" ? "Cash on Delivery — delivery par payment karein." : "Advance payment par order confirm hoga.";
+                /* Advance shows "Pay ₹700" (opens the UPI app), COD
+                   shows "Buy Now" (straight to WhatsApp); switching
+                   method also hides any UPI panel left over from an
+                   earlier pay tap */
+                if (buyLabel) buyLabel.textContent = selPay === "cod" ? "Buy Now" : "Pay ₹700";
+                if (upiPanel) upiPanel.hidden = true;
               });
             });
           }
@@ -2262,8 +2282,33 @@ const SHOP_PRODUCTS=[["B0BRKJFK55","Lymio Men's Polyester Half Sleeve Printed Ca
                 localStorage.setItem("fg-addr-pin", v.pin);
                 localStorage.setItem("fg-addr-addr", addrIn ? addrIn.value.trim() : v.addr);
               } catch(err){}
+              var title = titleEl ? titleEl.textContent : "";
+              if (selPay === "advance"){
+                /* Advance: open the customer's own UPI app with ₹700
+                   pre-filled — they enter their PIN inside that app;
+                   the site never asks for or stores any PIN/password.
+                   A fresh Order ID is made per tap and rides in both
+                   the UPI link (tr) and the panel's WhatsApp message
+                   so the seller can match payment to order. */
+                e.preventDefault();
+                var orderId = "FG" + Date.now();
+                if (upiWa){
+                  upiWa.href = "https://wa.me/918595318608?text=" + encodeURIComponent("Namaste! Mujhe ye product chahiye: " + title + " — Fashion Goals website se. Size: " + selSize + ". Price: ₹700. Naam: " + v.name + ". Mobile: " + v.mobile + ". Address: " + v.addr + ", " + v.pin + ". Main advance payment karke order confirm karunga. Order ID: " + orderId);
+                }
+                if (upiPanel) upiPanel.hidden = false;
+                /* open the UPI app through a throwaway link click,
+                   still inside this tap's user gesture */
+                var upiLink = document.createElement("a");
+                upiLink.href = "upi://pay?pa=85953186081@ibl&pn=Fashion%20Goals&am=700&cu=INR&tn=" + encodeURIComponent("Fashion Goals order " + title + " Size " + selSize) + "&tr=" + orderId;
+                document.body.appendChild(upiLink);
+                upiLink.click();
+                document.body.removeChild(upiLink);
+                return;
+              }
+              /* COD: straight to WhatsApp with the COD ending line,
+                 exactly as before — no UPI link, no panel */
               if (titleEl){
-                buyLink.href = "https://wa.me/918595318608?text=" + encodeURIComponent("Namaste! Mujhe ye product chahiye: " + titleEl.textContent + " — Fashion Goals website se. Size: " + selSize + ". Price: ₹700. Naam: " + v.name + ". Mobile: " + v.mobile + ". Address: " + v.addr + ", " + v.pin + ". " + (selPay === "cod" ? "Main Cash on Delivery par order karna chahta hun." : "Main advance payment karke order confirm karunga."));
+                buyLink.href = "https://wa.me/918595318608?text=" + encodeURIComponent("Namaste! Mujhe ye product chahiye: " + title + " — Fashion Goals website se. Size: " + selSize + ". Price: ₹700. Naam: " + v.name + ". Mobile: " + v.mobile + ". Address: " + v.addr + ", " + v.pin + ". Main Cash on Delivery par order karna chahta hun.");
               }
             });
           }
@@ -2310,12 +2355,14 @@ const SHOP_PRODUCTS=[["B0BRKJFK55","Lymio Men's Polyester Half Sleeve Printed Ca
             (it.price ? '<p class="m-price">₹' + Number(it.price).toLocaleString("en-IN") + '</p>' : '') +
             /* the 6 featured photos (ids not built by prodItem, so no
                "p-" prefix) sell direct: a size selector (S/M/L/XL, M
-               preselected), a delivery address form and a WhatsApp
-               Buy Now pill under the name/description/price; the
-               chosen size and the filled address ride along in the
-               WhatsApp message. The Amazon products keep their
-               viewer exactly as it was — no selector, no form, no
-               button. */
+               preselected), a payment choice (Advance UPI / COD), a
+               delivery address form and a buy pill under the
+               name/description/price — Advance reads "Pay ₹700" and
+               opens the UPI app, then shows a panel with the UPI ID
+               and a WhatsApp order button; COD reads "Buy Now" and
+               goes straight to WhatsApp. The Amazon products keep
+               their viewer exactly as it was — no selector, no form,
+               no button. */
             (it.id.indexOf("p-") !== 0 ? '<div class="m-size" role="group" aria-label="Choose a size"><span class="m-size-label">Size:</span>' +
               '<button type="button" class="size-chip" data-size="S" aria-pressed="false">S</button>' +
               '<button type="button" class="size-chip sel" data-size="M" aria-pressed="true">M</button>' +
@@ -2333,7 +2380,7 @@ const SHOP_PRODUCTS=[["B0BRKJFK55","Lymio Men's Polyester Half Sleeve Printed Ca
                 '<label>Pura address<textarea class="addr-full" autocomplete="street-address" rows="2" placeholder="House no, gali, area, sheher"></textarea></label>' +
                 '<p class="m-addr-hint" hidden>Pehle apna naam, mobile aur address bharo.</p>' +
               '</div>' +
-              '<a class="m-buy" target="_blank" rel="noopener" href="https://wa.me/918595318608?text=' + encodeURIComponent("Namaste! Mujhe ye product chahiye: " + it.title + " — Fashion Goals website se. Size: M. Price: ₹700. Main advance payment karke order confirm karunga.") + '"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2 22l5.25-1.38a9.9 9.9 0 0 0 4.79 1.22c5.46 0 9.9-4.45 9.9-9.91C21.95 6.45 17.5 2 12.04 2zm0 18.13a8.2 8.2 0 0 1-4.19-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.2 8.2 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.25-8.24 4.54 0 8.24 3.7 8.24 8.24 0 4.55-3.7 8.24-8.25 8.24zm4.52-6.16c-.25-.13-1.47-.72-1.69-.81-.23-.08-.39-.13-.56.13-.16.25-.64.8-.78.97-.15.16-.29.18-.54.06-.25-.13-1.05-.39-1.99-1.23-.74-.66-1.23-1.47-1.38-1.72-.14-.25-.01-.38.11-.51.11-.11.25-.29.37-.43.12-.15.16-.25.25-.41.08-.17.04-.31-.02-.43-.06-.13-.56-1.35-.77-1.84-.2-.48-.41-.42-.56-.43h-.48c-.17 0-.43.06-.66.31-.22.25-.86.85-.86 2.07 0 1.22.89 2.4 1.01 2.56.13.17 1.75 2.67 4.23 3.74.59.26 1.05.41 1.41.52.6.19 1.13.16 1.56.1.48-.07 1.47-.6 1.67-1.18.21-.58.21-1.07.15-1.18-.06-.1-.23-.16-.48-.29z"/></svg>Buy Now</a><p class="m-buy-note">Advance payment par order confirm hoga.</p>' : '') +
+              '<a class="m-buy" target="_blank" rel="noopener" href="https://wa.me/918595318608?text=' + encodeURIComponent("Namaste! Mujhe ye product chahiye: " + it.title + " — Fashion Goals website se. Size: M. Price: ₹700. Main advance payment karke order confirm karunga.") + '"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2 22l5.25-1.38a9.9 9.9 0 0 0 4.79 1.22c5.46 0 9.9-4.45 9.9-9.91C21.95 6.45 17.5 2 12.04 2zm0 18.13a8.2 8.2 0 0 1-4.19-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.2 8.2 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.25-8.24 4.54 0 8.24 3.7 8.24 8.24 0 4.55-3.7 8.24-8.25 8.24zm4.52-6.16c-.25-.13-1.47-.72-1.69-.81-.23-.08-.39-.13-.56.13-.16.25-.64.8-.78.97-.15.16-.29.18-.54.06-.25-.13-1.05-.39-1.99-1.23-.74-.66-1.23-1.47-1.38-1.72-.14-.25-.01-.38.11-.51.11-.11.25-.29.37-.43.12-.15.16-.25.25-.41.08-.17.04-.31-.02-.43-.06-.13-.56-1.35-.77-1.84-.2-.48-.41-.42-.56-.43h-.48c-.17 0-.43.06-.66.31-.22.25-.86.85-.86 2.07 0 1.22.89 2.4 1.01 2.56.13.17 1.75 2.67 4.23 3.74.59.26 1.05.41 1.41.52.6.19 1.13.16 1.56.1.48-.07 1.47-.6 1.67-1.18.21-.58.21-1.07.15-1.18-.06-.1-.23-.16-.48-.29z"/></svg><span class="m-buy-label">Pay ₹700</span></a><p class="m-buy-note">Advance payment par order confirm hoga.</p><div class="m-upi" hidden><p class="m-upi-msg">Payment kar diya? Ab WhatsApp par order bhejein.</p><p class="m-upi-id">UPI ID: 85953186081@ibl</p><a class="m-upi-wa" target="_blank" rel="noopener" href="#"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2 22l5.25-1.38a9.9 9.9 0 0 0 4.79 1.22c5.46 0 9.9-4.45 9.9-9.91C21.95 6.45 17.5 2 12.04 2zm0 18.13a8.2 8.2 0 0 1-4.19-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.2 8.2 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.25-8.24 4.54 0 8.24 3.7 8.24 8.24 0 4.55-3.7 8.24-8.25 8.24zm4.52-6.16c-.25-.13-1.47-.72-1.69-.81-.23-.08-.39-.13-.56.13-.16.25-.64.8-.78.97-.15.16-.29.18-.54.06-.25-.13-1.05-.39-1.99-1.23-.74-.66-1.23-1.47-1.38-1.72-.14-.25-.01-.38.11-.51.11-.11.25-.29.37-.43.12-.15.16-.25.25-.41.08-.17.04-.31-.02-.43-.06-.13-.56-1.35-.77-1.84-.2-.48-.41-.42-.56-.43h-.48c-.17 0-.43.06-.66.31-.22.25-.86.85-.86 2.07 0 1.22.89 2.4 1.01 2.56.13.17 1.75 2.67 4.23 3.74.59.26 1.05.41 1.41.52.6.19 1.13.16 1.56.1.48-.07 1.47-.6 1.67-1.18.21-.58.21-1.07.15-1.18-.06-.1-.23-.16-.48-.29z"/></svg>WhatsApp par Order Bhejein</a></div>' : '') +
             '<button class="desc-toggle" type="button" aria-expanded="false" hidden>Read more <svg class="chev" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 9 7 7 7-7"/></svg></button>' +
           '</div>' +
         '</section>';
