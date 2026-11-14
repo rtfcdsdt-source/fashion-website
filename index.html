@@ -524,10 +524,13 @@
          button tap for Advance orders. The look is deliberately
          celebratory and unlike anything else in the viewer: a bold
          black panel with a red frame (the site's red/black style),
-         a big animated checkmark that draws itself, and a confetti
-         burst that falls when the panel appears. The animations
-         start when the panel is unhidden, because a display:none
-         element runs no animation until it is shown. */
+         a big animated checkmark that draws itself, and colourful
+         confetti pieces (created by the script when the panel is
+         shown) that fall for about 4 seconds and are re-created
+         when the tab regains visibility/focus while the panel is
+         still open — the WhatsApp tap covers the site, so the
+         customer sees the fall again on returning. The pieces stay
+         in the DOM until the panel's X removes them. */
       .modal .m-congrats{position:relative;overflow:hidden;border:2px solid #E7000C;border-radius:14px;background:#0b0b0b;color:#fff;padding:18px 40px 16px 16px;display:flex;flex-direction:column;gap:5px;box-shadow:0 10px 30px rgba(231,0,12,.25);animation:cgPop .35s ease}
       .modal .m-congrats[hidden]{display:none}
       @keyframes cgPop{0%{transform:scale(.92);opacity:0}100%{transform:scale(1);opacity:1}}
@@ -536,25 +539,33 @@
       .modal .cg-check circle{stroke:#E7000C;stroke-width:3.5;stroke-dasharray:151;stroke-dashoffset:151;animation:cgDraw .6s ease forwards}
       .modal .cg-check path{stroke:#fff;stroke-width:4.5;stroke-dasharray:40;stroke-dashoffset:40;animation:cgDraw .4s .5s ease forwards}
       @keyframes cgDraw{to{stroke-dashoffset:0}}
-      .modal .cg-confetti{position:absolute;inset:0;overflow:hidden;pointer-events:none}
-      .modal .cg-confetti i{position:absolute;top:-14px;width:8px;height:13px;background:#E7000C;opacity:0;animation:cgFall 1.7s ease-in forwards}
-      .modal .cg-confetti i:nth-child(1){left:4%;animation-delay:.02s}
-      .modal .cg-confetti i:nth-child(2){left:12%;background:#fff;width:7px;height:7px;border-radius:50%;animation-delay:.18s}
-      .modal .cg-confetti i:nth-child(3){left:20%;animation-delay:.34s;transform:rotate(30deg)}
-      .modal .cg-confetti i:nth-child(4){left:28%;background:#8f8f8f;animation-delay:.08s}
-      .modal .cg-confetti i:nth-child(5){left:36%;background:#fff;animation-delay:.26s}
-      .modal .cg-confetti i:nth-child(6){left:44%;width:7px;height:7px;border-radius:50%;animation-delay:.42s}
-      .modal .cg-confetti i:nth-child(7){left:52%;background:#fff;animation-delay:.12s}
-      .modal .cg-confetti i:nth-child(8){left:60%;animation-delay:.3s}
-      .modal .cg-confetti i:nth-child(9){left:68%;background:#8f8f8f;width:7px;height:7px;border-radius:50%;animation-delay:.05s}
-      .modal .cg-confetti i:nth-child(10){left:76%;background:#fff;animation-delay:.22s}
-      .modal .cg-confetti i:nth-child(11){left:84%;animation-delay:.38s}
-      .modal .cg-confetti i:nth-child(12){left:92%;background:#fff;width:7px;height:7px;border-radius:50%;animation-delay:.15s}
-      @keyframes cgFall{0%{transform:translateY(0) rotate(0deg);opacity:1}75%{opacity:1}100%{transform:translateY(260px) rotate(580deg);opacity:0}}
+      .modal .cg-confetti{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:1}
+      .modal .cg-confetti i{position:absolute;top:-14px;width:8px;height:13px;background:#E7000C;opacity:0;animation:cgFall 4s linear forwards}
+      .modal .cg-confetti i:nth-child(1){left:4%;background:#E7000C;animation-delay:0s}
+      .modal .cg-confetti i:nth-child(2){left:9%;background:#FFD166;width:7px;height:7px;border-radius:50%;animation-delay:.14s}
+      .modal .cg-confetti i:nth-child(3){left:14%;background:#06D6A0;animation-delay:.28s}
+      .modal .cg-confetti i:nth-child(4){left:19%;background:#118AB2;animation-delay:.07s}
+      .modal .cg-confetti i:nth-child(5){left:24%;background:#FF6B9D;animation-delay:.21s}
+      .modal .cg-confetti i:nth-child(6){left:29%;background:#fff;width:7px;height:7px;border-radius:50%;animation-delay:.35s}
+      .modal .cg-confetti i:nth-child(7){left:34%;background:#FF9F1C;animation-delay:.1s}
+      .modal .cg-confetti i:nth-child(8){left:39%;background:#7C3AED;animation-delay:.24s}
+      .modal .cg-confetti i:nth-child(9){left:44%;background:#E7000C;width:7px;height:7px;border-radius:50%;animation-delay:.03s}
+      .modal .cg-confetti i:nth-child(10){left:49%;background:#FFD166;animation-delay:.17s}
+      .modal .cg-confetti i:nth-child(11){left:54%;background:#06D6A0;animation-delay:.31s}
+      .modal .cg-confetti i:nth-child(12){left:59%;background:#118AB2;width:7px;height:7px;border-radius:50%;animation-delay:.12s}
+      .modal .cg-confetti i:nth-child(13){left:64%;background:#FF6B9D;animation-delay:.26s}
+      .modal .cg-confetti i:nth-child(14){left:69%;background:#fff;animation-delay:.05s}
+      .modal .cg-confetti i:nth-child(15){left:74%;background:#FF9F1C;width:7px;height:7px;border-radius:50%;animation-delay:.19s}
+      .modal .cg-confetti i:nth-child(16){left:79%;background:#7C3AED;animation-delay:.33s}
+      .modal .cg-confetti i:nth-child(17){left:84%;background:#E7000C;animation-delay:.09s}
+      .modal .cg-confetti i:nth-child(18){left:89%;background:#FFD166;width:7px;height:7px;border-radius:50%;animation-delay:.23s}
+      .modal .cg-confetti i:nth-child(19){left:93%;background:#06D6A0;animation-delay:.15s}
+      .modal .cg-confetti i:nth-child(20){left:97%;background:#FF6B9D;animation-delay:.3s}
+      @keyframes cgFall{0%{transform:translateY(0) rotate(0deg);opacity:1}82%{opacity:1}100%{transform:translateY(360px) rotate(720deg);opacity:0}}
       .modal .m-congrats-head{font-size:18px;font-weight:800;margin:0 0 3px;line-height:1.4;text-align:center}
       .modal .m-congrats-line{margin:0;font-size:14.5px;line-height:1.5;text-align:center}
       .modal .m-congrats-remind{margin:5px 0 0;font-size:13.5px;font-weight:700;line-height:1.5;text-align:center;color:#ffb3b8}
-      .modal .m-congrats-close{position:absolute;top:8px;right:8px;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;background:transparent;border:1px solid rgba(255,255,255,.4);border-radius:999px;color:#fff;cursor:pointer;padding:0;z-index:1}
+      .modal .m-congrats-close{position:absolute;top:8px;right:8px;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;background:transparent;border:1px solid rgba(255,255,255,.4);border-radius:999px;color:#fff;cursor:pointer;padding:0;z-index:2}
       @media (prefers-reduced-motion: reduce){
         .modal .m-congrats,.modal .cg-confetti i,.modal .cg-check circle,.modal .cg-check path{animation:none}
         .modal .cg-check circle,.modal .cg-check path{stroke-dashoffset:0}
@@ -2628,6 +2639,58 @@ const SHOP_PRODUCTS=[["B0BRKJFK55","Lymio Men's Polyester Half Sleeve Printed Ca
              the panel — address, size and payment state stay as-is. */
           var congrats = sec.querySelector(".m-congrats");
           var lastOrderId = "";
+          /* Confetti: colourful pieces are created fresh every time
+             the panel is shown and RE-created when the tab regains
+             visibility/focus while the panel is still open — the
+             WhatsApp tap opens WhatsApp in front of the site, so a
+             one-shot burst on open would already be over when the
+             customer returns. Each piece falls for about 4 seconds
+             (CSS cgFall 4s + a staggered delay) and the pieces stay
+             in the DOM for the whole life of the panel; they are
+             only removed, and the replay listeners only removed,
+             when the panel's X closes it. The container is
+             pointer-events:none, so the pieces never block the
+             panel text or the X. */
+          var confettiBox = congrats ? congrats.querySelector(".cg-confetti") : null;
+          var confettiColors = ["#E7000C", "#FFD166", "#06D6A0", "#118AB2", "#FF6B9D", "#ffffff", "#FF9F1C", "#7C3AED"];
+          var confettiActive = false;
+          var startConfetti = function(){
+            if (!confettiBox) return;
+            confettiBox.innerHTML = "";
+            for (var ci = 0; ci < 28; ci++){
+              var piece = document.createElement("i");
+              piece.className = "cg-piece confetti-piece";
+              piece.style.left = (2 + (ci * 3.4) + (ci % 3)) + "%";
+              piece.style.background = confettiColors[ci % confettiColors.length];
+              if (ci % 3 === 1){
+                piece.style.width = "7px"; piece.style.height = "7px"; piece.style.borderRadius = "50%";
+              } else if (ci % 3 === 2){
+                piece.style.width = "6px"; piece.style.height = "10px";
+              } else {
+                piece.style.width = "8px"; piece.style.height = "13px";
+              }
+              piece.style.animationDuration = (3.8 + (ci % 5) * 0.12) + "s";
+              piece.style.animationDelay = ((ci % 10) * 0.07) + "s";
+              confettiBox.appendChild(piece);
+            }
+            confettiActive = true;
+          };
+          var onCgVisibility = function(){
+            if (!document.hidden) replayConfetti();
+          };
+          var onCgFocus = function(){
+            replayConfetti();
+          };
+          var replayConfetti = function(){
+            if (!congrats || congrats.hidden || !confettiActive) return;
+            startConfetti();
+          };
+          var stopConfetti = function(){
+            confettiActive = false;
+            if (confettiBox) confettiBox.innerHTML = "";
+            document.removeEventListener("visibilitychange", onCgVisibility);
+            window.removeEventListener("focus", onCgFocus);
+          };
           var showCongrats = function(oid){
             if (!congrats) return;
             var cName = congrats.querySelector(".cg-name");
@@ -2637,11 +2700,16 @@ const SHOP_PRODUCTS=[["B0BRKJFK55","Lymio Men's Polyester Half Sleeve Printed Ca
             if (cSize) cSize.textContent = "Size: " + selSize;
             if (cOid) cOid.textContent = "Order ID: " + oid;
             congrats.hidden = false;
+            startConfetti();
+            document.removeEventListener("visibilitychange", onCgVisibility);
+            window.removeEventListener("focus", onCgFocus);
+            document.addEventListener("visibilitychange", onCgVisibility);
+            window.addEventListener("focus", onCgFocus);
             if (congrats.scrollIntoView) congrats.scrollIntoView({ block: "nearest" });
           };
           if (congrats){
             var cgClose = congrats.querySelector(".m-congrats-close");
-            if (cgClose) cgClose.addEventListener("click", function(){ congrats.hidden = true; });
+            if (cgClose) cgClose.addEventListener("click", function(){ stopConfetti(); congrats.hidden = true; });
           }
           /* Advance: the after-payment panel's WhatsApp button still
              opens WhatsApp exactly as before; the same tap also
@@ -2892,7 +2960,7 @@ const SHOP_PRODUCTS=[["B0BRKJFK55","Lymio Men's Polyester Half Sleeve Printed Ca
                 '<p><b>COD order:</b> COD wale apni UPI ID WhatsApp par dein — refund usi UPI ID par 48 ghante mein aayega.</p>' +
                 '<p><b>Galat ya damage product:</b> aaye to bhi free return + poora refund — wahi 3 din, wahi 48 ghante.</p>' +
               '</div>' +
-              '<a class="m-buy" target="_blank" rel="noopener" href="https://wa.me/918595318608?text=' + encodeURIComponent("Namaste! Mujhe ye product chahiye: " + it.title + " — Fashion Goals website se. Size: M. Price: ₹700. Main advance payment karke order confirm karunga.") + '"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2 22l5.25-1.38a9.9 9.9 0 0 0 4.79 1.22c5.46 0 9.9-4.45 9.9-9.91C21.95 6.45 17.5 2 12.04 2zm0 18.13a8.2 8.2 0 0 1-4.19-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.2 8.2 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.25-8.24 4.54 0 8.24 3.7 8.24 8.24 0 4.55-3.7 8.24-8.25 8.24zm4.52-6.16c-.25-.13-1.47-.72-1.69-.81-.23-.08-.39-.13-.56.13-.16.25-.64.8-.78.97-.15.16-.29.18-.54.06-.25-.13-1.05-.39-1.99-1.23-.74-.66-1.23-1.47-1.38-1.72-.14-.25-.01-.38.11-.51.11-.11.25-.29.37-.43.12-.15.16-.25.25-.41.08-.17.04-.31-.02-.43-.06-.13-.56-1.35-.77-1.84-.2-.48-.41-.42-.56-.43h-.48c-.17 0-.43.06-.66.31-.22.25-.86.85-.86 2.07 0 1.22.89 2.4 1.01 2.56.13.17 1.75 2.67 4.23 3.74.59.26 1.05.41 1.41.52.6.19 1.13.16 1.56.1.48-.07 1.47-.6 1.67-1.18.21-.58.21-1.07.15-1.18-.06-.1-.23-.16-.48-.29z"/></svg><span class="m-buy-label">Pay ₹700</span></a><p class="m-buy-note">Advance payment par order confirm hoga.</p><div class="m-upi" hidden><p class="m-upi-msg">Payment kar diya? Ab WhatsApp par order bhejein.</p><p class="m-upi-id">UPI ID: 85953186081@ibl</p><a class="m-upi-wa" target="_blank" rel="noopener" href="#"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2 22l5.25-1.38a9.9 9.9 0 0 0 4.79 1.22c5.46 0 9.9-4.45 9.9-9.91C21.95 6.45 17.5 2 12.04 2zm0 18.13a8.2 8.2 0 0 1-4.19-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.2 8.2 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.25-8.24 4.54 0 8.24 3.7 8.24 8.24 0 4.55-3.7 8.24-8.25 8.24zm4.52-6.16c-.25-.13-1.47-.72-1.69-.81-.23-.08-.39-.13-.56.13-.16.25-.64.8-.78.97-.15.16-.29.18-.54.06-.25-.13-1.05-.39-1.99-1.23-.74-.66-1.23-1.47-1.38-1.72-.14-.25-.01-.38.11-.51.11-.11.25-.29.37-.43.12-.15.16-.25.25-.41.08-.17.04-.31-.02-.43-.06-.13-.56-1.35-.77-1.84-.2-.48-.41-.42-.56-.43h-.48c-.17 0-.43.06-.66.31-.22.25-.86.85-.86 2.07 0 1.22.89 2.4 1.01 2.56.13.17 1.75 2.67 4.23 3.74.59.26 1.05.41 1.41.52.6.19 1.13.16 1.56.1.48-.07 1.47-.6 1.67-1.18.21-.58.21-1.07.15-1.18-.06-.1-.23-.16-.48-.29z"/></svg>WhatsApp par Order Bhejein</a></div><div class="m-congrats" hidden><span class="cg-confetti" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span><button type="button" class="m-congrats-close" aria-label="Close"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M5 5l14 14M19 5L5 19"/></svg></button><span class="cg-check" aria-hidden="true"><svg viewBox="0 0 52 52"><circle cx="26" cy="26" r="24"/><path d="M14.5 27l8 8L38 18"/></svg></span><p class="m-congrats-head">🎉 Congratulations! Aapka order bhej diya gaya hai</p><p class="m-congrats-line cg-name"></p><p class="m-congrats-line cg-size"></p><p class="m-congrats-line">Price: ₹700</p><p class="m-congrats-line cg-oid"></p><p class="m-congrats-line">Shiva jald WhatsApp par order confirm karenge.</p><p class="m-congrats-remind">Agar message nahi gaya ho to dobara WhatsApp kholkar Send dabayein.</p></div>' : '') + reviewHTML +
+              '<a class="m-buy" target="_blank" rel="noopener" href="https://wa.me/918595318608?text=' + encodeURIComponent("Namaste! Mujhe ye product chahiye: " + it.title + " — Fashion Goals website se. Size: M. Price: ₹700. Main advance payment karke order confirm karunga.") + '"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2 22l5.25-1.38a9.9 9.9 0 0 0 4.79 1.22c5.46 0 9.9-4.45 9.9-9.91C21.95 6.45 17.5 2 12.04 2zm0 18.13a8.2 8.2 0 0 1-4.19-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.2 8.2 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.25-8.24 4.54 0 8.24 3.7 8.24 8.24 0 4.55-3.7 8.24-8.25 8.24zm4.52-6.16c-.25-.13-1.47-.72-1.69-.81-.23-.08-.39-.13-.56.13-.16.25-.64.8-.78.97-.15.16-.29.18-.54.06-.25-.13-1.05-.39-1.99-1.23-.74-.66-1.23-1.47-1.38-1.72-.14-.25-.01-.38.11-.51.11-.11.25-.29.37-.43.12-.15.16-.25.25-.41.08-.17.04-.31-.02-.43-.06-.13-.56-1.35-.77-1.84-.2-.48-.41-.42-.56-.43h-.48c-.17 0-.43.06-.66.31-.22.25-.86.85-.86 2.07 0 1.22.89 2.4 1.01 2.56.13.17 1.75 2.67 4.23 3.74.59.26 1.05.41 1.41.52.6.19 1.13.16 1.56.1.48-.07 1.47-.6 1.67-1.18.21-.58.21-1.07.15-1.18-.06-.1-.23-.16-.48-.29z"/></svg><span class="m-buy-label">Pay ₹700</span></a><p class="m-buy-note">Advance payment par order confirm hoga.</p><div class="m-upi" hidden><p class="m-upi-msg">Payment kar diya? Ab WhatsApp par order bhejein.</p><p class="m-upi-id">UPI ID: 85953186081@ibl</p><a class="m-upi-wa" target="_blank" rel="noopener" href="#"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2 22l5.25-1.38a9.9 9.9 0 0 0 4.79 1.22c5.46 0 9.9-4.45 9.9-9.91C21.95 6.45 17.5 2 12.04 2zm0 18.13a8.2 8.2 0 0 1-4.19-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.2 8.2 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.25-8.24 4.54 0 8.24 3.7 8.24 8.24 0 4.55-3.7 8.24-8.25 8.24zm4.52-6.16c-.25-.13-1.47-.72-1.69-.81-.23-.08-.39-.13-.56.13-.16.25-.64.8-.78.97-.15.16-.29.18-.54.06-.25-.13-1.05-.39-1.99-1.23-.74-.66-1.23-1.47-1.38-1.72-.14-.25-.01-.38.11-.51.11-.11.25-.29.37-.43.12-.15.16-.25.25-.41.08-.17.04-.31-.02-.43-.06-.13-.56-1.35-.77-1.84-.2-.48-.41-.42-.56-.43h-.48c-.17 0-.43.06-.66.31-.22.25-.86.85-.86 2.07 0 1.22.89 2.4 1.01 2.56.13.17 1.75 2.67 4.23 3.74.59.26 1.05.41 1.41.52.6.19 1.13.16 1.56.1.48-.07 1.47-.6 1.67-1.18.21-.58.21-1.07.15-1.18-.06-.1-.23-.16-.48-.29z"/></svg>WhatsApp par Order Bhejein</a></div><div class="m-congrats" hidden><span class="cg-confetti" aria-hidden="true"><i class="cg-piece confetti-piece"></i><i class="cg-piece confetti-piece"></i><i class="cg-piece confetti-piece"></i><i class="cg-piece confetti-piece"></i><i class="cg-piece confetti-piece"></i><i class="cg-piece confetti-piece"></i><i class="cg-piece confetti-piece"></i><i class="cg-piece confetti-piece"></i><i class="cg-piece confetti-piece"></i><i class="cg-piece confetti-piece"></i><i class="cg-piece confetti-piece"></i><i class="cg-piece confetti-piece"></i><i class="cg-piece confetti-piece"></i><i class="cg-piece confetti-piece"></i><i class="cg-piece confetti-piece"></i><i class="cg-piece confetti-piece"></i><i class="cg-piece confetti-piece"></i><i class="cg-piece confetti-piece"></i><i class="cg-piece confetti-piece"></i><i class="cg-piece confetti-piece"></i></span><button type="button" class="m-congrats-close" aria-label="Close"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M5 5l14 14M19 5L5 19"/></svg></button><span class="cg-check" aria-hidden="true"><svg viewBox="0 0 52 52"><circle cx="26" cy="26" r="24"/><path d="M14.5 27l8 8L38 18"/></svg></span><p class="m-congrats-head">🎉 Congratulations! Aapka order bhej diya gaya hai</p><p class="m-congrats-line cg-name"></p><p class="m-congrats-line cg-size"></p><p class="m-congrats-line">Price: ₹700</p><p class="m-congrats-line cg-oid"></p><p class="m-congrats-line">Shiva jald WhatsApp par order confirm karenge.</p><p class="m-congrats-remind">Agar message nahi gaya ho to dobara WhatsApp kholkar Send dabayein.</p></div>' : '') + reviewHTML +
             '<button class="desc-toggle" type="button" aria-expanded="false" hidden>Read more <svg class="chev" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 9 7 7 7-7"/></svg></button>' +
           '</div>' +
         '</section>';
