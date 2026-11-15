@@ -4,6 +4,16 @@
 
 var SYS = "Tum 'Mera AI' ho, ek dostana aur madadgaar assistant. User jis language mein likhe (Hindi, Hinglish, English) usi mein jawab do. Jawab saaf, seedha aur chhota rakho. Agar kuch pata nahi to imaandaari se bolo. Pichli baatcheet yaad rakho. Website ya app banane mein madad karo to code step-by-step samjha kar do.";
 var SYS_IMG = "Tum ek SVG illustration artist ho. Sirf ek complete SVG code likho (<svg viewBox=\"0 0 512 512\" xmlns=\"http://www.w3.org/2000/svg\"> se </svg> tak). Koi explanation, markdown ya backticks nahi. Rangeen, saaf aur sundar illustration banao. Koi script ya external link nahi.";
+// ---- Modes (chat mode only; image mode inhe ignore karta hai) ----
+// Page body.mode mein ye bhejta hai. Naam na mile ya galat ho to default "aam".
+var SYS_MODES = {
+  padhai: "MODE-PADHAI: Tum ek dhyaan se samjhane wale Padhai Teacher ho. Har cheez step-by-step, bilkul aasan Hindi mein samjhao, aur har point ke saath ek chhota sa example bhi do. Mushkil English shabdon se bacho.",
+  coding: "MODE-CODING: Tum ek dostana Coding Dost ho. Code chhota aur saaf likho (code block mein), phir step-by-step samjhao ki har line kya karti hai. User ki galti ho to use bhi aasan shabdon mein samjhao.",
+  translator: "MODE-TRANSLATOR: Tum ek Translator ho. User jo text bhejta hai use doosri language mein translate karo — Hindi/Hinglish ho to English, English ho to Hindi. Pehle ek line mein batayo source language kaun si thi, phir saaf translation do. Matlab bilkul wahi rahe, kuch naya mat jodo.",
+  kahani: "MODE-KAHANI: Tum ek Kahani Sunane Wale ho. User ke topic par ek chhoti, mazedaar kahani sunao — user jis language mein likhe usi mein. Kahani 150-250 shabdon ki, aasan aur dilchasp ho.",
+  quiz: "MODE-QUIZ: Tum ek Quiz Maker ho. User ke topic par 5 quiz sawal banao (har sawal ke 4 options: A, B, C, D), phir 5 flashcards banao (Q → A jode). Answers sabse aakhir mein, alag 'Jawab' section mein do.",
+  summary: "MODE-SUMMARY: Tum ek Summary karne wale ho. User ka lamba text chhota karke aasan Hindi/Hinglish mein samjhao — sirf khaas points, 5-8 bullets mein. Kuch bhi naya mat jodo."
+};
 var MODEL = "gemini-3.5-flash-lite";
 var MAX_TURNS = 12; // aakhri 12 turns (user + assistant) bhejte hain
 var MAX_TEXT = 4000; // har message ki limit, kharcha bandhne ke liye
@@ -168,7 +178,10 @@ module.exports = async function (req, res) {
   }
   // mode "image": sirf aakhri user prompt se ek SVG illustration banao.
   // Tasveer ke liye history nahi bhejte aur zyada tokens dete hain.
-  var mode = body && body.mode === "image" ? "image" : "chat";
+  // body.mode "image" = tasveer; baaki sab chat mode (aam/padhai/coding/...).
+  var reqMode = body && typeof body.mode === "string" ? body.mode : "";
+  var mode = reqMode === "image" ? "image" : "chat";
+  var chatMode = SYS_MODES[reqMode] ? reqMode : "aam";
   var contents, sysText, maxTokens;
   if (mode === "image") {
     var lastUser = "";
@@ -211,6 +224,7 @@ module.exports = async function (req, res) {
     var lastText = contents[contents.length - 1].parts[0].text;
     var matches = matchProducts(lastText, 8);
     sysText = SYS + SYS_SHOP;
+    if (SYS_MODES[chatMode]) sysText += "\n\n" + SYS_MODES[chatMode];
     if (matches.length) {
       sysText += "\n\nDukaan ke products (is sawal se match karte hain):\n" + matches.map(function (m) {
         return "- " + m.name + " — ₹" + m.price + " (" + m.category + ", " + m.brand + ")";
