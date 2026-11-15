@@ -50,7 +50,7 @@ iframe{flex:1;width:100%;border:0;background:#fff;min-height:0}
 <select id="ex"><option value="">Example...</option></select>
 <button id="clr" onclick="clearAll()">Saaf</button>
 <button onclick="toggleTheme()">🌓</button>
-<button class="run" onclick="run()">▶ Chalao</button>
+<button class="run" onclick="run();openFull()">▶ Chalao ↗</button>
 </header>
 <div class="work">
 <div class="pane">
@@ -104,13 +104,14 @@ function clearAll(){var b=document.getElementById("clr");
  armClr=0;b.textContent="Saaf";var p=P();p.html=p.css=p.js="";showTab();run()}
 ["html","css","js"].forEach(function(t){var b=document.createElement("button");b.textContent=t.toUpperCase();b.id="t_"+t;b.onclick=function(){P()[cur]=ed.value;cur=t;showTab();run()};tabs.appendChild(b)});
 function showTab(){["html","css","js"].forEach(function(t){document.getElementById("t_"+t).className=(t===cur)?"on":""});ed.value=P()[cur];ed.scrollTop=0;refresh()}
-var SPY="<script>(function(){window.__lo=__LO__;function f(a){return Array.prototype.map.call(a,function(x){if(typeof x==='object'){try{return JSON.stringify(x)}catch(e){}}return String(x)}).join(' ')}['log','warn','error'].forEach(function(k){var o=console[k];console[k]=function(){parent.postMessage({ck:1,t:k,m:f(arguments)},'*');o.apply(console,arguments)}});window.onerror=function(m,s,l,c){var n=(l&&window.__lo!==undefined)?Math.max(1,l-window.__lo):l;parent.postMessage({ck:1,t:'error',m:'Line '+n+': '+String(m)},'*')}})()<\/script>";
+var SPY="<script>(function(){window.__lo=__LO__;function f(a){return Array.prototype.map.call(a,function(x){if(typeof x==='object'){try{return JSON.stringify(x)}catch(e){}}return String(x)}).join(' ')}['log','warn','error'].forEach(function(k){var o=console[k];console[k]=function(){parent.postMessage({ck:1,t:k,m:f(arguments)},'*');o.apply(console,arguments)}});window.onerror=function(m,s,l,c){var n=(l&&window.__lo!==undefined)?Math.max(1,l-window.__lo):l;var msg='Line '+n+': '+String(m);parent.postMessage({ck:1,t:'error',m:msg},'*');try{var d=document.getElementById('ck-err');if(!d){d=document.createElement('div');d.id='ck-err';d.style.cssText='position:fixed;left:0;right:0;top:0;background:#fee2e2;color:#b42318;font:14px/1.4 sans-serif;padding:10px 12px;z-index:99999;white-space:pre-wrap';document.body.appendChild(d)}d.textContent='✖ '+msg}catch(e){}}})()<\/script>";
 function build(){var p=P(),js=p.js.replace(/<\/script/gi,"<\\/script");
  var css=p.css.replace(/<\/style/gi,"<\\/style");
  var pre="<!DOCTYPE html><html><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">"+SPY+"<style>"+css+"</style></head><body>"+p.html+"<script>";
  var off=pre.split("\n").length-1;
  return "<!DOCTYPE html><html><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">"+SPY.replace("__LO__",off)+"<style>"+css+"</style></head><body>"+p.html+"<script>"+js+"<\/script></body></html>"}
 function run(){P()[cur]=ed.value;con.textContent="";pv.srcdoc=build();save()}
+function openFull(){var u=URL.createObjectURL(new Blob([build()],{type:"text/html"}));var w=window.open(u,"_blank");if(!w){alert("Naya page nahi khula — browser ne rok diya. Dobara dabao.")}else{setTimeout(function(){URL.revokeObjectURL(u)},30000)}}
 function dl(){P()[cur]=ed.value;save();var n=(P().name||"project").replace(/[^\w\- ]+/g,"").trim()||"project";var a=document.createElement("a");a.href=URL.createObjectURL(new Blob([build()],{type:"text/html"}));a.download=n+".html";a.click();setTimeout(function(){URL.revokeObjectURL(a.href)},3000)}
 window.addEventListener("message",function(e){var d=e.data;if(e.source!==pv.contentWindow||!d||!d.ck)return;var l=document.createElement("div");l.className=d.t;l.textContent=(d.t==="error"?"✖ ":"› ")+d.m;con.appendChild(l);con.scrollTop=con.scrollHeight});
 Object.keys(EX).forEach(function(k){var o=document.createElement("option");o.value=k;o.textContent=k;exs.appendChild(o)});
