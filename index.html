@@ -660,6 +660,31 @@
         padding:11px 24px;font-weight:700;font-size:15px;cursor:pointer;
       }
       .modal .m-rsubmit:active{background:#b91c1c}
+      /* full catalogue feed under the review section (featured
+         sections only): the Shop page's own product grid, whole —
+         the 6 featured photos first as full-bleed .scard cards
+         with the same red Shop pill the shop grid carries, then
+         every catalogue product as the shop page's .pcard cards
+         (photo + name) — 2 columns on a phone, 3 on wider
+         screens, spanning the viewer's full width below the
+         product details. The catalogue cards load in chunks with
+         a Load more button, exactly like the shop page, so the
+         viewer stays light. */
+      .modal .m-morefeed{
+        grid-column:1/-1;border-top:1px solid var(--line);background:var(--bg);
+        padding:18px clamp(10px,3vw,28px) 24px;
+      }
+      .modal .m-more-title{font-family:"Playfair Display",Georgia,serif;font-size:21px;margin:0 0 12px}
+      .modal .m-moregrid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+      @media (min-width:760px){.modal .m-moregrid{grid-template-columns:repeat(3,1fr);gap:12px}}
+      .modal .m-moreprod{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:10px}
+      @media (min-width:760px){.modal .m-moreprod{grid-template-columns:repeat(3,1fr);gap:12px}}
+      .modal .m-morebtnwrap{text-align:center;margin-top:14px}
+      .modal .m-morebtn{
+        border:1px solid #171717;background:#171717;color:#fff;border-radius:999px;
+        padding:11px 30px;font:inherit;font-weight:700;font-size:14.5px;cursor:pointer;
+        -webkit-tap-highlight-color:transparent;
+      }
       /* wishlist button in the shop top bar + the wishlist panel */
       .wish-btn{
         flex:none;display:inline-flex;align-items:center;gap:6px;
@@ -2505,6 +2530,34 @@ const SHOP_PRODUCTS=[["B0BRKJFK55","Lymio Men's Polyester Half Sleeve Printed Ca
            and the reviews stand in the featured sections only
            (their markup is only rendered there) */
         var secId = sec.getAttribute("data-item");
+        /* the full catalogue feed under the review section: one
+           delegated tap handler covers the featured photos, their
+           Shop pills and every catalogue card — including chunks
+           the Load more button appends later — and re-opens the
+           viewer on the tapped product, exactly like a tap on
+           the shop grid itself. Load more appends the next chunk
+           of the catalogue (60 at a time, like the shop page)
+           until every product stands in the feed. */
+        var feedBox = sec.querySelector(".m-morefeed");
+        if (feedBox){
+          feedBox.addEventListener("click", function(e){
+            var b = e.target && e.target.closest ? e.target.closest("[data-open]") : null;
+            if (b) openModal(b.getAttribute("data-open"));
+          });
+          var feedProdGrid = feedBox.querySelector(".m-moreprod");
+          var feedMoreBtn = feedBox.querySelector(".m-morebtn");
+          if (feedProdGrid && feedMoreBtn){
+            var feedShown = feedProdGrid.querySelectorAll(".pcard").length;
+            feedMoreBtn.addEventListener("click", function(){
+              var next = SHOP_PRODUCTS.slice(feedShown, feedShown + MORE_CHUNK);
+              if (next.length){
+                feedProdGrid.insertAdjacentHTML("beforeend", next.map(prodCardHTML).join(""));
+                feedShown += next.length;
+              }
+              if (feedShown >= SHOP_PRODUCTS.length) feedMoreBtn.parentNode.style.display = "none";
+            });
+          }
+        }
         var shareBtn = sec.querySelector(".m-share");
         if (shareBtn){
           shareBtn.addEventListener("click", function(){
@@ -2970,6 +3023,62 @@ const SHOP_PRODUCTS=[["B0BRKJFK55","Lymio Men's Polyester Half Sleeve Printed Ca
         }
       }
 
+      /* the featured photos in the exact order the shop grid
+         shows them (the same board-by-board balance render()
+         deals out) — the head of the full catalogue feed under
+         the review section; the catalogue products follow them
+         in moreFeedHTML */
+      function shopFeedItems(){
+        var buckets = {};
+        visibleItems().forEach(function(it){
+          if (!buckets[it.board]) buckets[it.board] = [];
+          buckets[it.board].push(it);
+        });
+        var boardOrder = BOARDS.map(function(b){ return b.id; });
+        Object.keys(buckets).forEach(function(bid){
+          if (boardOrder.indexOf(bid) === -1) boardOrder.push(bid);
+        });
+        var mixed = [], progressed = true;
+        while (progressed){
+          progressed = false;
+          boardOrder.forEach(function(bid){
+            if (buckets[bid] && buckets[bid].length){
+              mixed.push(buckets[bid].shift());
+              progressed = true;
+            }
+          });
+        }
+        return mixed;
+      }
+      /* the Shop page's whole product grid, rebuilt for inside
+         the viewer: the 6 featured photos first (same .scard
+         cards, same red Shop pill on every photo), then SAARE
+         catalogue products (the full SHOP_PRODUCTS list — 1,000
+         products) as the shop page's own .pcard cards, rendered
+         through the same prodCardHTML the shop page uses. The
+         catalogue renders MORE_CHUNK cards up front and the
+         rest through the feed's Load more button (wired in
+         wireModalSection), so every product is in the feed
+         without building all 1,000 cards at once. Tapping any
+         photo, Shop pill or card opens that product's viewer. */
+      var MORE_CHUNK = 60;
+      function moreFeedHTML(){
+        var cards = shopFeedItems().map(function(f){
+          return '<article class="scard">' +
+            '<button class="scard-photo" data-open="' + f.id + '" aria-label="View ' + f.title + '">' +
+              '<img src="' + f.img + '" alt="' + f.alt + '" width="880" height="1100" loading="lazy" />' +
+            '</button>' +
+            '<button class="scard-shop" data-open="' + f.id + '" aria-label="Shop — view ' + f.title + '">Shop</button>' +
+          '</article>';
+        }).join("");
+        var prods = SHOP_PRODUCTS.slice(0, MORE_CHUNK).map(prodCardHTML).join("");
+        var moreBtn = SHOP_PRODUCTS.length > MORE_CHUNK
+          ? '<div class="m-morebtnwrap"><button type="button" class="m-morebtn">Load more</button></div>' : '';
+        return '<div class="m-morefeed"><h4 class="m-more-title">Sare products dekhein</h4>' +
+          '<div class="m-moregrid">' + cards + '</div>' +
+          '<div class="m-moreprod">' + prods + '</div>' + moreBtn + '</div>';
+      }
+
       /* one full photo section of the viewer feed: the photo at
          its natural ratio, its name and a short description —
          photo-only, no price and no links */
@@ -3051,6 +3160,12 @@ const SHOP_PRODUCTS=[["B0BRKJFK55","Lymio Men's Polyester Half Sleeve Printed Ca
               '<a class="m-buy" target="_blank" rel="noopener" href="https://wa.me/918595318608?text=' + encodeURIComponent("Namaste! Mujhe ye product chahiye: " + it.title + " — Fashion Goals website se. Size: M. Price: ₹700. Main advance payment karke order confirm karunga.") + '"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2 22l5.25-1.38a9.9 9.9 0 0 0 4.79 1.22c5.46 0 9.9-4.45 9.9-9.91C21.95 6.45 17.5 2 12.04 2zm0 18.13a8.2 8.2 0 0 1-4.19-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.2 8.2 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.25-8.24 4.54 0 8.24 3.7 8.24 8.24 0 4.55-3.7 8.24-8.25 8.24zm4.52-6.16c-.25-.13-1.47-.72-1.69-.81-.23-.08-.39-.13-.56.13-.16.25-.64.8-.78.97-.15.16-.29.18-.54.06-.25-.13-1.05-.39-1.99-1.23-.74-.66-1.23-1.47-1.38-1.72-.14-.25-.01-.38.11-.51.11-.11.25-.29.37-.43.12-.15.16-.25.25-.41.08-.17.04-.31-.02-.43-.06-.13-.56-1.35-.77-1.84-.2-.48-.41-.42-.56-.43h-.48c-.17 0-.43.06-.66.31-.22.25-.86.85-.86 2.07 0 1.22.89 2.4 1.01 2.56.13.17 1.75 2.67 4.23 3.74.59.26 1.05.41 1.41.52.6.19 1.13.16 1.56.1.48-.07 1.47-.6 1.67-1.18.21-.58.21-1.07.15-1.18-.06-.1-.23-.16-.48-.29z"/></svg><span class="m-buy-label">Pay ₹700</span></a><button type="button" class="m-rzp">Razorpay se pay karo (UPI / Card)</button><p class="m-rzp-err" hidden></p><p class="m-buy-note">Advance payment par order confirm hoga.</p><div class="m-upi" hidden><p class="m-upi-msg">Payment kar diya? Ab WhatsApp par order bhejein.</p><p class="m-upi-id">UPI ID: 85953186081@ibl</p><a class="m-upi-wa" target="_blank" rel="noopener" href="#"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2 22l5.25-1.38a9.9 9.9 0 0 0 4.79 1.22c5.46 0 9.9-4.45 9.9-9.91C21.95 6.45 17.5 2 12.04 2zm0 18.13a8.2 8.2 0 0 1-4.19-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.2 8.2 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.25-8.24 4.54 0 8.24 3.7 8.24 8.24 0 4.55-3.7 8.24-8.25 8.24zm4.52-6.16c-.25-.13-1.47-.72-1.69-.81-.23-.08-.39-.13-.56.13-.16.25-.64.8-.78.97-.15.16-.29.18-.54.06-.25-.13-1.05-.39-1.99-1.23-.74-.66-1.23-1.47-1.38-1.72-.14-.25-.01-.38.11-.51.11-.11.25-.29.37-.43.12-.15.16-.25.25-.41.08-.17.04-.31-.02-.43-.06-.13-.56-1.35-.77-1.84-.2-.48-.41-.42-.56-.43h-.48c-.17 0-.43.06-.66.31-.22.25-.86.85-.86 2.07 0 1.22.89 2.4 1.01 2.56.13.17 1.75 2.67 4.23 3.74.59.26 1.05.41 1.41.52.6.19 1.13.16 1.56.1.48-.07 1.47-.6 1.67-1.18.21-.58.21-1.07.15-1.18-.06-.1-.23-.16-.48-.29z"/></svg>WhatsApp par Order Bhejein</a></div><div class="m-congrats" hidden><span class="cg-confetti" aria-hidden="true"><i class="cg-piece confetti-piece"></i><i class="cg-piece confetti-piece"></i><i class="cg-piece confetti-piece"></i><i class="cg-piece confetti-piece"></i><i class="cg-piece confetti-piece"></i><i class="cg-piece confetti-piece"></i><i class="cg-piece confetti-piece"></i><i class="cg-piece confetti-piece"></i><i class="cg-piece confetti-piece"></i><i class="cg-piece confetti-piece"></i><i class="cg-piece confetti-piece"></i><i class="cg-piece confetti-piece"></i><i class="cg-piece confetti-piece"></i><i class="cg-piece confetti-piece"></i><i class="cg-piece confetti-piece"></i><i class="cg-piece confetti-piece"></i><i class="cg-piece confetti-piece"></i><i class="cg-piece confetti-piece"></i><i class="cg-piece confetti-piece"></i><i class="cg-piece confetti-piece"></i></span><button type="button" class="m-congrats-close" aria-label="Close"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M5 5l14 14M19 5L5 19"/></svg></button><span class="cg-check" aria-hidden="true"><svg viewBox="0 0 52 52"><circle cx="26" cy="26" r="24"/><path d="M14.5 27l8 8L38 18"/></svg></span><p class="m-congrats-head">🎉 Congratulations! Aapka order bhej diya gaya hai</p><p class="m-congrats-line cg-name"></p><p class="m-congrats-line cg-size"></p><p class="m-congrats-line">Price: ₹700</p><p class="m-congrats-line cg-oid"></p><p class="m-congrats-line">Shiva jald WhatsApp par order confirm karenge.</p><p class="m-congrats-remind">Agar message nahi gaya ho to dobara WhatsApp kholkar Send dabayein.</p></div>' : '') + reviewHTML +
             '<button class="desc-toggle" type="button" aria-expanded="false" hidden>Read more <svg class="chev" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 9 7 7 7-7"/></svg></button>' +
           '</div>' +
+          /* featured sections only: below the review form, the
+             Shop page's full product feed — the 6 featured photos
+             with their red Shop pills plus the whole catalogue
+             (all 1,000 products, chunk-loaded with Load more) —
+             so the visitor can jump straight to any product */
+          (isFeat ? moreFeedHTML() : '') +
         '</section>';
       }
 
