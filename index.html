@@ -283,7 +283,7 @@
          its bottom-right corner: tapping it opens the same photo
          viewer a tap on the photo itself opens (it carries the
          same data-open hook the render wires up) */
-      .scard-shop{
+      .scard-shop,.pcard-shop{
         position:absolute;right:10px;bottom:10px;z-index:2;
         border-radius:999px;border:0;padding:8px 16px;
         background:#E7000C;color:#ffffff;
@@ -292,18 +292,18 @@
         box-shadow:0 4px 14px rgba(0,0,0,.35);
         -webkit-tap-highlight-color:transparent;
       }
-      .scard-shop:active{background:#c4000b}
+      .scard-shop:active,.pcard-shop:active{background:#c4000b}
 
-      /* ---------- Amazon product cards: below the featured photos ----------
-         The old card style the owner picked from his screenshot:
-         photo on top, product name below it, a "Shop" pill under
-         the name — the pill is RED #E7000C like the Shop pill at
-         the top of the page (the screenshot's black pill was
-         explicitly overruled). No price on the card. The photo
-         area shows the FULL product, never cropped: contain on a
-         plain white ground, so a whole shirt / full jeans is
-         always visible. Two columns on a phone, widening like
-         the featured grid above on bigger screens. */
+      /* ---------- catalogue product cards: below the featured photos ----------
+         The SAME design as the 6 featured photos above (the owner
+         asked for it on every product): a photo-full rounded card
+         in a two-column grid, the photo shown WHOLE — contain on a
+         plain white ground, never cropped, every card the same
+         4/5 size — and the red "Shop" pill pinned INSIDE the
+         photo at its bottom-right corner. No name and no price on
+         the card: tapping the photo or the pill opens the viewer,
+         where the name and price stand. Two columns on a phone,
+         widening like the featured grid above on bigger screens. */
       .prod-feed{
         max-width:1440px;margin:0 auto;
         padding:4px clamp(10px,3vw,28px) 10px;
@@ -313,19 +313,15 @@
       @media (min-width:1100px){.prod-feed{grid-template-columns:repeat(4,1fr)}}
       @media (max-width:760px){.prod-feed{padding-left:8px;padding-right:8px}}
       .pcard{
-        background:var(--surface);border:1px solid var(--line);border-radius:14px;
-        overflow:hidden;display:flex;flex-direction:column;margin:0;
+        position:relative;border-radius:16px;overflow:hidden;background:#ffffff;
+        aspect-ratio:4/5;margin:0;
       }
       .pcard-photo{
-        border:0;padding:0;background:#ffffff;width:100%;aspect-ratio:4/5;
-        display:block;cursor:pointer;-webkit-tap-highlight-color:transparent;
+        position:absolute;inset:0;border:0;padding:0;background:none;
+        width:100%;height:100%;display:block;cursor:pointer;
+        -webkit-tap-highlight-color:transparent;
       }
       .pcard-photo img{width:100%;height:100%;object-fit:contain;display:block}
-      .pcard-name{
-        font-size:14.5px;font-weight:600;line-height:1.35;color:var(--ink);
-        margin:0;padding:10px 12px 12px;
-        display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;
-      }
       .prod-more{max-width:1440px;margin:0 auto;padding:8px clamp(10px,3vw,28px) 26px;text-align:center}
       .prod-morebtn{
         border:1px solid #171717;background:#171717;color:#fff;border-radius:999px;
@@ -2269,13 +2265,19 @@ const SHOP_PRODUCTS=[["B0BRKJFK55","Lymio Men's Polyester Half Sleeve Printed Ca
         return SHOP_PRODUCTS.filter(function(p){ return prodMatch(p, board); })
           .map(function(p){ return "p-" + p[0]; });
       }
+      /* one catalogue card, in the featured photos' design:
+         photo-full rounded card, the whole photo (contain), the
+         red Shop pill inside the photo's bottom-right corner, and
+         NO name on the card — the name and price stand in the
+         viewer a tap on the photo or the pill opens (both carry
+         the same data-open hook) */
       function prodCardHTML(p){
         var name = escHTML(p[1]);
         return '<article class="pcard">' +
           '<button class="pcard-photo" data-open="p-' + p[0] + '" aria-label="View ' + name + '">' +
             '<img src="' + p[3] + '" alt="' + name + '" loading="lazy" />' +
           '</button>' +
-          '<h3 class="pcard-name">' + name + '</h3>' +
+          '<button class="pcard-shop" data-open="p-' + p[0] + '" aria-label="Shop — view ' + name + '">Shop</button>' +
         '</article>';
       }
       function syncProducts(){
