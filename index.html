@@ -2310,9 +2310,15 @@ const SHOP_PRODUCTS=[["76v4n1","Urban Style Men's Black Fleece Hoodie",600,"http
       function prodList(){
         return SHOP_PRODUCTS.filter(function(p){ return prodMatch(p, state.board); });
       }
+      /* a catalogue row's viewer id: the Meesho hoodies open as
+         "h-<code>"; the owner's own added products keep the
+         "u-<n>" id they were saved with */
+      function prodIdOf(p){
+        return (typeof p[0] === "string" && p[0].indexOf("u-") === 0) ? p[0] : "h-" + p[0];
+      }
       function prodIdsFor(board){
         return SHOP_PRODUCTS.filter(function(p){ return prodMatch(p, board); })
-          .map(function(p){ return "h-" + p[0]; });
+          .map(function(p){ return prodIdOf(p); });
       }
       /* one catalogue card, in the featured photos' design:
          photo-full rounded card, the photo filling the card
@@ -2324,10 +2330,10 @@ const SHOP_PRODUCTS=[["76v4n1","Urban Style Men's Black Fleece Hoodie",600,"http
       function prodCardHTML(p){
         var name = escHTML(p[1]);
         return '<article class="pcard">' +
-          '<button class="pcard-photo" data-open="h-' + p[0] + '" aria-label="View ' + name + '">' +
+          '<button class="pcard-photo" data-open="' + prodIdOf(p) + '" aria-label="View ' + name + '">' +
             '<img src="' + p[3] + '" alt="' + name + '" loading="lazy" />' +
           '</button>' +
-          '<button class="pcard-shop" data-open="h-' + p[0] + '" aria-label="Shop — view ' + name + '">Shop</button>' +
+          '<button class="pcard-shop" data-open="' + prodIdOf(p) + '" aria-label="Shop — view ' + name + '">Shop</button>' +
         '</article>';
       }
       function syncProducts(){
@@ -2365,11 +2371,59 @@ const SHOP_PRODUCTS=[["76v4n1","Urban Style Men's Black Fleece Hoodie",600,"http
       function prodItem(p){
         var colours = p[4] || [];
         return {
-          id:"h-" + p[0], title:p[1], img:p[3], alt:p[1],
-          desc:"Hoodie" + (colours.length === 1 ? " · " + colours[0] : ""),
+          id:prodIdOf(p), title:p[1], img:p[3], alt:p[1],
+          desc:(typeof p[0] === "string" && p[0].indexOf("u-") === 0) ? "" : ("Hoodie" + (colours.length === 1 ? " · " + colours[0] : "")),
           price:p[2], colours:colours
         };
       }
+
+      /* ----- the owner's own added products (/api/products) -----
+         The products Shiva adds himself (photo link + name + price,
+         saved on the server by the Add Product page) are fetched
+         once when the shop loads and stood at the head of the
+         catalogue, in the same rows the hoodies use: each one is
+         normalised to a catalogue row [id, name, price, photo, []]
+         whose id keeps its saved "u-<n>" form, so the shop grid,
+         the viewer feed, search order and itemById all treat it
+         exactly like a hoodie — same photo-full card with the red
+         Shop pill, same viewer with Size, address, WhatsApp and
+         Razorpay at the product's own price. The fetch is fully
+         guarded: if the endpoint is missing or fails, the shop
+         simply stands as it was — 6 featured + 215 hoodies. */
+      (function loadUserProducts(){
+        try {
+          fetch("/api/products", { cache:"no-store" }).then(function(r){
+            if (!r.ok) return null;
+            return r.json();
+          }).then(function(data){
+            var list = Array.isArray(data) ? data : (data && Array.isArray(data.products) ? data.products : null);
+            if (!list || !list.length) return;
+            var rows = [];
+            list.forEach(function(u){
+              if (!u || typeof u !== "object") return;
+              var id = String(u.id || "");
+              var name = String(u.name || "").trim();
+              var photo = String(u.photo || u.image || u.img || "").trim();
+              var price = Number(u.price);
+              if (id.indexOf("u-") !== 0 || !name || !photo || !(price > 0)) return;
+              for (var k = 0; k < SHOP_PRODUCTS.length; k++){ if (SHOP_PRODUCTS[k][0] === id) return; }
+              rows.push([id, name, price, photo, []]);
+            });
+            if (!rows.length) return;
+            /* newest first at the head of the catalogue, ahead of
+               the shuffled hoodies */
+            for (var ri = rows.length - 1; ri >= 0; ri--) SHOP_PRODUCTS.unshift(rows[ri]);
+            /* rebuild the shop grid + viewer order with the new
+               rows in place: reset the chunked product grid, then
+               render() re-deals the featured photos and syncs the
+               catalogue from the top */
+            prodShown = 0;
+            prodGrid.innerHTML = "";
+            prodBoardSeen = null;
+            render();
+          }).catch(function(){});
+        } catch(e){}
+      })();
 
       var toastTimer = null;
       function toast(msg){
@@ -3261,7 +3315,7 @@ const SHOP_PRODUCTS=[["76v4n1","Urban Style Men's Black Fleece Hoodie",600,"http
          photo-only, no price and no links */
       function sectionHTML(it, first){
         var dims = dimsOf(it);
-        var isFeat = it.id.indexOf("h-") !== 0;
+        var isFeat = it.id.indexOf("h-") !== 0 && it.id.indexOf("u-") !== 0;
         var gal = isFeat ? (GALLERY[it.id] || []) : [];
         var photoHTML = '<div class="m-photo loading' + (isFeat ? '' : ' crop-wm') + '" style="aspect-ratio:' + dims[0] + ' / ' + dims[1] + '"><span class="m-shimmer" aria-hidden="true"><span></span></span>' +
             '<img src="' + it.img + '" alt="' + it.alt + '" width="' + dims[0] + '" height="' + dims[1] + '" decoding="async"' + (first ? '' : ' loading="lazy"') + ' />' +
@@ -3364,9 +3418,11 @@ const SHOP_PRODUCTS=[["76v4n1","Urban Style Men's Black Fleece Hoodie",600,"http
       function itemById(id){
         var found = ITEMS.filter(function(x){ return x.id===id; });
         if (found.length) return found[0];
-        /* "h-<code>" ids are the Meesho hoodies below the photos */
-        if (id.indexOf("h-") === 0){
-          var code = id.slice(2);
+        /* "h-<code>" ids are the Meesho hoodies below the photos;
+           "u-<n>" ids are the owner's own added products — both
+           stand in SHOP_PRODUCTS as catalogue rows */
+        if (id.indexOf("h-") === 0 || id.indexOf("u-") === 0){
+          var code = id.indexOf("u-") === 0 ? id : id.slice(2);
           for (var i = 0; i < SHOP_PRODUCTS.length; i++){
             if (SHOP_PRODUCTS[i][0] === code) return prodItem(SHOP_PRODUCTS[i]);
           }

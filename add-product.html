@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Add Product — Fashion Goals</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; background: #0b0b0b; color: #f5f5f5; }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 14px 12px 40px; }
+  header { display: flex; align-items: center; gap: 10px; padding: 6px 2px 14px; }
+  header h1 { font-size: 22px; margin: 0; }
+  .pill { background: #E7000C; color: #fff; border-radius: 999px; padding: 4px 10px; font-size: 12px; font-weight: 700; }
+  .card { background: #171717; border: 1px solid #2a2a2a; border-radius: 12px; padding: 14px; margin-bottom: 12px; }
+  .card h2 { margin: 0 0 8px; font-size: 16px; }
+  .card p { margin: 6px 0; color: #ddd; font-size: 14px; line-height: 1.5; }
+  .muted { color: #999; font-size: 13px; }
+  label { display: block; font-size: 14px; color: #ccc; margin: 12px 0 6px; }
+  input, button { font-size: 16px; }
+  input[type=password], input[type=text], input[type=number] { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #333; background: #111; color: #fff; }
+  button { background: #E7000C; color: #fff; border: 0; border-radius: 10px; padding: 12px 16px; font-weight: 700; cursor: pointer; }
+  button.ghost { background: #222; color: #fff; border: 1px solid #444; }
+  button.small { padding: 8px 12px; font-size: 14px; }
+  button:disabled { opacity: .5; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .row input { flex: 1; min-width: 160px; }
+  .err { color: #fca5a5; font-size: 14px; margin-top: 8px; }
+  .ok { color: #86efac; font-size: 14px; margin-top: 8px; }
+  .empty { text-align: center; color: #999; padding: 30px 10px; }
+  #photoPreview { max-width: 100%; border-radius: 10px; margin-top: 10px; display: none; }
+  .prod { background: #171717; border: 1px solid #2a2a2a; border-radius: 12px; padding: 12px; margin-bottom: 10px; }
+  .prod img { width: 100%; border-radius: 10px; display: block; }
+  .prod .meta { color: #ddd; font-size: 15px; margin-top: 8px; }
+  .prod .meta b { color: #fff; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+  a { color: #fff; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>➕ Add Product</h1>
+    <span class="pill">Fashion Goals</span>
+  </header>
+  <p class="sub muted">Photo ka link + naam + price daalo — product shop mein dikhne lagega. Sirf tum (admin code se) add kar sakte ho.</p>
+
+  <div class="card" id="loginCard">
+    <h2>Admin code daalo</h2>
+    <p class="muted">Wahi code jo dashboard / My Photos ke liye use hota hai.</p>
+    <div class="row">
+      <input type="password" id="codeInput" placeholder="Admin code" autocomplete="off">
+      <button id="loginBtn">Kholo</button>
+    </div>
+    <div class="err" id="loginErr" style="display:none"></div>
+  </div>
+
+  <div id="main" style="display:none">
+    <div class="card">
+      <h2>Naya product add karo</h2>
+      <label for="photoInput">Photo ka link</label>
+      <input type="text" id="photoInput" placeholder="https://fashion-website-theta-taupe.vercel.app/api/photo?id=1" autocomplete="off">
+      <p class="muted">My Photos se link copy karke yahan paste karo. <a href="/photos">My Photos kholo →</a></p>
+      <img id="photoPreview" alt="Photo preview">
+      <label for="nameInput">Product ka naam</label>
+      <input type="text" id="nameInput" placeholder="Jaise: Light Blue Ripped Jeans" autocomplete="off">
+      <label for="priceInput">Price (₹)</label>
+      <input type="number" id="priceInput" placeholder="Jaise: 700" min="1" step="1" inputmode="numeric">
+      <div class="row" style="margin-top:14px">
+        <button id="addBtn">Add karo</button>
+        <button class="ghost small" id="logoutBtn">Code badlo</button>
+        <a href="/" style="margin-left:auto;font-size:14px">← Shop par wapas</a>
+      </div>
+      <div class="err" id="addErr" style="display:none"></div>
+      <div class="ok" id="addOk" style="display:none"></div>
+    </div>
+
+    <div class="card">
+      <h2>Tumhare add kiye products</h2>
+      <div class="row" style="margin-bottom:10px">
+        <button class="ghost small" id="refreshBtn">↻ Refresh</button>
+      </div>
+      <div id="list"></div>
+    </div>
+    <div class="ok" id="msg" style="display:none"></div>
+  </div>
+</div>
+<script>
+(function () {
+  var API = "/api/products";
+  var code = "";
+  try { code = localStorage.getItem("fg-addproduct-code") || ""; } catch (e) { code = ""; }
+
+  var loginCard = document.getElementById("loginCard");
+  var main = document.getElementById("main");
+  var codeInput = document.getElementById("codeInput");
+  var loginBtn = document.getElementById("loginBtn");
+  var loginErr = document.getElementById("loginErr");
+  var photoInput = document.getElementById("photoInput");
+  var nameInput = document.getElementById("nameInput");
+  var priceInput = document.getElementById("priceInput");
+  var photoPreview = document.getElementById("photoPreview");
+  var addBtn = document.getElementById("addBtn");
+  var addErr = document.getElementById("addErr");
+  var addOk = document.getElementById("addOk");
+  var listEl = document.getElementById("list");
+  var msgEl = document.getElementById("msg");
+
+  function showMsg(t, isErr) {
+    msgEl.style.display = "block";
+    msgEl.className = isErr ? "err" : "ok";
+    msgEl.textContent = t;
+    setTimeout(function () { msgEl.style.display = "none"; }, 4000);
+  }
+  function esc(s) {
+    return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+  function fmtDate(d) {
+    try { return new Date(d).toLocaleString("en-IN", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }); } catch (e) { return ""; }
+  }
+
+  // Photo preview from the pasted link.
+  var previewTimer = null;
+  photoInput.addEventListener("input", function () {
+    if (previewTimer) clearTimeout(previewTimer);
+    previewTimer = setTimeout(function () {
+      var v = photoInput.value.trim();
+      if (v.indexOf("http://") === 0 || v.indexOf("https://") === 0) {
+        photoPreview.src = v;
+        photoPreview.style.display = "block";
+        photoPreview.onerror = function () { photoPreview.style.display = "none"; };
+      } else {
+        photoPreview.style.display = "none";
+      }
+    }, 400);
+  });
+
+  addBtn.addEventListener("click", async function () {
+    var photo = photoInput.value.trim();
+    var name = nameInput.value.trim();
+    var price = parseInt(priceInput.value, 10);
+    addErr.style.display = "none";
+    addOk.style.display = "none";
+    if (!photo || (photo.indexOf("http://") !== 0 && photo.indexOf("https://") !== 0)) {
+      addErr.style.display = "block";
+      addErr.textContent = "Pehle photo ka link paste karo (My Photos se copy karo).";
+      return;
+    }
+    if (!name) {
+      addErr.style.display = "block";
+      addErr.textContent = "Product ka naam likho.";
+      return;
+    }
+    if (!price || price <= 0) {
+      addErr.style.display = "block";
+      addErr.textContent = "Sahi price likho (₹ mein).";
+      return;
+    }
+    addBtn.disabled = true;
+    try {
+      var r = await fetch(API, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: code, name: name, price: price, photo: photo })
+      });
+      var d = null; try { d = await r.json(); } catch (e) {}
+      if (r.ok && d && d.ok) {
+        addOk.style.display = "block";
+        addOk.textContent = "Product add ho gaya! Ab shop mein dikhega: " + d.product.name + " — ₹" + d.product.price;
+        photoInput.value = "";
+        nameInput.value = "";
+        priceInput.value = "";
+        photoPreview.style.display = "none";
+        loadProducts();
+      } else if (r.status === 401) {
+        addErr.style.display = "block";
+        addErr.textContent = "Galat code. Dobara code daalo.";
+        showLogin();
+      } else {
+        addErr.style.display = "block";
+        addErr.textContent = "Add nahi hua. Dobara try karo.";
+      }
+    } catch (e) {
+      addErr.style.display = "block";
+      addErr.textContent = "Net nahi mila. Dobara try karo.";
+    }
+    addBtn.disabled = false;
+  });
+
+  async function loadProducts() {
+    listEl.innerHTML = '<div class="empty">Load ho raha hai…</div>';
+    var r;
+    try {
+      r = await fetch(API);
+    } catch (e) {
+      listEl.innerHTML = '<div class="empty">Net nahi mila. Dobara try karo.</div>';
+      return;
+    }
+    var d = null;
+    try { d = await r.json(); } catch (e) {}
+    if (!r.ok || !d || !d.ok) {
+      listEl.innerHTML = '<div class="empty">Products nahi mile. Dobara try karo.</div>';
+      return;
+    }
+    var products = d.products || [];
+    if (!products.length) {
+      listEl.innerHTML = '<div class="empty">Abhi koi product add nahi kiya.</div>';
+      return;
+    }
+    listEl.innerHTML = products.map(function (p) {
+      var numId = String(p.id || "").replace("u-", "");
+      return '<div class="prod" data-id="' + esc(numId) + '">' +
+        '<img src="' + esc(p.photo) + '" alt="' + esc(p.name) + '" loading="lazy">' +
+        '<div class="meta"><b>' + esc(p.name) + '</b> — ₹' + esc(p.price) + '<br><span class="muted">' + fmtDate(p.created_at) + '</span></div>' +
+        '<div class="actions"><button class="small ghost delBtn">Delete</button></div>' +
+        '</div>';
+    }).join("");
+    listEl.querySelectorAll(".prod").forEach(function (card) {
+      var id = card.getAttribute("data-id");
+      card.querySelector(".delBtn").addEventListener("click", function () {
+        if (!confirm("Ye product shop se delete kar dun?")) return;
+        deleteProduct(id);
+      });
+    });
+  }
+
+  async function deleteProduct(id) {
+    try {
+      var r = await fetch(API + "?action=delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: code, id: Number(id) })
+      });
+      var d = null; try { d = await r.json(); } catch (e) {}
+      if (r.ok && d && d.ok) { showMsg("Product delete ho gaya."); loadProducts(); }
+      else showMsg("Delete nahi hua. Dobara try karo.", true);
+    } catch (e) { showMsg("Net nahi mila.", true); }
+  }
+
+  function showLogin() {
+    loginCard.style.display = "block";
+    main.style.display = "none";
+  }
+  function showMain() {
+    loginCard.style.display = "none";
+    main.style.display = "block";
+    loadProducts();
+  }
+
+  loginBtn.addEventListener("click", function () {
+    var v = codeInput.value.trim();
+    if (!v) { loginErr.style.display = "block"; loginErr.textContent = "Pehle code daalo."; return; }
+    code = v;
+    try { localStorage.setItem("fg-addproduct-code", code); } catch (e) {}
+    loginErr.style.display = "none";
+    showMain();
+  });
+  codeInput.addEventListener("keydown", function (e) { if (e.key === "Enter") loginBtn.click(); });
+  document.getElementById("refreshBtn").addEventListener("click", loadProducts);
+  document.getElementById("logoutBtn").addEventListener("click", function () {
+    try { localStorage.removeItem("fg-addproduct-code"); } catch (e) {}
+    code = "";
+    codeInput.value = "";
+    showLogin();
+  });
+
+  if (code) { codeInput.value = code; showMain(); }
+})();
+</script>
+</body>
+</html>
