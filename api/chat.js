@@ -188,6 +188,7 @@ function cleanMessages(input) {
 }
 
 module.exports = async function (req, res) {
+  var t0 = Date.now(); // continuation ke liye time budget napne ke liye
   if (req.method !== "POST") {
     res.setHeader("Allow", "POST");
     return json(res, 405, { error: "Sirf POST chalega." });
@@ -235,7 +236,7 @@ module.exports = async function (req, res) {
       if (oldSite && typeof oldSite.html === "string" && typeof oldSite.css === "string" && typeof oldSite.js === "string") {
         sysText += "\n\nYeh maujooda code hai, isi mein user ke kehne ke hisaab se badlav karo. Poora updated code wapas do, sirf badla hua hissa nahi:\n===HTML===\n" + oldSite.html.slice(0, 4000) + "\n===CSS===\n" + oldSite.css.slice(0, 4000) + "\n===JS===\n" + oldSite.js.slice(0, 4000);
       }
-      maxTokens = 4096;
+      maxTokens = 8192;
     } else {
       contents = [{ role: "user", parts: [{ text: "Topic: " + topic.slice(0, MAX_TEXT) }] }];
       sysText = app === "quiz" ? SYS_QUIZAPP : app === "flashcards" ? SYS_FLASH : app === "comic" ? SYS_COMIC : SYS_MINDMAP;
@@ -334,13 +335,58 @@ module.exports = async function (req, res) {
   if (!reply) {
     return json(res, 502, { error: "Gemini ne khali jawab diya. Dobara try karo." });
   }
+  var finishReason = "";
+  try { finishReason = (data && data.candidates && data.candidates[0] && data.candidates[0].finishReason) || ""; } catch (e) { finishReason = ""; }
+  // Website: agar code beech mein kat gaya (MAX_TOKENS), ek baar aage continue karwao.
+  // Sirf tab jab time bacha ho (Vercel 10s limit) — warna partial reply hi rahega.
+  if (app === "website" && finishReason === "MAX_TOKENS" && (Date.now() - t0) < 5000) {
+    try {
+      var contContents = [
+        { role: "user", parts: [{ text: "User ki maang: " + topic.slice(0, MAX_TEXT) }] },
+        { role: "model", parts: [{ text: reply }] },
+        { role: "user", parts: [{ text: "Aage continue karo, wahi se jahan ruka tha. Dobara shuru se mat likho. Jo section beech mein ruka tha, usi ko aage badhao — uska heading dobara mat likho. Jab ek section poora ho jaye to agle section ka heading likh kar aage badho. Sirf bacha hua code do." }] }
+      ];
+      var contUp = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          systemInstruction: { parts: [{ text: sysText }] },
+          contents: contContents,
+          generationConfig: { temperature: 0.7, maxOutputTokens: 4096 }
+        }),
+        signal: AbortSignal.timeout(FETCH_TIMEOUT_MS)
+      });
+      if (contUp && contUp.ok) {
+        var contData = null;
+        try { contData = await contUp.json(); } catch (e) { contData = null; }
+        var contReply = "";
+        try {
+          var cparts = contData && contData.candidates && contData.candidates[0] && contData.candidates[0].content && contData.candidates[0].content.parts;
+          if (Array.isArray(cparts)) {
+            contReply = cparts.map(function (p) { return p && typeof p.text === "string" ? p.text : ""; }).join("").trim();
+          }
+        } catch (e) { contReply = ""; }
+        if (contReply) {
+          var mm = contReply.match(/^\s*(===(HTML|CSS|JS)===)/);
+          if (mm && reply.indexOf(mm[1]) >= 0) {
+            contReply = contReply.replace(/^\s*===(HTML|CSS|JS)===\s*/, "");
+          }
+          reply = reply + "\n" + contReply;
+          try { finishReason = (contData && contData.candidates && contData.candidates[0] && contData.candidates[0].finishReason) || finishReason; } catch (e) {}
+        }
+      }
+    } catch (e) { /* continuation fail ho to partial reply hi rahega; neeche completeness check pakdega */ }
+  }
   // Website: sections parse karo; HTML na mile to saaf Hinglish error.
   if (app === "website") {
     var wHtml = webPart(reply, "===HTML===", "===CSS===");
     var wCss = webPart(reply, "===CSS===", "===JS===");
     var wJs = webPart(reply, "===JS===", null);
-    if (wHtml === null) {
+    if (wHtml === null || wCss === null || wJs === null) {
       return json(res, 502, { error: "Website ka jawab samajh nahi aaya. Dobara bhejo." });
+    }
+    if (finishReason === "MAX_TOKENS") {
+      return json(res, 502, { error: "Website ka code poora nahi ban paya (bahut lamba tha, beech mein kat gaya). Chhota/simpler website banao ya dobara try karo." });
     }
     return json(res, 200, { ok: true, reply: reply, website: { html: wHtml, css: wCss || "", js: wJs || "" } });
   }
