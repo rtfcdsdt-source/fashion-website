@@ -8,6 +8,24 @@ var MODEL = "gemini-3.5-flash-lite";
 var MAX_TURNS = 12; // aakhri 12 turns (user + assistant) bhejte hain
 var MAX_TEXT = 4000; // har message ki limit, kharcha bandhne ke liye
 var FETCH_TIMEOUT_MS = 9000; // Vercel Hobby 10s limit ke andar rehne ke liye
+var IMG_MIMES = { "image/jpeg": 1, "image/png": 1, "image/webp": 1, "image/gif": 1 };
+var MAX_IMAGE_B64 = 900000; // ~675KB binary; page photo ko pehle hi 1024px JPEG 0.8 tak chhota karta hai
+var DEFAULT_PHOTO_Q = "Is photo ke baare mein batao.";
+
+// body.image = {mimeType, data} — data = base64, "data:..." prefix ho to bhi chalega.
+// Galat format ya bahut badi photo par {error} deta hai; photo kahin save ya log nahi hoti.
+function parseImage(img) {
+  if (!img || typeof img !== "object" || Array.isArray(img)) return { error: "Photo sahi tareeke se nahi bheji gayi." };
+  if (typeof img.mimeType !== "string" || typeof img.data !== "string") return { error: "Photo sahi tareeke se nahi bheji gayi." };
+  var mime = img.mimeType.trim().toLowerCase();
+  var data = img.data.trim();
+  var prefix = data.match(/^data:image\/[a-z0-9.+-]+;base64,/i);
+  if (prefix) data = data.slice(prefix[0].length);
+  if (!IMG_MIMES[mime]) return { error: "Photo ka format sahi nahi hai. JPG, PNG, WebP ya GIF photo bhejo." };
+  if (!data || !/^[A-Za-z0-9+/=_-]+$/.test(data)) return { error: "Photo ka data kharab hai. Dobara photo bhejkar try karo." };
+  if (data.length > MAX_IMAGE_B64) return { error: "Photo bahut badi hai. Chhoti photo bhejkar try karo." };
+  return { mime: mime, data: data };
+}
 
 // ---- Fashion Goals dukaan ----
 // CATALOG: 1000 Amazon products, compact [naam, price, category, brand].
@@ -167,12 +185,28 @@ module.exports = async function (req, res) {
     sysText = SYS_IMG;
     maxTokens = 4096;
   } else {
+    // Photo (agar bheji ho) pehle check karo — galat photo par turant 400.
+    // Photo sirf is wale message ke saath Gemini ko jaati hai, history mein nahi.
+    var img = null;
+    if (body && body.image != null) {
+      img = parseImage(body.image);
+      if (img.error) {
+        return json(res, 400, { error: img.error });
+      }
+    }
     contents = body ? cleanMessages(body.messages) : null;
     if (!contents || !contents.length) {
-      return json(res, 400, { error: "Kuch likh kar bhejo, phir jawab milega." });
+      if (img) {
+        contents = [{ role: "user", parts: [{ text: DEFAULT_PHOTO_Q }] }];
+      } else {
+        return json(res, 400, { error: "Kuch likh kar bhejo, phir jawab milega." });
+      }
     }
     if (contents[contents.length - 1].role !== "user") {
       return json(res, 400, { error: "Aakhri message tumhara hona chahiye." });
+    }
+    if (img) {
+      contents[contents.length - 1].parts.push({ inlineData: { mimeType: img.mime, data: img.data } });
     }
     var lastText = contents[contents.length - 1].parts[0].text;
     var matches = matchProducts(lastText, 8);

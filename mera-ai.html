@@ -22,30 +22,69 @@ form{display:flex;gap:8px;padding:12px 16px;border-top:1px solid var(--border);b
 textarea{flex:1;font:inherit;padding:10px 12px;border:1px solid var(--border);border-radius:12px;background:var(--bg);color:var(--text);resize:none;height:46px}
 button{font:inherit;border:0;border-radius:12px;padding:0 18px;background:var(--accent);color:var(--on-accent);font-weight:600;cursor:pointer}
 button:disabled{opacity:.6}
+#cam{background:var(--card);color:var(--text);border:1px solid var(--border)}
+#pv{display:none;max-width:720px;width:100%;margin:0 auto;padding:10px 16px 0;align-items:center;gap:10px}
+#pv img{width:64px;height:64px;object-fit:cover;border-radius:10px;border:1px solid var(--border);background:#fff}
+#pv span{color:var(--muted);font-size:.85rem;flex:1}
+#pvx{border:1px solid var(--border);background:var(--card);color:var(--text);border-radius:50%;width:28px;height:28px;padding:0;font-size:14px;line-height:1}
 #hint{color:var(--muted);text-align:center;margin-top:40px}
 </style>
 </head>
 <body>
 <header>✨ Mera AI<span>Kuch bhi poocho</span></header>
-<div id="log"><div id="hint">Namaste! Apna sawal neeche likho. Hindi, Hinglish ya English, jo bhi chalega. Tasveer chahiye? Likho kaisi (jaise: pahadon ke beech ek ghar) aur 🎨 dabao. Dukaan ke baare mein bhi poochh sakte ho — jaise "₹700 wala shirt kaunsa hai".</div></div>
-<form id="f"><textarea id="q" placeholder="Yahan likho..."></textarea><button id="b">Bhejo</button><button type="button" id="ib" title="Tasveer banao" style="background:var(--card);color:var(--text);border:1px solid var(--border)">🎨</button></form>
+<div id="log"><div id="hint">Namaste! Apna sawal neeche likho. Hindi, Hinglish ya English, jo bhi chalega. Tasveer chahiye? Likho kaisi (jaise: pahadon ke beech ek ghar) aur 🎨 dabao. Dukaan ke baare mein bhi poochh sakte ho — jaise "₹700 wala shirt kaunsa hai". Photo ke saath sawal bhi poochh sakte ho — 📷 dabao.</div></div>
+<input type="file" id="fp" accept="image/*" hidden>
+<div id="pv"><img id="pvi" alt="photo"><span>Photo jod di gayi hai</span><button type="button" id="pvx" title="Photo hatao">✕</button></div>
+<form id="f"><textarea id="q" placeholder="Yahan likho..."></textarea><button type="button" id="cam" title="Photo jodo">📷</button><button id="b">Bhejo</button><button type="button" id="ib" title="Tasveer banao" style="background:var(--card);color:var(--text);border:1px solid var(--border)">🎨</button></form>
 <script>
 var log=document.getElementById("log"),q=document.getElementById("q"),b=document.getElementById("b"),hist=[];
 function add(cls,txt){var d=document.createElement("div");d.className="m "+cls;d.textContent=txt;log.appendChild(d);log.scrollTop=log.scrollHeight;return d}
+// ---- Photo jodna ----
+// Photo ko pehle yahin chhota karte hain (max side 1024px, JPEG 0.8) taaki upload
+// ~100-300KB rahe. Photo sirf usi message ke saath jaati hai, history mein nahi.
+var cam=document.getElementById("cam"),fp=document.getElementById("fp"),pv=document.getElementById("pv"),pvi=document.getElementById("pvi"),pvx=document.getElementById("pvx");
+var photo=null,photoUrl=""; // {mime,data} — base64, "data:..." prefix nahi
+function clearPhoto(){photo=null;photoUrl="";pv.style.display="none";pvi.removeAttribute("src");fp.value=""}
+cam.onclick=function(){fp.click()};
+pvx.onclick=clearPhoto;
+fp.onchange=function(){
+ var f=fp.files&&fp.files[0];if(!f)return;
+ if(!/^image\//.test(f.type||"")){alert("Sirf photo (JPG, PNG, WebP ya GIF) chun sakte ho.");fp.value="";return}
+ var url=URL.createObjectURL(f);var im=new Image();
+ im.onload=function(){
+  var s=Math.min(1,1024/Math.max(im.naturalWidth||1,im.naturalHeight||1));
+  var cw=Math.max(1,Math.round((im.naturalWidth||1)*s)),ch=Math.max(1,Math.round((im.naturalHeight||1)*s));
+  var c=document.createElement("canvas");c.width=cw;c.height=ch;
+  c.getContext("2d").drawImage(im,0,0,cw,ch);
+  URL.revokeObjectURL(url);
+  var d=c.toDataURL("image/jpeg",0.8);
+  photo={mime:"image/jpeg",data:d.split(",")[1]};photoUrl=d;
+  pvi.src=d;pv.style.display="flex";q.focus();
+ };
+ im.onerror=function(){URL.revokeObjectURL(url);alert("Photo khul nahi payi. Doosri photo try karo.");fp.value=""};
+ im.src=url;
+};
 async function send(){
- var t=q.value.trim();if(!t)return;
+ var t=q.value.trim();
+ if(!t&&!photo)return;
+ if(!t)t="Is photo ke baare mein batao.";
  var h=document.getElementById("hint");if(h)h.remove();
- q.value="";add("u",t);hist.push({role:"user",text:t});
- var box=add("a","Soch raha hun...");b.disabled=true;q.disabled=true;
+ q.value="";var ub=add("u",t);
+ if(photoUrl){var pim=document.createElement("img");pim.alt="photo";pim.style.cssText="width:100%;max-width:220px;border-radius:10px;display:block;margin-top:8px";pim.src=photoUrl;ub.appendChild(pim);log.scrollTop=log.scrollHeight}
+ hist.push({role:"user",text:t});
+ var imgToSend=photo;clearPhoto();
+ var box=add("a","Soch raha hun...");b.disabled=true;cam.disabled=true;ib.disabled=true;q.disabled=true;
  try{
-  var r=await fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({messages:hist.slice(-12)})});
+  var payload={messages:hist.slice(-12)};
+  if(imgToSend)payload.image={mimeType:imgToSend.mime,data:imgToSend.data};
+  var r=await fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
   var d={};try{d=await r.json()}catch(e){}
-  if(!r.ok){box.textContent=d.error||("Kuch gadbad hui (code "+r.status+"). Thodi der baad dobara try karo.");b.disabled=false;q.disabled=false;q.focus();return}
+  if(!r.ok){box.textContent=d.error||("Kuch gadbad hui (code "+r.status+"). Thodi der baad dobara try karo.");b.disabled=false;cam.disabled=false;q.disabled=false;q.focus();return}
   var ans=(d.reply||"").trim();
-  if(!ans){box.textContent="Khali jawab aaya. Dobara try karo.";b.disabled=false;q.disabled=false;q.focus();return}
+  if(!ans){box.textContent="Khali jawab aaya. Dobara try karo.";b.disabled=false;cam.disabled=false;q.disabled=false;q.focus();return}
   box.textContent=ans;hist.push({role:"assistant",text:ans});
  }catch(e){box.textContent="Internet ya server se jod nahi paya. Dobara try karo."}
- b.disabled=false;q.disabled=false;q.focus();
+ b.disabled=false;cam.disabled=false;q.disabled=false;q.focus();
 }
 var ib=document.getElementById("ib");
 async function draw(){
