@@ -5,6 +5,32 @@
 // Page mein key/secret kabhi nahi hote, aur yahan se kabhi log ya response mein
 // wapas nahi bheje jate — sirf Key ID checkout.js ko diya jata hai (woh public hota hai).
 // Order banana FREE hai — sirf successful payment par ~2% fee lagti hai.
+// User-added products ("u-<n>"): unki price Neon user_products table se aati hai
+// (Add Product se add kiye gaye) — isliye Neon helpers yahan bhi hain.
+
+function getConnString() {
+  return (
+    process.env.DATABASE_URL ||
+    process.env.POSTGRES_URL ||
+    process.env.NEON_DATABASE_URL ||
+    ""
+  );
+}
+
+async function neonQuery(connString, query, params) {
+  var host = new URL(connString).host;
+  var resp = await fetch("https://" + host + "/sql", {
+    method: "POST",
+    headers: {
+      "Neon-Connection-String": connString,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ query: query, params: params || [] })
+  });
+  if (!resp.ok) throw new Error("db_query_failed");
+  var data = await resp.json();
+  return data.rows || [];
+}
 
 var FEATURED = {
   "flannel": "Red Check Flannel Shirt",
@@ -39,11 +65,41 @@ module.exports = async function (req, res) {
   var productId = body.productId;
   var isFeatured = !!(productId && FEATURED[productId]);
   var hoodie = productId ? HOODIES[productId] : null;
-  if (!isFeatured && !hoodie) {
+  var amountPaise = 0;
+  var productName = "";
+  if (isFeatured) {
+    amountPaise = AMOUNT_PAISE;
+    productName = FEATURED[productId];
+  } else if (hoodie) {
+    amountPaise = hoodie[1];
+    productName = hoodie[0];
+  } else if (productId && productId.indexOf("u-") === 0) {
+    // User-added product: price Neon user_products table se lao.
+    var uid = parseInt(productId.slice(2), 10);
+    if (!uid) {
+      return send(res, 400, { ok: false, error: "Ye product Razorpay se nahi kharida ja sakta." });
+    }
+    var connString = getConnString();
+    if (!connString) {
+      return send(res, 503, { ok: false, error: "Razorpay abhi set nahi hua hai, thodi der baad try karo." });
+    }
+    var rows;
+    try {
+      rows = await neonQuery(connString, "SELECT name, price FROM user_products WHERE id = $1", [uid]);
+    } catch (e) {
+      return send(res, 502, { ok: false, error: "Razorpay se order nahi bana — dobara try karo." });
+    }
+    if (!rows.length) {
+      return send(res, 400, { ok: false, error: "Ye product Razorpay se nahi kharida ja sakta." });
+    }
+    productName = rows[0].name;
+    amountPaise = Math.round(Number(rows[0].price) * 100);
+    if (!amountPaise || amountPaise <= 0) {
+      return send(res, 400, { ok: false, error: "Ye product Razorpay se nahi kharida ja sakta." });
+    }
+  } else {
     return send(res, 400, { ok: false, error: "Ye product Razorpay se nahi kharida ja sakta." });
   }
-  var amountPaise = isFeatured ? AMOUNT_PAISE : hoodie[1];
-  var productName = isFeatured ? FEATURED[productId] : hoodie[0];
   var keyId = process.env.RAZORPAY_KEY_ID;
   var secret = process.env.RAZORPAY_KEY_SECRET;
   if (!keyId || !secret) {
