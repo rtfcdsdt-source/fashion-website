@@ -89,7 +89,7 @@ button:disabled{opacity:.6}
 <body>
 <header><span class="t">✨ Mera AI</span><button type="button" class="hbtn" id="rmBtn" title="Coding roadmap">📋 Roadmap</button><button type="button" class="hbtn" id="toolsBtn" title="Tools">🧰 Tools</button><button type="button" class="hbtn" id="clrBtn" title="Nayi baat-cheet">🗑️</button><button type="button" class="hbtn" id="setBtn" title="Settings">⚙️</button></header>
 <div id="who"></div>
-<div id="modes"><button type="button" class="chip on" data-mode="aam">💬 Aam</button><button type="button" class="chip" data-mode="padhai">📚 Padhai</button><button type="button" class="chip" data-mode="coding">💻 Coding</button><button type="button" class="chip" data-mode="translator">🌐 Translator</button><button type="button" class="chip" data-mode="kahani">📖 Kahani</button><button type="button" class="chip" data-mode="quiz">❓ Quiz</button><button type="button" class="chip" data-mode="summary">📝 Summary</button><button type="button" class="chip" data-mode="homework">✏️ Homework</button><button type="button" class="chip" data-mode="english">🗣️ English</button><button type="button" class="chip" data-mode="likho">✉️ Likho</button><button type="button" class="chip" data-mode="kirdar">🎭 Kirdar</button></div>
+<div id="modes"><button type="button" class="chip on" data-mode="aam">💬 Aam</button><button type="button" class="chip" data-mode="padhai">📚 Padhai</button><button type="button" class="chip" data-mode="coding">💻 Coding</button><button type="button" class="chip" data-mode="translator">🌐 Translator</button><button type="button" class="chip" data-mode="kahani">📖 Kahani</button><button type="button" class="chip" data-mode="quiz">❓ Quiz</button><button type="button" class="chip" data-mode="summary">📝 Summary</button><button type="button" class="chip" data-mode="homework">✏️ Homework</button><button type="button" class="chip" data-mode="english">🗣️ English</button><button type="button" class="chip" data-mode="likho">✉️ Likho</button><button type="button" class="chip" data-mode="kirdar">🎭 Kirdar</button><button type="button" class="chip" data-mode="script">🎬 Script</button><button type="button" class="chip" data-mode="business">💡 Business</button><button type="button" class="chip" data-mode="resume">📄 Resume</button><button type="button" class="chip" data-mode="interview">🎤 Interview</button><button type="button" class="chip" data-mode="recipe">🍳 Recipe</button></div>
 <div id="settings" class="panel"><h3>⚙️ Settings</h3>
 <div class="row"><button type="button" class="backBtn" data-back>← Wapas</button></div>
 <div class="row"><span class="lbl">Rang</span><button type="button" class="chip" data-t="auto">🌞 Auto</button><button type="button" class="chip" data-t="light">Halka</button><button type="button" class="chip" data-t="dark">Andhera</button><button type="button" class="chip" data-t="blue">Neela</button></div>
@@ -114,6 +114,9 @@ button:disabled{opacity:.6}
 <button type="button" class="toolBtn" data-open="panel-bill">🧾 Bill Banane Wala <span>quotation</span></button>
 <button type="button" class="toolBtn" data-open="panel-faq">❓ FAQ <span>dukaan ke sawal-jawab</span></button>
 <button type="button" class="toolBtn" data-open="panel-games">🎮 Games <span>tic-tac-toe, saanp-seedhi</span></button>
+<button type="button" class="toolBtn" data-open="panel-comic">📖 Comic <span>kahani + drawings</span></button>
+<button type="button" class="toolBtn" data-open="panel-mindmap">🗺️ Mind Map <span>topic ka naksha</span></button>
+<button type="button" class="toolBtn" data-open="panel-diary">📔 Diary <span>ideas, pattern dekho</span></button>
 </div>
 <div id="panel-quiz" class="panel"><h3>❓ Quiz App</h3>
 <div class="row"><button type="button" class="backBtn" data-back>← Wapas</button></div>
@@ -136,6 +139,15 @@ button:disabled{opacity:.6}
 <select id="khCat" class="fld"><option>Khana</option><option>Kapde</option><option>Bill</option><option>Travel</option><option>Dusra</option></select>
 <input id="khNote" class="fld" type="text" placeholder="Note (optional)">
 <div class="row"><button type="button" class="chip" id="khAdd">+ Jodo</button></div>
+<h3 style="margin-top:14px">Kamaai</h3>
+<input id="khIncAmt" class="fld" type="number" min="1" placeholder="Rashi ₹ (jaise: 5000)">
+<select id="khIncSrc" class="fld"><option>Dukaan</option><option>Freelance</option><option>Dusra</option></select>
+<input id="khIncNote" class="fld" type="text" placeholder="Note (optional)">
+<div class="row"><button type="button" class="chip" id="khIncAdd">+ Kamaai jodo</button></div>
+<div id="incList"></div>
+<div id="budgetSummary" style="font-weight:700;margin:8px 0"></div>
+<div class="row"><button type="button" class="chip" id="budgetGo">Bachat suggestion</button></div>
+<div id="budgetOut" style="white-space:pre-wrap"></div>
 <div id="khTotals" style="font-weight:700;margin:8px 0"></div>
 <div id="khBars"></div>
 <div id="khList"></div>
@@ -203,6 +215,29 @@ button:disabled{opacity:.6}
 <div id="slBoard" class="slboard"></div>
 <div class="row"><button type="button" class="chip" id="slRoll">🎲 Dice</button><button type="button" class="chip" id="slReset">Dobara khelo</button></div>
 </div>
+<div id="panel-comic" class="panel"><h3>📖 Comic / Storybook</h3>
+<div class="row"><button type="button" class="backBtn" data-back>← Wapas</button></div>
+<div style="font-size:.85rem;color:var(--muted)">Kahani likho — AI 3 scenes mein todkar har scene ki drawing banayega. Har scene ki drawing mein ~8 second lagte hain.</div>
+<input id="comicTopic" class="fld" type="text" placeholder="Kahani kya ho? (jaise: ek bahadur ladka aur andhera jungle)">
+<div class="row"><button type="button" class="chip" id="comicGo">Comic banao</button></div>
+<div id="comicArea"></div>
+</div>
+<div id="panel-mindmap" class="panel"><h3>🗺️ Mind Map</h3>
+<div class="row"><button type="button" class="backBtn" data-back>← Wapas</button></div>
+<div style="font-size:.85rem;color:var(--muted)">Topic likho — uska naksha (mind map) ban jayega.</div>
+<input id="mmTopic" class="fld" type="text" placeholder="Topic likho… (jaise: Solar System)">
+<div class="row"><button type="button" class="chip" id="mmGo">Naksha banao</button></div>
+<div id="mmArea"></div>
+</div>
+<div id="panel-diary" class="panel"><h3>📔 Ideas Diary</h3>
+<div class="row"><button type="button" class="backBtn" data-back>← Wapas</button></div>
+<div style="font-size:.85rem;color:var(--muted)">Roz kuch likho — AI patterns batayega. Sirf is phone par bachta hai.</div>
+<input id="dgDate" class="fld" type="date">
+<input id="dgText" class="fld" type="text" placeholder="Aaj kya socha / kya idea aaya?">
+<div class="row"><button type="button" class="chip" id="dgAdd">+ Jodo</button><button type="button" class="chip" id="dgPattern">Pattern batayo</button></div>
+<div id="dgPatternOut" style="white-space:pre-wrap"></div>
+<div id="dgList"></div>
+</div>
 <div id="log"><div id="hint">Namaste! Apna sawal neeche likho.</div></div>
 <input type="file" id="fp" accept="image/*" hidden>
 <div id="pv"><img id="pvi" alt="photo"><span>Photo jod di gayi hai</span><button type="button" id="pvx" title="Photo hatao">✕</button></div>
@@ -265,6 +300,7 @@ function showPanel(id){
  if(t){t.style.display="block";t.classList.add("open")}
  currentView=id;
  if(id==="panel-kharcha")renderKh();
+ if(id==="panel-diary"){renderDg();var dg=document.getElementById("dgDate");if(dg&&!dg.value)dg.value=dayStr();}
  if(id==="panel-habit")renderHb();
  if(id==="panel-faq")renderFaqList();
  if(id==="panel-bill")renderBillRows();
@@ -539,8 +575,12 @@ document.getElementById("flGo").onclick=async function(){
 // ---- Kharcha Tracker ----
 var KH_KEY="meraai-kharcha-v1"+suffix();
 function dayStr(d){d=d||new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
-function loadKh(){try{var a=JSON.parse(localStorage.getItem(KH_KEY)||"null");return Array.isArray(a)?a:[]}catch(e){return[]}}
-function saveKh(a){try{localStorage.setItem(KH_KEY,JSON.stringify(a))}catch(e){}}
+// Kamaai alag `income` array mein, wahi localStorage key. Purana data (sirf
+// kharcha array) bina income ke aaye to income=[] default — koi crash nahi.
+function loadKhObj(){try{var o=JSON.parse(localStorage.getItem(KH_KEY)||"null");if(Array.isArray(o))return{expenses:o,income:[]};if(o&&Array.isArray(o.expenses))return{expenses:o.expenses,income:Array.isArray(o.income)?o.income:[]}}catch(e){}return{expenses:[],income:[]}}
+function loadKh(){return loadKhObj().expenses}
+function saveKhObj(o){try{localStorage.setItem(KH_KEY,JSON.stringify(o))}catch(e){}}
+function saveKh(a){saveKhObj({expenses:Array.isArray(a)?a:[],income:loadKhObj().income})}
 function renderKh(){
  var list=loadKh();var area=document.getElementById("khList");area.innerHTML="";
  var today=dayStr(),month=today.slice(0,7);
@@ -557,6 +597,18 @@ function renderKh(){
   row.appendChild(nm);row.appendChild(del);area.appendChild(row);
  });
  document.getElementById("khTotals").textContent="Aaj: ₹"+totToday+" · Is mahine: ₹"+totMonth;
+ // Kamaai list + is mahine ka budget summary (Kamaai − Kharcha = Bachat)
+ var obj=loadKhObj();var incMonth=0;
+ obj.income.forEach(function(e){if(String(e.ts||"").slice(0,7)===month)incMonth+=e.amt});
+ var incArea=document.getElementById("incList");incArea.innerHTML="";
+ obj.income.forEach(function(e,i){
+  var row=document.createElement("div");row.className="hbrow";
+  var nm=document.createElement("span");nm.className="nm";nm.textContent="₹"+e.amt+" · "+e.src+(e.note?" — "+e.note:"");
+  var del=document.createElement("button");del.type="button";del.className="mini";del.textContent="✕";
+  del.onclick=function(){var o=loadKhObj();o.income.splice(i,1);saveKhObj(o);renderKh()};
+  row.appendChild(nm);row.appendChild(del);incArea.appendChild(row);
+ });
+ var bs=document.getElementById("budgetSummary");if(bs)bs.textContent="Is mahine: Kamaai ₹"+incMonth+" − Kharcha ₹"+totMonth+" = Bachat ₹"+(incMonth-totMonth);
  var bars=document.getElementById("khBars");bars.innerHTML="";
  var cats=Object.keys(byCat);var max=0;cats.forEach(function(c){if(byCat[c]>max)max=byCat[c]});
  cats.forEach(function(c){
@@ -572,6 +624,29 @@ document.getElementById("khAdd").onclick=function(){
  var cat=document.getElementById("khCat").value;var note=document.getElementById("khNote").value.trim();
  var a=loadKh();a.unshift({amt:Math.round(amt),cat:cat,note:note,ts:new Date().toISOString()});saveKh(a);
  document.getElementById("khAmt").value="";document.getElementById("khNote").value="";renderKh();
+};
+// ---- Kamaai jodna + Bachat suggestion (chat log mein nahi, panel mein dikhega) ----
+document.getElementById("khIncAdd").onclick=function(){
+ var amt=parseFloat(document.getElementById("khIncAmt").value);
+ if(!amt||amt<=0){alert("Sahi rashi likho.");return}
+ var src=document.getElementById("khIncSrc").value;var note=document.getElementById("khIncNote").value.trim();
+ var o=loadKhObj();o.income.unshift({amt:Math.round(amt),src:src,note:note,ts:new Date().toISOString()});saveKhObj(o);
+ document.getElementById("khIncAmt").value="";document.getElementById("khIncNote").value="";renderKh();
+};
+document.getElementById("budgetGo").onclick=async function(){
+ var o=loadKhObj();var month=dayStr().slice(0,7);
+ var inc=0,exp=0;
+ o.income.forEach(function(e){if(String(e.ts||"").slice(0,7)===month)inc+=e.amt});
+ o.expenses.forEach(function(e){if(String(e.ts||"").slice(0,7)===month)exp+=e.amt});
+ var out=document.getElementById("budgetOut");
+ if(!inc&&!exp){out.textContent="Pehle kamaai ya kharcha jodo.";return}
+ var msg="Is mahine meri kamaai ₹"+inc+" hai aur kharcha ₹"+exp+" hai, bachat ₹"+(inc-exp)+" hai. Bachat badhane ke liye 3-4 chhote, practical suggestion do (Hindi/Hinglish mein).";
+ out.textContent="Soch raha hun...";
+ try{
+  var r=await fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({mode:"aam",messages:[{role:"user",text:msg}]})});
+  var d={};try{d=await r.json()}catch(e){}
+  out.textContent=r.ok?(d.reply||"").trim()||"Khali jawab aaya.":(d.error||"Jawab nahi mila.");
+ }catch(e){out.textContent="Internet ya server se jod nahi paya. Dobara try karo."}
 };
 // ---- Aadat + To-Do Tracker ----
 var HB_KEY="meraai-habit-v1"+suffix();
@@ -855,6 +930,146 @@ document.getElementById("slRoll").onclick=function(){
  renderSl();
 };
 document.getElementById("slReset").onclick=function(){slMe=0;slCp=0;slOver=false;document.getElementById("slStatus").textContent="Dice dabao!";renderSl()};
+// ---- Feature Pack 3 ----
+// ---- Comic / Storybook ----
+function comicFail(area,topic){
+ area.innerHTML="";
+ var er=document.createElement("div");er.textContent="Comic nahi ban paya, dobara try karo.";area.appendChild(er);
+ var cb=document.createElement("button");cb.type="button";cb.className="chip";cb.textContent="Chat mein poochho";
+ cb.onclick=function(){askInChat("kahani","Mujhe is kahani par comic banao: "+topic)};
+ area.appendChild(cb);
+}
+function drawSceneSvg(prompt){
+ return fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({mode:"image",messages:[{role:"user",text:prompt}]})})
+  .then(function(r){return r.json()}).then(function(d){
+   var m=(d.reply||"").match(/<svg[\s\S]*<\/svg>/i);
+   return m?m[0]:null;
+  }).catch(function(){return null});
+}
+document.getElementById("comicGo").onclick=async function(){
+ var topic=document.getElementById("comicTopic").value.trim();
+ if(!topic){alert("Pehle kahani likho.");return}
+ var area=document.getElementById("comicArea");area.innerHTML="";area.textContent="Comic bana raha hun...";
+ try{
+  var r=await fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({app:"comic",messages:[{role:"user",text:topic}]})});
+  var d={};try{d=await r.json()}catch(e){}
+  if(!r.ok){comicFail(area,topic);return}
+  var j=parseJsonReply(d.reply||"");
+  if(!j||!Array.isArray(j.scenes)||j.scenes.length!==3||!j.scenes.every(function(s){return s&&typeof s.text==="string"&&typeof s.image==="string"})){comicFail(area,topic);return}
+  area.innerHTML="";
+  for(var si=0;si<j.scenes.length;si++){
+   var sc=j.scenes[si];
+   var box=document.createElement("div");box.className="billbox";
+   var tt=document.createElement("div");tt.style.fontWeight="700";tt.textContent="Scene "+(si+1);box.appendChild(tt);
+   var tx=document.createElement("div");tx.style.whiteSpace="pre-wrap";tx.textContent=sc.text;box.appendChild(tx);
+   var st=document.createElement("div");st.style.cssText="font-size:.85rem;color:var(--muted)";st.textContent="Scene "+(si+1)+" ki tasveer ban rahi hai...";box.appendChild(st);
+   area.appendChild(box);
+   var svg=await drawSceneSvg("Cartoon style mein: "+sc.image);
+   st.remove();
+   if(svg){
+    var im=document.createElement("img");im.alt="scene "+(si+1);im.style.cssText="width:100%;max-width:420px;border-radius:10px;background:#fff;display:block;margin-top:8px";im.src="data:image/svg+xml;charset=utf-8,"+encodeURIComponent(svg);box.appendChild(im);
+    attachCopy(box,(function(sv){return function(){return sv}})(svg));
+   }else{
+    var nf=document.createElement("div");nf.style.cssText="font-size:.85rem;color:var(--muted)";nf.textContent="Is scene ki tasveer nahi ban payi.";box.appendChild(nf);
+   }
+  }
+ }catch(e){comicFail(area,topic)}
+};
+// ---- Mind Map ----
+function mmEscape(s){return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}
+function mmWrap(t,maxLen){
+ var words=String(t||"").split(/\s+/).filter(Boolean);var lines=[""];
+ words.forEach(function(w){
+  var last=lines[lines.length-1];
+  if((last+" "+w).trim().length>maxLen&&last){lines.push(w)}else{lines[lines.length-1]=(last+" "+w).trim()}
+ });
+ if(lines.length>2){lines=lines.slice(0,2);lines[1]=lines[1].replace(/\.?$/,"…")}
+ return lines;
+}
+function renderMindMap(j){
+ var area=document.getElementById("mmArea");area.innerHTML="";
+ var branches=(j.branches||[]).slice(0,6);
+ if(!branches.length){area.textContent="Naksha nahi ban paya, dobara try karo.";return}
+ var maxKids=0;branches.forEach(function(b){var n=Math.min((b.children||[]).length,4);if(n>maxKids)maxKids=n});
+ var W=720,colW=W/branches.length,H=164+maxKids*46+10;
+ var s='<svg viewBox="0 0 '+W+' '+H+'" width="100%" style="display:block" xmlns="http://www.w3.org/2000/svg">';
+ var tLines=mmWrap(j.topic||"Topic",18);
+ s+='<rect x="250" y="10" width="220" height="44" rx="10" style="fill:var(--accent);stroke:var(--accent)"/>';
+ tLines.forEach(function(ln,i){s+='<text x="360" y="'+(28+i*16)+'" text-anchor="middle" style="fill:var(--on-accent);font-size:14px;font-weight:700">'+mmEscape(ln)+'</text>'});
+ branches.forEach(function(b,bi){
+  var cx=Math.round(colW*bi+colW/2);
+  var bw=Math.min(colW-12,200),bx=Math.round(cx-bw/2);
+  s+='<line x1="360" y1="54" x2="'+cx+'" y2="100" style="stroke:var(--border);stroke-width:2"/>';
+  var bLines=mmWrap(b.label||"",16);
+  var bh=26+bLines.length*15;
+  s+='<rect x="'+bx+'" y="100" width="'+bw+'" height="'+bh+'" rx="10" style="fill:var(--card);stroke:var(--border);stroke-width:1.5"/>';
+  bLines.forEach(function(ln,i){s+='<text x="'+cx+'" y="'+(118+i*15)+'" text-anchor="middle" style="fill:var(--text);font-size:12px;font-weight:700">'+mmEscape(ln)+'</text>'});
+  var kids=(b.children||[]).slice(0,4);
+  kids.forEach(function(k,ki){
+   var cy=164+ki*46,kw=Math.min(colW-12,190),kx=Math.round(cx-kw/2);
+   s+='<line x1="'+cx+'" y1="'+(100+bh)+'" x2="'+cx+'" y2="'+cy+'" style="stroke:var(--border);stroke-width:1.5"/>';
+   var kLines=mmWrap(k,18);
+   var kh=24+kLines.length*15;
+   s+='<rect x="'+kx+'" y="'+cy+'" width="'+kw+'" height="'+kh+'" rx="8" style="fill:var(--bg);stroke:var(--border)"/>';
+   kLines.forEach(function(ln,i){s+='<text x="'+cx+'" y="'+(cy+15+i*15)+'" text-anchor="middle" style="fill:var(--text);font-size:11px">'+mmEscape(ln)+'</text>'});
+  });
+ });
+ s+='</svg>';
+ area.innerHTML=s;
+}
+function mmFail(area,topic){
+ area.innerHTML="";
+ var er=document.createElement("div");er.textContent="Naksha nahi ban paya, dobara try karo.";area.appendChild(er);
+ var cb=document.createElement("button");cb.type="button";cb.className="chip";cb.textContent="Chat mein poochho";
+ cb.onclick=function(){askInChat("aam","Mujhe is topic ka mind map samjhao: "+topic)};
+ area.appendChild(cb);
+}
+document.getElementById("mmGo").onclick=async function(){
+ var topic=document.getElementById("mmTopic").value.trim();
+ if(!topic){alert("Pehle topic likho.");return}
+ var area=document.getElementById("mmArea");area.innerHTML="";area.textContent="Naksha bana raha hun...";
+ try{
+  var r=await fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({app:"mindmap",messages:[{role:"user",text:topic}]})});
+  var d={};try{d=await r.json()}catch(e){}
+  if(!r.ok){mmFail(area,topic);return}
+  var j=parseJsonReply(d.reply||"");
+  if(!j||typeof j.topic!=="string"||!Array.isArray(j.branches)||!j.branches.length||!j.branches.every(function(b){return b&&typeof b.label==="string"&&Array.isArray(b.children)})){mmFail(area,topic);return}
+  renderMindMap(j);
+ }catch(e){mmFail(area,topic)}
+};
+// ---- Ideas Diary ----
+var DG_KEY="meraai-diary-v1"+suffix();
+function loadDg(){try{var a=JSON.parse(localStorage.getItem(DG_KEY)||"null");return Array.isArray(a)?a:[]}catch(e){return[]}}
+function saveDg(a){try{localStorage.setItem(DG_KEY,JSON.stringify(a))}catch(e){}}
+function renderDg(){
+ var a=loadDg();var list=document.getElementById("dgList");list.innerHTML="";
+ a.forEach(function(e,i){
+  var row=document.createElement("div");row.className="hbrow";
+  var tx=document.createElement("span");tx.className="nm";tx.textContent=(e.date||"")+" — "+e.text;
+  var del=document.createElement("button");del.type="button";del.className="mini";del.textContent="✕";
+  del.onclick=function(){var aa=loadDg();aa.splice(i,1);saveDg(aa);renderDg()};
+  row.appendChild(tx);row.appendChild(del);list.appendChild(row);
+ });
+}
+document.getElementById("dgAdd").onclick=function(){
+ var t=document.getElementById("dgText").value.trim();
+ if(!t){alert("Pehle kuch likho.");return}
+ var dt=document.getElementById("dgDate").value||dayStr();
+ var a=loadDg();a.unshift({date:dt,text:t});saveDg(a);
+ document.getElementById("dgText").value="";renderDg();
+};
+document.getElementById("dgPattern").onclick=async function(){
+ var a=loadDg().slice(0,10);
+ var out=document.getElementById("dgPatternOut");
+ if(!a.length){out.textContent="Pehle diary mein kuch likho.";return}
+ out.textContent="Pattern dekh raha hun...";
+ var msg="Meri ideas diary ki ye entries dekho aur batayo: inmein kaun se common themes/patterns dikh rahe hain, aur agla kadam kya ho sakta hai?\n"+a.map(function(e){return e.date+": "+e.text}).join("\n");
+ try{
+  var r=await fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({mode:"aam",messages:[{role:"user",text:msg}]})});
+  var d={};try{d=await r.json()}catch(e){}
+  out.textContent=r.ok?(d.reply||"").trim()||"Khali jawab aaya.":(d.error||"Jawab nahi mila.");
+ }catch(e){out.textContent="Internet ya server se jod nahi paya. Dobara try karo."}
+};
 </script>
 </body>
 </html>
