@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>My Orders — Fashion Goals</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; background: #0b0b0b; color: #f5f5f5; }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 14px 12px 40px; }
+  header { display: flex; align-items: center; gap: 10px; padding: 6px 2px 14px; }
+  header h1 { font-size: 22px; margin: 0; }
+  header .sub { color: #aaa; font-size: 13px; }
+  .pill { background: #E7000C; color: #fff; border-radius: 999px; padding: 4px 10px; font-size: 12px; font-weight: 700; }
+  .card { background: #171717; border: 1px solid #2a2a2a; border-radius: 12px; padding: 14px; margin-bottom: 12px; }
+  .card h2 { margin: 0 0 8px; font-size: 16px; }
+  .card p { margin: 6px 0; color: #ddd; font-size: 14px; line-height: 1.5; }
+  .muted { color: #999; font-size: 13px; }
+  input, select, button { font-size: 16px; }
+  input[type=password], input[type=text] { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #333; background: #111; color: #fff; }
+  button { background: #E7000C; color: #fff; border: 0; border-radius: 10px; padding: 12px 16px; font-weight: 700; cursor: pointer; }
+  button.ghost { background: #222; color: #fff; border: 1px solid #444; }
+  button.small { padding: 8px 12px; font-size: 14px; }
+  button:disabled { opacity: .5; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .row input { flex: 1; min-width: 160px; }
+  .stats { display: flex; gap: 8px; flex-wrap: wrap; margin: 0 0 12px; }
+  .stat { flex: 1; min-width: 100px; background: #171717; border: 1px solid #2a2a2a; border-radius: 12px; padding: 10px; text-align: center; }
+  .stat b { display: block; font-size: 20px; }
+  .stat span { color: #aaa; font-size: 12px; }
+  .order { background: #171717; border: 1px solid #2a2a2a; border-radius: 12px; padding: 12px; margin-bottom: 10px; }
+  .order .top { display: flex; justify-content: space-between; gap: 8px; align-items: flex-start; }
+  .order .prod { font-weight: 700; font-size: 16px; }
+  .order .price { font-weight: 700; color: #fff; white-space: nowrap; }
+  .order .meta { color: #ccc; font-size: 13px; line-height: 1.6; margin-top: 6px; word-break: break-word; }
+  .badge { display: inline-block; border-radius: 999px; padding: 3px 10px; font-size: 12px; font-weight: 700; }
+  .b-new { background: #14532d; color: #bbf7d0; }
+  .b-packed { background: #78350f; color: #fde68a; }
+  .b-shipped { background: #1e3a8a; color: #bfdbfe; }
+  .b-delivered { background: #065f46; color: #a7f3d0; }
+  .b-cancelled { background: #7f1d1d; color: #fecaca; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+  .actions select { flex: 1; min-width: 140px; padding: 10px; border-radius: 10px; border: 1px solid #333; background: #111; color: #fff; }
+  .err { color: #fca5a5; font-size: 14px; margin-top: 8px; }
+  .ok { color: #86efac; font-size: 14px; margin-top: 8px; }
+  .empty { text-align: center; color: #999; padding: 30px 10px; }
+  a { color: #fff; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>📦 My Orders</h1>
+    <span class="pill">Fashion Goals</span>
+  </header>
+  <p class="sub muted">Sirf tum dekh sakte ho — admin code se khulta hai. Customer ka order aate hi yahan dikhega.</p>
+
+  <div class="card" id="loginCard">
+    <h2>Admin code daalo</h2>
+    <p class="muted">Wahi code jo shared reels ke liye use hota hai.</p>
+    <div class="row">
+      <input type="password" id="codeInput" placeholder="Admin code" autocomplete="off">
+      <button id="loginBtn">Dekho</button>
+    </div>
+    <div class="err" id="loginErr" style="display:none"></div>
+  </div>
+
+  <div id="dash" style="display:none">
+    <div class="stats">
+      <div class="stat"><b id="stTotal">0</b><span>Total orders</span></div>
+      <div class="stat"><b id="stNew">0</b><span>New</span></div>
+      <div class="stat"><b id="stAmt">₹0</b><span>Total amount</span></div>
+    </div>
+    <div class="row" style="margin-bottom:12px">
+      <button class="ghost small" id="refreshBtn">↻ Refresh</button>
+      <button class="ghost small" id="logoutBtn">Code badlo</button>
+      <a href="/" style="margin-left:auto;font-size:14px">← Shop par wapas</a>
+    </div>
+    <div id="list"></div>
+    <div class="ok" id="msg" style="display:none"></div>
+  </div>
+</div>
+<script>
+(function () {
+  var API = "/api/orders";
+  var code = "";
+  try { code = localStorage.getItem("fg-orders-code") || ""; } catch (e) { code = ""; }
+
+  var loginCard = document.getElementById("loginCard");
+  var dash = document.getElementById("dash");
+  var codeInput = document.getElementById("codeInput");
+  var loginBtn = document.getElementById("loginBtn");
+  var loginErr = document.getElementById("loginErr");
+  var listEl = document.getElementById("list");
+  var msgEl = document.getElementById("msg");
+
+  function showMsg(t, isErr) {
+    msgEl.style.display = "block";
+    msgEl.className = isErr ? "err" : "ok";
+    msgEl.textContent = t;
+    setTimeout(function () { msgEl.style.display = "none"; }, 4000);
+  }
+  function esc(s) {
+    return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+  function badge(st) {
+    var m = { "new": "b-new", "packed": "b-packed", "shipped": "b-shipped", "delivered": "b-delivered", "cancelled": "b-cancelled" };
+    var label = { "new": "New", "packed": "Packed", "shipped": "Shipped", "delivered": "Delivered", "cancelled": "Cancelled" };
+    return '<span class="badge ' + (m[st] || "b-new") + '">' + (label[st] || esc(st)) + "</span>";
+  }
+  function fmtDate(d) {
+    try { return new Date(d).toLocaleString("en-IN", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }); } catch (e) { return ""; }
+  }
+
+  async function loadOrders() {
+    listEl.innerHTML = '<div class="empty">Load ho raha hai…</div>';
+    var r;
+    try {
+      r = await fetch(API + "?code=" + encodeURIComponent(code));
+    } catch (e) {
+      listEl.innerHTML = '<div class="empty">Net nahi mila. Dobara try karo.</div>';
+      return;
+    }
+    var d = null;
+    try { d = await r.json(); } catch (e) { d = null; }
+    if (!r.ok || !d || !d.ok) {
+      if (r.status === 401) {
+        loginErr.style.display = "block";
+        loginErr.textContent = "Galat code. Dobara daalo.";
+        showLogin();
+      } else {
+        listEl.innerHTML = '<div class="empty">Order nahi mile. Dobara try karo.</div>';
+      }
+      return;
+    }
+    render(d.orders || []);
+  }
+
+  function render(orders) {
+    var total = orders.length;
+    var nw = 0, amt = 0;
+    orders.forEach(function (o) { if (o.status === "new") nw++; amt += Number(o.price) || 0; });
+    document.getElementById("stTotal").textContent = total;
+    document.getElementById("stNew").textContent = nw;
+    document.getElementById("stAmt").textContent = "₹" + amt;
+    if (!orders.length) {
+      listEl.innerHTML = '<div class="empty">Abhi koi order nahi hai.</div>';
+      return;
+    }
+    listEl.innerHTML = orders.map(function (o) {
+      return '<div class="order" data-id="' + o.id + '">' +
+        '<div class="top"><div class="prod">' + esc(o.product) + '</div><div class="price">₹' + (Number(o.price) || 0) + '</div></div>' +
+        '<div>' + badge(o.status) + ' <span class="muted">· ' + esc(o.order_id) + ' · ' + fmtDate(o.created_at) + '</span></div>' +
+        '<div class="meta">👤 ' + esc(o.customer_name) + ' · 📱 ' + esc(o.mobile) + '<br>' +
+        '📍 ' + esc(o.address) + ' — ' + esc(o.pincode) + '<br>' +
+        'Size: ' + esc(o.size) + (o.colour ? ' · Colour: ' + esc(o.colour) : '') + ' · Payment: ' + esc(o.payment) + '</div>' +
+        '<div class="actions">' +
+        '<select class="stSel">' +
+        ["new", "packed", "shipped", "delivered", "cancelled"].map(function (s) {
+          return '<option value="' + s + '"' + (o.status === s ? " selected" : "") + '>' + s + '</option>';
+        }).join("") +
+        '</select>' +
+        '<button class="small saveBtn">Status badlo</button>' +
+        '<button class="small ghost delBtn">Delete</button>' +
+        '</div></div>';
+    }).join("");
+
+    listEl.querySelectorAll(".order").forEach(function (card) {
+      var id = card.getAttribute("data-id");
+      card.querySelector(".saveBtn").addEventListener("click", function () {
+        var st = card.querySelector(".stSel").value;
+        updateStatus(id, st, card);
+      });
+      card.querySelector(".delBtn").addEventListener("click", function () {
+        if (!confirm("Ye order delete kar dun?")) return;
+        deleteOrder(id);
+      });
+    });
+  }
+
+  async function updateStatus(id, st, card) {
+    var btn = card.querySelector(".saveBtn");
+    btn.disabled = true;
+    try {
+      var r = await fetch(API + "?action=status", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: code, id: Number(id), status: st })
+      });
+      var d = null; try { d = await r.json(); } catch (e) {}
+      if (r.ok && d && d.ok) { showMsg("Status badal gaya."); loadOrders(); }
+      else showMsg("Status nahi badla. Dobara try karo.", true);
+    } catch (e) { showMsg("Net nahi mila.", true); }
+    btn.disabled = false;
+  }
+
+  async function deleteOrder(id) {
+    try {
+      var r = await fetch(API + "?action=delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: code, id: Number(id) })
+      });
+      var d = null; try { d = await r.json(); } catch (e) {}
+      if (r.ok && d && d.ok) { showMsg("Order delete ho gaya."); loadOrders(); }
+      else showMsg("Delete nahi hua. Dobara try karo.", true);
+    } catch (e) { showMsg("Net nahi mila.", true); }
+  }
+
+  function showLogin() {
+    loginCard.style.display = "block";
+    dash.style.display = "none";
+  }
+  function showDash() {
+    loginCard.style.display = "none";
+    dash.style.display = "block";
+    loadOrders();
+  }
+
+  loginBtn.addEventListener("click", function () {
+    var v = codeInput.value.trim();
+    if (!v) { loginErr.style.display = "block"; loginErr.textContent = "Pehle code daalo."; return; }
+    code = v;
+    try { localStorage.setItem("fg-orders-code", code); } catch (e) {}
+    loginErr.style.display = "none";
+    showDash();
+  });
+  codeInput.addEventListener("keydown", function (e) { if (e.key === "Enter") loginBtn.click(); });
+  document.getElementById("refreshBtn").addEventListener("click", loadOrders);
+  document.getElementById("logoutBtn").addEventListener("click", function () {
+    try { localStorage.removeItem("fg-orders-code"); } catch (e) {}
+    code = "";
+    codeInput.value = "";
+    showLogin();
+  });
+
+  if (code) { codeInput.value = code; showDash(); }
+})();
+</script>
+</body>
+</html>
