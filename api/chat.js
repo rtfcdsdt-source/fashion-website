@@ -3,6 +3,7 @@
 // aur yahan se key kabhi log ya response mein wapas nahi bheji jati.
 
 var SYS = "Tum 'Mera AI' ho, ek dostana aur madadgaar assistant. User jis language mein likhe (Hindi, Hinglish, English) usi mein jawab do. Jawab saaf, seedha aur chhota rakho. Agar kuch pata nahi to imaandaari se bolo. Pichli baatcheet yaad rakho. Website ya app banane mein madad karo to code step-by-step samjha kar do.";
+var SYS_IMG = "Tum ek SVG illustration artist ho. Sirf ek complete SVG code likho (<svg viewBox=\"0 0 512 512\" xmlns=\"http://www.w3.org/2000/svg\"> se </svg> tak). Koi explanation, markdown ya backticks nahi. Rangeen, saaf aur sundar illustration banao. Koi script ya external link nahi.";
 var MODEL = "gemini-3.5-flash-lite";
 var MAX_TURNS = 12; // aakhri 12 turns (user + assistant) bhejte hain
 var MAX_TEXT = 4000; // har message ki limit, kharcha bandhne ke liye
@@ -57,19 +58,41 @@ module.exports = async function (req, res) {
   if (typeof body === "string") {
     try { body = JSON.parse(body); } catch (e) { body = null; }
   }
-  var contents = body ? cleanMessages(body.messages) : null;
-  if (!contents || !contents.length) {
-    return json(res, 400, { error: "Kuch likh kar bhejo, phir jawab milega." });
-  }
-  if (contents[contents.length - 1].role !== "user") {
-    return json(res, 400, { error: "Aakhri message tumhara hona chahiye." });
+  // mode "image": sirf aakhri user prompt se ek SVG illustration banao.
+  // Tasveer ke liye history nahi bhejte aur zyada tokens dete hain.
+  var mode = body && body.mode === "image" ? "image" : "chat";
+  var contents, sysText, maxTokens;
+  if (mode === "image") {
+    var lastUser = "";
+    if (body && Array.isArray(body.messages)) {
+      for (var i = body.messages.length - 1; i >= 0; i--) {
+        var mm = body.messages[i];
+        if (mm && mm.role === "user" && typeof mm.text === "string" && mm.text.trim()) { lastUser = mm.text.trim(); break; }
+      }
+    }
+    if (!lastUser) {
+      return json(res, 400, { error: "Pehle likho ki kaisi tasveer chahiye." });
+    }
+    contents = [{ role: "user", parts: [{ text: "Tasveer: " + lastUser.slice(0, MAX_TEXT) }] }];
+    sysText = SYS_IMG;
+    maxTokens = 4096;
+  } else {
+    contents = body ? cleanMessages(body.messages) : null;
+    if (!contents || !contents.length) {
+      return json(res, 400, { error: "Kuch likh kar bhejo, phir jawab milega." });
+    }
+    if (contents[contents.length - 1].role !== "user") {
+      return json(res, 400, { error: "Aakhri message tumhara hona chahiye." });
+    }
+    sysText = SYS;
+    maxTokens = 1024;
   }
 
   var url = "https://generativelanguage.googleapis.com/v1beta/models/" + MODEL + ":generateContent?key=" + encodeURIComponent(String(key).trim());
   var payload = {
-    systemInstruction: { parts: [{ text: SYS }] },
+    systemInstruction: { parts: [{ text: sysText }] },
     contents: contents,
-    generationConfig: { temperature: 0.7, maxOutputTokens: 1024 }
+    generationConfig: { temperature: 0.7, maxOutputTokens: maxTokens }
   };
 
   var upstream;

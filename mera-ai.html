@@ -27,8 +27,8 @@ button:disabled{opacity:.6}
 </head>
 <body>
 <header>✨ Mera AI<span>Kuch bhi poocho</span></header>
-<div id="log"><div id="hint">Namaste! Apna sawal neeche likho. Hindi, Hinglish ya English, jo bhi chalega.</div></div>
-<form id="f"><textarea id="q" placeholder="Yahan likho..."></textarea><button id="b">Bhejo</button></form>
+<div id="log"><div id="hint">Namaste! Apna sawal neeche likho. Hindi, Hinglish ya English, jo bhi chalega. Tasveer chahiye? Likho kaisi (jaise: pahadon ke beech ek ghar) aur 🎨 dabao.</div></div>
+<form id="f"><textarea id="q" placeholder="Yahan likho..."></textarea><button id="b">Bhejo</button><button type="button" id="ib" title="Tasveer banao" style="background:var(--card);color:var(--text);border:1px solid var(--border)">🎨</button></form>
 <script>
 var log=document.getElementById("log"),q=document.getElementById("q"),b=document.getElementById("b"),hist=[];
 function add(cls,txt){var d=document.createElement("div");d.className="m "+cls;d.textContent=txt;log.appendChild(d);log.scrollTop=log.scrollHeight;return d}
@@ -47,6 +47,25 @@ async function send(){
  }catch(e){box.textContent="Internet ya server se jod nahi paya. Dobara try karo."}
  b.disabled=false;q.disabled=false;q.focus();
 }
+var ib=document.getElementById("ib");
+async function draw(){
+ var t=q.value.trim();if(!t){alert("Pehle likho ki kaisi tasveer chahiye.");return}
+ var h=document.getElementById("hint");if(h)h.remove();
+ q.value="";add("u","🎨 "+t);var box=add("a","Tasveer bana raha hun...");b.disabled=true;ib.disabled=true;q.disabled=true;
+ try{
+  var r=await fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({mode:"image",messages:[{role:"user",text:t}]})});
+  var d={};try{d=await r.json()}catch(e){}
+  if(!r.ok){box.textContent=d.error||("Kuch gadbad hui (code "+r.status+"). Thodi der baad dobara try karo.");}
+  else{
+   var txt=(d.reply||"");
+   var m=txt.match(/<svg[\s\S]*<\/svg>/i);
+   if(!m){box.textContent="Tasveer nahi ban payi. Thoda alag likhkar dobara try karo.";}
+   else{box.textContent="";var im=document.createElement("img");im.alt=t;im.style.cssText="width:100%;max-width:420px;border-radius:10px;background:#fff;display:block";im.src="data:image/svg+xml;charset=utf-8,"+encodeURIComponent(m[0]);box.appendChild(im);log.scrollTop=log.scrollHeight}
+  }
+ }catch(e){box.textContent="Internet ya server se jod nahi paya. Dobara try karo."}
+ b.disabled=false;ib.disabled=false;q.disabled=false;q.focus();
+}
+ib.onclick=draw;
 document.getElementById("f").onsubmit=function(e){e.preventDefault();send()};
 q.onkeydown=function(e){if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();send()}};
 </script>
