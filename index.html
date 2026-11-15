@@ -2667,6 +2667,7 @@ const SHOP_PRODUCTS=[["B0BRKJFK55","Lymio Men's Polyester Half Sleeve Printed Ca
              the panel — address, size and payment state stay as-is. */
           var congrats = sec.querySelector(".m-congrats");
           var lastOrderId = "";
+          var lastWaEnding = "Main advance payment karke order confirm karunga.";
           /* Confetti: colourful pieces are created fresh every time
              the panel is shown and RE-created when the tab regains
              visibility/focus while the panel is still open — the
@@ -2760,7 +2761,7 @@ const SHOP_PRODUCTS=[["B0BRKJFK55","Lymio Men's Polyester Half Sleeve Printed Ca
              opens WhatsApp exactly as before; the same tap also
              shows the Congratulations panel with that order's ID */
           if (upiWa){
-            upiWa.addEventListener("click", function(){ showCongrats(lastOrderId); });
+            upiWa.addEventListener("click", function(){ refreshUpiWa(); showCongrats(lastOrderId); });
           }
           var addrBox = sec.querySelector(".m-addr");
           var nameIn = addrBox ? addrBox.querySelector(".addr-name") : null;
@@ -2785,6 +2786,23 @@ const SHOP_PRODUCTS=[["B0BRKJFK55","Lymio Men's Polyester Half Sleeve Printed Ca
           var addrValid = function(v){
             return !!v.name && /^\d{10}$/.test(v.mobile) && /^\d{6}$/.test(v.pin) && !!v.addr;
           };
+          /* Shared WhatsApp order message: built fresh from the
+             CURRENT size, payment ending and address values every
+             time it is called, so a size / payment / address change
+             made after "Pay ₹700" was tapped can never leave a stale
+             message behind. The Order ID is passed in — rebuilding
+             reuses the existing lastOrderId and never mints a new
+             one, so the WhatsApp message always matches the UPI /
+             Razorpay payment it belongs to. */
+          var buildWaMessage = function(orderId, ending){
+            var v = addrValues();
+            var title = titleEl ? titleEl.textContent : "";
+            return "Namaste! Mujhe ye product chahiye: " + title + " — Fashion Goals website se. Size: " + selSize + ". Price: ₹700. Naam: " + v.name + ". Mobile: " + v.mobile + ". Address: " + v.addr + ", " + v.pin + ". " + ending + " Order ID: " + orderId;
+          };
+          var refreshUpiWa = function(){
+            if (!upiWa || !lastOrderId) return;
+            upiWa.href = "https://wa.me/918595318608?text=" + encodeURIComponent(buildWaMessage(lastOrderId, lastWaEnding));
+          };
           sizeRow.querySelectorAll(".size-chip").forEach(function(chip){
             chip.addEventListener("click", function(){
               sizeRow.querySelectorAll(".size-chip").forEach(function(c){
@@ -2794,6 +2812,7 @@ const SHOP_PRODUCTS=[["B0BRKJFK55","Lymio Men's Polyester Half Sleeve Printed Ca
               chip.classList.add("sel");
               chip.setAttribute("aria-pressed", "true");
               selSize = chip.getAttribute("data-size") || "M";
+              refreshUpiWa();
             });
           });
           /* payment pills: exactly one selected; the pick swaps the
@@ -2821,6 +2840,7 @@ const SHOP_PRODUCTS=[["B0BRKJFK55","Lymio Men's Polyester Half Sleeve Printed Ca
                 if (upiPanel) upiPanel.hidden = true;
                 if (rzpBtn) rzpBtn.hidden = selPay !== "advance";
                 if (rzpErr) rzpErr.hidden = true;
+                refreshUpiWa();
               });
             });
           }
@@ -2836,6 +2856,7 @@ const SHOP_PRODUCTS=[["B0BRKJFK55","Lymio Men's Polyester Half Sleeve Printed Ca
           if (addrBox){
             addrBox.addEventListener("input", function(){
               if (addrHint && addrValid(addrValues())) addrHint.hidden = true;
+              refreshUpiWa();
             });
           }
           if (buyLink){
@@ -2864,8 +2885,9 @@ const SHOP_PRODUCTS=[["B0BRKJFK55","Lymio Men's Polyester Half Sleeve Printed Ca
                 e.preventDefault();
                 var orderId = "FG" + Date.now();
                 lastOrderId = orderId;
+                lastWaEnding = "Main advance payment karke order confirm karunga.";
                 if (upiWa){
-                  upiWa.href = "https://wa.me/918595318608?text=" + encodeURIComponent("Namaste! Mujhe ye product chahiye: " + title + " — Fashion Goals website se. Size: " + selSize + ". Price: ₹700. Naam: " + v.name + ". Mobile: " + v.mobile + ". Address: " + v.addr + ", " + v.pin + ". Main advance payment karke order confirm karunga. Order ID: " + orderId);
+                  upiWa.href = "https://wa.me/918595318608?text=" + encodeURIComponent(buildWaMessage(orderId, lastWaEnding));
                 }
                 if (upiPanel) upiPanel.hidden = false;
                 /* open the UPI app through a throwaway link click,
@@ -2895,8 +2917,9 @@ const SHOP_PRODUCTS=[["B0BRKJFK55","Lymio Men's Polyester Half Sleeve Printed Ca
                  the link itself still fires exactly as before. */
               var codOrderId = "FG" + Date.now();
               lastOrderId = codOrderId;
+              lastWaEnding = "Main Cash on Delivery par order karna chahta hun.";
               if (titleEl){
-                buyLink.href = "https://wa.me/918595318608?text=" + encodeURIComponent("Namaste! Mujhe ye product chahiye: " + title + " — Fashion Goals website se. Size: " + selSize + ". Price: ₹700. Naam: " + v.name + ". Mobile: " + v.mobile + ". Address: " + v.addr + ", " + v.pin + ". Main Cash on Delivery par order karna chahta hun. Order ID: " + codOrderId);
+                buyLink.href = "https://wa.me/918595318608?text=" + encodeURIComponent(buildWaMessage(codOrderId, lastWaEnding));
               }
               showCongrats(codOrderId);
             });
@@ -2974,8 +2997,9 @@ const SHOP_PRODUCTS=[["B0BRKJFK55","Lymio Men's Polyester Half Sleeve Printed Ca
                           return;
                         }
                         lastOrderId = receipt;
+                        lastWaEnding = "Maine Razorpay se advance payment kar diya hai.";
                         if (upiWa){
-                          upiWa.href = "https://wa.me/918595318608?text=" + encodeURIComponent("Namaste! Mujhe ye product chahiye: " + title + " — Fashion Goals website se. Size: " + selSize + ". Price: ₹700. Naam: " + v.name + ". Mobile: " + v.mobile + ". Address: " + v.addr + ", " + v.pin + ". Maine Razorpay se advance payment kar diya hai. Order ID: " + receipt);
+                          upiWa.href = "https://wa.me/918595318608?text=" + encodeURIComponent(buildWaMessage(receipt, lastWaEnding));
                         }
                         if (upiPanel) upiPanel.hidden = false;
                       }).catch(function(){
