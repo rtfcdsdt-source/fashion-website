@@ -44,8 +44,15 @@ header .t{flex:1}
 .editrow{display:flex;gap:6px;margin-top:8px}
 .editrow input{flex:1;font:inherit;padding:7px 10px;border:1px solid var(--border);border-radius:10px;background:var(--bg);color:var(--text)}
 .editrow button{font:inherit;border:0;border-radius:10px;padding:0 14px;background:var(--accent);color:var(--on-accent);font-weight:600;cursor:pointer}
-form{display:flex;gap:6px;padding:10px 8px;border-top:1px solid var(--border);background:var(--card);max-width:720px;width:100%;margin:0 auto}
+form{display:flex;gap:6px;padding:10px 8px;border-top:1px solid var(--border);background:var(--card);max-width:720px;width:100%;margin:0 auto;position:relative}
 form button{padding:0 14px}
+#qwrap{flex:1;display:flex;align-items:center;gap:6px;border:1px solid var(--border);border-radius:16px;background:var(--bg);padding:0 6px}
+#qwrap textarea{flex:1;min-width:0;border:0;background:transparent;padding:12px 6px;height:56px;border-radius:0}
+#plusBtn{flex:0 0 auto;width:34px;height:34px;border-radius:50%;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:20px;font-weight:700;line-height:1;padding:0;cursor:pointer}
+#plusMenu{position:absolute;left:8px;bottom:calc(100% + 6px);display:none;z-index:30;background:var(--card);border:1px solid var(--border);border-radius:12px;box-shadow:0 4px 16px rgba(0,0,0,.18);overflow:hidden;min-width:200px}
+#plusMenu.open{display:block}
+#plusMenu button{display:block;width:100%;text-align:left;border:0;background:transparent;color:var(--text);padding:12px 14px;font-size:.95rem;font-weight:600;cursor:pointer}
+#plusMenu button+button{border-top:1px solid var(--border)}
 textarea{flex:1;font:inherit;padding:12px 14px;border:1px solid var(--border);border-radius:16px;background:var(--bg);color:var(--text);resize:none;height:56px}
 button{font:inherit;border:0;border-radius:12px;padding:0 18px;background:var(--accent);color:var(--on-accent);font-weight:600;cursor:pointer}
 button:disabled{opacity:.6}
@@ -251,7 +258,7 @@ button:disabled{opacity:.6}
 <input type="file" id="fp" accept="image/*" hidden>
 <div id="pv"><img id="pvi" alt="photo"><span>Photo jod di gayi hai</span><button type="button" id="pvx" title="Photo hatao">✕</button></div>
 <div id="styles"><span class="lbl">Tasveer ka style:</span><button type="button" class="chip on" data-style="simple">🎨 Simple</button><button type="button" class="chip" data-style="cartoon">🎭 Cartoon</button><button type="button" class="chip" data-style="naksha">🗺️ Naksha</button><button type="button" class="chip" data-style="logo">🔰 Logo</button></div>
-<form id="f"><textarea id="q" placeholder="Yahan likho..."></textarea><button type="button" id="cam" title="Photo jodo">📷</button><button id="b">Bhejo</button><button type="button" id="ib" title="Tasveer banao" style="background:var(--card);color:var(--text);border:1px solid var(--border)">🎨</button></form>
+<form id="f"><div id="qwrap"><button type="button" id="plusBtn" title="Jodo">+</button><textarea id="q" placeholder="Yahan likho..."></textarea></div><button id="b">Bhejo</button><button type="button" id="cam" title="Photo jodo" hidden>📷</button><button type="button" id="ib" title="Tasveer banao" hidden>🎨</button><div id="plusMenu"><button type="button" id="pmPhoto">📷 Photo se sawal</button><button type="button" id="pmDraw">🎨 Tasveer banao</button></div></form>
 <script>
 // ---- Profile (fashion site ki Google login se) ----
 function prof(){try{var p=JSON.parse(localStorage.getItem("fgProfile")||"null");if(p&&p.id)return{name:p.name||"",email:String(p.id)}}catch(e){}return{name:"",email:""}}
@@ -383,6 +390,13 @@ fp.onchange=function(){
  im.onerror=function(){URL.revokeObjectURL(url);alert("Photo khul nahi payi. Doosri photo try karo.");fp.value=""};
  im.src=url;
 };
+// ---- + menu (Photo / Tasveer box ke andar; triggers wahi purane hain) ----
+var plusBtn=document.getElementById("plusBtn"),plusMenu=document.getElementById("plusMenu");
+function closePlus(){plusMenu.classList.remove("open")}
+plusBtn.onclick=function(e){e.stopPropagation();plusMenu.classList.toggle("open")};
+document.getElementById("pmPhoto").onclick=function(){closePlus();cam.click()};
+document.getElementById("pmDraw").onclick=function(){closePlus();ib.click()};
+document.addEventListener("click",function(e){if(!plusMenu.classList.contains("open"))return;if(e.target===plusBtn||plusMenu.contains(e.target))return;closePlus()});
 // ---- Website banana (demo website: HTML/CSS/JS, Claude v5 jaisa flow) ----
 // "website" jaisa shabd aaye to chat ki jagah website banti hai. Backend
 // streaming nahi karta, isliye stage fake nahi karte — sirf elapsed seconds.
