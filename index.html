@@ -323,6 +323,16 @@
         -webkit-tap-highlight-color:transparent;
       }
       .pcard-photo img{width:100%;height:100%;object-fit:cover;display:block}
+      /* the Meesho source photos carry their "s-…" image ID printed
+         at the very bottom-left of the photo itself. Every .pcard
+         photo is zoomed a touch from its top edge, so the bottom
+         ~6% of the photo — the strip the number stands in — falls
+         below the card frame and is clipped away by the card's
+         overflow:hidden. The photo fills the card exactly as
+         before: no blank band, no white strip, just the number
+         gone. (.pcard cards are only ever the Meesho hoodies, so
+         the featured photos are untouched.) */
+      .pcard-photo img{transform:scale(1.06);transform-origin:top center}
       .prod-more{max-width:1440px;margin:0 auto;padding:8px clamp(10px,3vw,28px) 26px;text-align:center}
       .prod-morebtn{
         border:1px solid #171717;background:#171717;color:#fff;border-radius:999px;
@@ -434,6 +444,17 @@
         opacity:0;transition:opacity .35s ease;
       }
       .modal .m-photo img.loaded{opacity:1}
+      /* hoodie sections only (the .crop-wm class stands on Meesho
+         hoodie photos, never on the 6 featured photos): the same
+         bottom-strip fix as the shop cards — the photo fills its
+         frame (cover, top-anchored) and is zoomed a touch from
+         the top, so the bottom ~6% carrying the printed "s-…"
+         image ID falls outside the frame and is clipped away.
+         No blank band is left behind: the zoomed photo still
+         covers the whole frame. On phones the photo stands at
+         its natural height and the same zoom pushes the number
+         strip below the frame's hidden overflow. */
+      .modal .m-photo.crop-wm img{object-fit:cover;object-position:top center;transform:scale(1.06);transform-origin:top center}
       .modal .m-photo .m-shimmer{
         position:absolute;inset:0;display:none;place-items:center;
       }
@@ -3187,7 +3208,7 @@ const SHOP_PRODUCTS=[["76v4n1","Urban Style Men's Black Fleece Hoodie",600,"http
         var dims = dimsOf(it);
         var isFeat = it.id.indexOf("h-") !== 0;
         var gal = isFeat ? (GALLERY[it.id] || []) : [];
-        var photoHTML = '<div class="m-photo loading" style="aspect-ratio:' + dims[0] + ' / ' + dims[1] + '"><span class="m-shimmer" aria-hidden="true"><span></span></span>' +
+        var photoHTML = '<div class="m-photo loading' + (isFeat ? '' : ' crop-wm') + '" style="aspect-ratio:' + dims[0] + ' / ' + dims[1] + '"><span class="m-shimmer" aria-hidden="true"><span></span></span>' +
             '<img src="' + it.img + '" alt="' + it.alt + '" width="' + dims[0] + '" height="' + dims[1] + '" decoding="async"' + (first ? '' : ' loading="lazy"') + ' />' +
           '</div>';
         if (gal.length){
