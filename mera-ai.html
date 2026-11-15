@@ -25,6 +25,7 @@ header .t{flex:1}
 .chip{flex:0 0 auto;border:1px solid var(--border);background:var(--bg);color:var(--text);border-radius:999px;padding:5px 12px;font-size:.85rem;font-weight:600;cursor:pointer;white-space:nowrap}
 .chip.on{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
 .panel{display:none;max-width:720px;width:100%;margin:0 auto;padding:12px 8px;background:var(--card);border-bottom:1px solid var(--border)}
+.panel.open{flex:1 1 auto;overflow-y:auto;min-height:0}
 .panel h3{margin:0 0 8px;font-size:1rem}
 .panel .row{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:8px 0}
 .panel .lbl{font-size:.85rem;color:var(--muted);min-width:74px}
@@ -32,6 +33,7 @@ header .t{flex:1}
 #rmfill{height:100%;background:var(--accent);width:0%;transition:width .2s}
 .rmph{font-weight:700;margin-top:12px;font-size:.9rem}
 .rmstep{display:flex;gap:8px;align-items:flex-start;padding:6px 0;border-bottom:1px solid var(--border);font-size:.92rem}
+.rmstep label{display:flex;gap:8px;align-items:flex-start;flex:1}
 .rmstep input{margin-top:3px;flex:0 0 auto}
 .rmstep.done span{text-decoration:line-through;color:var(--muted)}
 #log{flex:1;overflow-y:auto;padding:12px 8px;max-width:720px;width:100%;margin:0 auto}
@@ -55,22 +57,151 @@ button:disabled{opacity:.6}
 #styles{display:none;max-width:720px;width:100%;margin:0 auto;padding:8px 8px 0;gap:6px;flex-wrap:wrap;align-items:center}
 #styles .lbl{font-size:.85rem;color:var(--muted)}
 #hint{color:var(--muted);text-align:center;margin-top:24px;font-size:.9rem}
+.toolBtn{display:flex;justify-content:space-between;align-items:center;width:100%;text-align:left;border:1px solid var(--border);background:var(--bg);color:var(--text);border-radius:12px;padding:10px 12px;font-size:.92rem;font-weight:600;cursor:pointer;margin:6px 0}
+.toolBtn span{color:var(--muted);font-weight:400;font-size:.8rem}
+.backBtn{border:1px solid var(--border);background:var(--bg);color:var(--text);border-radius:10px;padding:5px 10px;font-size:.85rem;font-weight:600;cursor:pointer}
+.optbtn{display:block;width:100%;text-align:left;border:1px solid var(--border);background:var(--bg);color:var(--text);border-radius:12px;padding:10px 12px;font-size:.92rem;font-weight:600;cursor:pointer;margin:6px 0}
+.optbtn.ok{background:#e6f4ea;border-color:#7fb98d}
+.optbtn.bad{background:#fdeceb;border-color:#d98a84}
+.fld{width:100%;font:inherit;padding:9px 10px;border:1px solid var(--border);border-radius:10px;background:var(--bg);color:var(--text);margin:6px 0}
+.kv{display:flex;justify-content:space-between;font-size:.9rem;padding:3px 0}
+.bar{height:12px;background:var(--border);border-radius:6px;overflow:hidden;margin:3px 0 8px}
+.bar i{display:block;height:100%;background:var(--accent)}
+.hbrow{display:flex;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);font-size:.92rem}
+.hbrow .nm{flex:1}
+.streak{font-weight:700;color:var(--accent);font-size:.85rem;white-space:nowrap}
+.tdrow{display:flex;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);font-size:.92rem}
+.tdrow.done span{text-decoration:line-through;color:var(--muted)}
+.mini{border:1px solid var(--border);background:var(--bg);color:var(--text);border-radius:8px;padding:4px 10px;font-size:.8rem;font-weight:600;cursor:pointer;flex:0 0 auto}
+.ttt{display:grid;grid-template-columns:repeat(3,72px);grid-template-rows:repeat(3,72px);gap:6px;margin:10px auto;width:max-content}
+.ttt button{font-size:1.7rem;font-weight:700;border:1px solid var(--border);background:var(--bg);color:var(--text);border-radius:10px;cursor:pointer;padding:0}
+.slboard{display:grid;grid-template-columns:repeat(10,1fr);gap:2px;margin:10px 0}
+.slcell{aspect-ratio:1;border:1px solid var(--border);border-radius:4px;font-size:.62rem;display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--bg);color:var(--muted)}
+.slcell .dot{width:11px;height:11px;border-radius:50%}
+.slcell .dot.me{background:#d92b2b}
+.slcell .dot.cp{background:#2563eb}
+.flcard{border:1px solid var(--border);border-radius:14px;background:var(--bg);min-height:150px;display:flex;align-items:center;justify-content:center;text-align:center;padding:18px;font-size:1.05rem;font-weight:600;cursor:pointer;margin:10px 0}
+.billbox{border:1px solid var(--border);border-radius:12px;padding:12px;background:var(--bg);margin:10px 0}
+.billbox table{width:100%;border-collapse:collapse;font-size:.9rem}
+.billbox td,.billbox th{border-bottom:1px solid var(--border);padding:5px 4px;text-align:left}
 </style>
 </head>
 <body>
-<header><span class="t">✨ Mera AI</span><button type="button" class="hbtn" id="rmBtn" title="Coding roadmap">📋 Roadmap</button><button type="button" class="hbtn" id="clrBtn" title="Nayi baat-cheet">🗑️</button><button type="button" class="hbtn" id="setBtn" title="Settings">⚙️</button></header>
+<header><span class="t">✨ Mera AI</span><button type="button" class="hbtn" id="rmBtn" title="Coding roadmap">📋 Roadmap</button><button type="button" class="hbtn" id="toolsBtn" title="Tools">🧰 Tools</button><button type="button" class="hbtn" id="clrBtn" title="Nayi baat-cheet">🗑️</button><button type="button" class="hbtn" id="setBtn" title="Settings">⚙️</button></header>
 <div id="who"></div>
-<div id="modes"><button type="button" class="chip on" data-mode="aam">💬 Aam</button><button type="button" class="chip" data-mode="padhai">📚 Padhai</button><button type="button" class="chip" data-mode="coding">💻 Coding</button><button type="button" class="chip" data-mode="translator">🌐 Translator</button><button type="button" class="chip" data-mode="kahani">📖 Kahani</button><button type="button" class="chip" data-mode="quiz">❓ Quiz</button><button type="button" class="chip" data-mode="summary">📝 Summary</button></div>
+<div id="modes"><button type="button" class="chip on" data-mode="aam">💬 Aam</button><button type="button" class="chip" data-mode="padhai">📚 Padhai</button><button type="button" class="chip" data-mode="coding">💻 Coding</button><button type="button" class="chip" data-mode="translator">🌐 Translator</button><button type="button" class="chip" data-mode="kahani">📖 Kahani</button><button type="button" class="chip" data-mode="quiz">❓ Quiz</button><button type="button" class="chip" data-mode="summary">📝 Summary</button><button type="button" class="chip" data-mode="homework">✏️ Homework</button><button type="button" class="chip" data-mode="english">🗣️ English</button><button type="button" class="chip" data-mode="likho">✉️ Likho</button><button type="button" class="chip" data-mode="kirdar">🎭 Kirdar</button></div>
 <div id="settings" class="panel"><h3>⚙️ Settings</h3>
+<div class="row"><button type="button" class="backBtn" data-back>← Wapas</button></div>
 <div class="row"><span class="lbl">Rang</span><button type="button" class="chip" data-t="auto">🌞 Auto</button><button type="button" class="chip" data-t="light">Halka</button><button type="button" class="chip" data-t="dark">Andhera</button><button type="button" class="chip" data-t="blue">Neela</button></div>
 <div class="row"><span class="lbl">Akshar</span><button type="button" class="chip" data-f="small">Chhota</button><button type="button" class="chip" data-f="normal">Aam</button><button type="button" class="chip" data-f="large">Bada</button></div>
 <div class="row"><span class="lbl">Hindi font</span><button type="button" class="chip" id="hindiBtn">Hindi saaf font: Band</button></div>
 </div>
 <div id="roadmap" class="panel"><h3>📋 Coding Roadmap — YouTube jaisa app (MVP)</h3>
+<div class="row"><button type="button" class="backBtn" data-back>← Wapas</button></div>
 <div style="font-size:.85rem;color:var(--muted)">Ye steps aapke saved plan se hain. Tick lagao, progress dekho.</div>
 <div id="rmbar"><div id="rmfill"></div></div><div id="rmcount">0 / 11 poora</div>
 <div id="rmlist"></div>
 <div class="row"><button type="button" class="chip" id="rmReset">↺ Reset</button></div>
+</div>
+<div id="tools" class="panel"><h3>🧰 Tools</h3>
+<div class="row"><button type="button" class="backBtn" data-back>← Wapas</button></div>
+<button type="button" class="toolBtn" data-open="roadmap">📋 Coding Roadmap <span>checklist + progress</span></button>
+<button type="button" class="toolBtn" data-open="panel-quiz">❓ Quiz App <span>MCQ + score</span></button>
+<button type="button" class="toolBtn" data-open="panel-flash">🃏 Flashcards <span>palatne wale card</span></button>
+<button type="button" class="toolBtn" data-open="panel-kharcha">💰 Kharcha Tracker <span>roz ka hisaab</span></button>
+<button type="button" class="toolBtn" data-open="panel-habit">✅ Aadat + To-Do <span>streak dekho</span></button>
+<button type="button" class="toolBtn" data-open="panel-calc">🧮 Calculator <span>EMI, %, unit</span></button>
+<button type="button" class="toolBtn" data-open="panel-bill">🧾 Bill Banane Wala <span>quotation</span></button>
+<button type="button" class="toolBtn" data-open="panel-faq">❓ FAQ <span>dukaan ke sawal-jawab</span></button>
+<button type="button" class="toolBtn" data-open="panel-games">🎮 Games <span>tic-tac-toe, saanp-seedhi</span></button>
+</div>
+<div id="panel-quiz" class="panel"><h3>❓ Quiz App</h3>
+<div class="row"><button type="button" class="backBtn" data-back>← Wapas</button></div>
+<div style="font-size:.85rem;color:var(--muted)">Topic likho — AI 5 MCQ banayega, score dikhega.</div>
+<input id="quizTopic" class="fld" type="text" placeholder="Topic likho… (jaise: Solar System)">
+<div class="row"><button type="button" class="chip" id="quizGo">Quiz banao</button></div>
+<div id="quizArea"></div>
+</div>
+<div id="panel-flash" class="panel"><h3>🃏 Flashcards</h3>
+<div class="row"><button type="button" class="backBtn" data-back>← Wapas</button></div>
+<div style="font-size:.85rem;color:var(--muted)">Topic likho — AI yaad karne wale card banayega. Card par tap karo, jawab dikhega.</div>
+<input id="flTopic" class="fld" type="text" placeholder="Topic likho… (jaise: English words)">
+<div class="row"><button type="button" class="chip" id="flGo">Cards banao</button></div>
+<div id="flArea"></div>
+</div>
+<div id="panel-kharcha" class="panel"><h3>💰 Kharcha Tracker</h3>
+<div class="row"><button type="button" class="backBtn" data-back>← Wapas</button></div>
+<div style="font-size:.85rem;color:var(--muted)">Roz ka hisaab — sirf is phone par bachta hai.</div>
+<input id="khAmt" class="fld" type="number" min="1" placeholder="Rashi ₹ (jaise: 500)">
+<select id="khCat" class="fld"><option>Khana</option><option>Kapde</option><option>Bill</option><option>Travel</option><option>Dusra</option></select>
+<input id="khNote" class="fld" type="text" placeholder="Note (optional)">
+<div class="row"><button type="button" class="chip" id="khAdd">+ Jodo</button></div>
+<div id="khTotals" style="font-weight:700;margin:8px 0"></div>
+<div id="khBars"></div>
+<div id="khList"></div>
+</div>
+<div id="panel-habit" class="panel"><h3>✅ Aadat + To-Do</h3>
+<div class="row"><button type="button" class="backBtn" data-back>← Wapas</button></div>
+<div style="font-size:.85rem;color:var(--muted)">Roz ki aadat aur kaam — sirf is phone par bachta hai.</div>
+<h3 style="margin-top:14px">Aadat</h3>
+<div class="row"><input id="hbName" class="fld" type="text" placeholder="Aadat likho… (jaise: Subah walk)" style="margin:0;flex:1"><button type="button" class="chip" id="hbAdd">+ Jodo</button></div>
+<div id="hbList"></div>
+<h3 style="margin-top:14px">To-Do</h3>
+<div class="row"><input id="tdName" class="fld" type="text" placeholder="Kaam likho…" style="margin:0;flex:1"><button type="button" class="chip" id="tdAdd">+ Jodo</button></div>
+<div id="tdList"></div>
+</div>
+<div id="panel-calc" class="panel"><h3>🧮 Calculator</h3>
+<div class="row"><button type="button" class="backBtn" data-back>← Wapas</button></div>
+<h3 style="margin-top:14px">EMI</h3>
+<input id="emiP" class="fld" type="number" min="1" placeholder="Loan rashi ₹">
+<input id="emiR" class="fld" type="number" min="0" step="0.1" placeholder="Saal ka byaaj %">
+<input id="emiN" class="fld" type="number" min="1" placeholder="Mahine (jaise: 12)">
+<div class="row"><button type="button" class="chip" id="emiGo">EMI nikalo</button></div>
+<div id="emiOut" style="font-weight:700"></div>
+<h3 style="margin-top:14px">Percentage</h3>
+<input id="pcX" class="fld" type="number" placeholder="X (jaise: 20)">
+<input id="pcY" class="fld" type="number" placeholder="Y (jaise: 500)">
+<div class="row"><button type="button" class="chip" id="pcGo">Hisab karo</button></div>
+<div id="pcOut" style="font-weight:700"></div>
+<h3 style="margin-top:14px">Unit badlo</h3>
+<select id="ucType" class="fld"><option value="length">Lambai</option><option value="weight">Vazan</option><option value="temp">Temperature</option></select>
+<input id="ucV" class="fld" type="number" placeholder="Number likho">
+<div class="row"><select id="ucFrom" class="fld" style="flex:1;margin:0"></select><select id="ucTo" class="fld" style="flex:1;margin:0"></select></div>
+<div class="row"><button type="button" class="chip" id="ucGo">Badlo</button></div>
+<div id="ucOut" style="font-weight:700"></div>
+</div>
+<div id="panel-bill" class="panel"><h3>🧾 Bill Banane Wala</h3>
+<div class="row"><button type="button" class="backBtn" data-back>← Wapas</button></div>
+<input id="billShop" class="fld" type="text" value="Fashion Goals" placeholder="Dukaan ka naam">
+<input id="billCust" class="fld" type="text" placeholder="Customer ka naam (optional)">
+<div id="billItems"></div>
+<div class="row"><button type="button" class="chip" id="billAddRow">+ Item jodo</button></div>
+<div id="billTotal" style="font-weight:700;margin:8px 0"></div>
+<div class="row"><button type="button" class="chip" id="billGo">Bill banao</button></div>
+<div id="billOut"></div>
+</div>
+<div id="panel-faq" class="panel"><h3>❓ FAQ — Dukaan ke sawal-jawab</h3>
+<div class="row"><button type="button" class="backBtn" data-back>← Wapas</button></div>
+<input id="faqQ" class="fld" type="text" placeholder="Sawal likho… (jaise: delivery kitne din mein?)">
+<div class="row"><button type="button" class="chip" id="faqGo">Jawab do</button></div>
+<div id="faqAns"></div>
+<div id="faqList"></div>
+<h3 style="margin-top:14px">Apna sawal-jawab jodo</h3>
+<div style="font-size:.85rem;color:var(--muted)">Ye jode hue sawal-jawab sirf is phone par dikhenge.</div>
+<input id="faqNewQ" class="fld" type="text" placeholder="Sawal">
+<input id="faqNewA" class="fld" type="text" placeholder="Jawab">
+<div class="row"><button type="button" class="chip" id="faqAdd">Jodo</button></div>
+</div>
+<div id="panel-games" class="panel"><h3>🎮 Games</h3>
+<div class="row"><button type="button" class="backBtn" data-back>← Wapas</button></div>
+<h3 style="margin-top:14px">Tic-Tac-Toe</h3>
+<div id="tttStatus" style="font-size:.9rem;color:var(--muted)">Tumhari baari — X</div>
+<div id="tttBoard" class="ttt"></div>
+<div class="row"><button type="button" class="chip" id="tttReset">Dobara khelo</button></div>
+<h3 style="margin-top:14px">Saanp-Seedhi</h3>
+<div id="slStatus" style="font-size:.9rem;color:var(--muted)">Dice dabao!</div>
+<div id="slBoard" class="slboard"></div>
+<div class="row"><button type="button" class="chip" id="slRoll">🎲 Dice</button><button type="button" class="chip" id="slReset">Dobara khelo</button></div>
 </div>
 <div id="log"><div id="hint">Namaste! Apna sawal neeche likho.</div></div>
 <input type="file" id="fp" accept="image/*" hidden>
@@ -115,6 +246,36 @@ function attachCopy(box,getText){
  c.onclick=function(e){if(e)e.stopPropagation();var t="";try{t=getText()||""}catch(err){t=""}copyText(t).then(function(ok){c.textContent=ok?"✓ Copy ho gaya":"Copy nahi hua";setTimeout(function(){c.textContent="📋 Copy"},1500)})};
  box.appendChild(c);
 }
+// ---- Views: chat ya koi panel (Tools se khulta hai) ----
+var CHAT_IDS=["who","modes","log","pv","styles","f"];
+var currentView="chat";
+var savedDisp={};
+function setChatVisible(v){
+ CHAT_IDS.forEach(function(id){var el=document.getElementById(id);if(!el)return;
+  if(v){el.style.display=savedDisp[id]||""}
+  // Pehle se chhupa ho to uski display value dobara save mat karo
+  // (warna "none" save ho jayega aur wapas aate hi log chhupa rahega).
+  else{if(el.style.display!=="none")savedDisp[id]=el.style.display;el.style.display="none"}
+ });
+}
+function showPanel(id){
+ Array.prototype.forEach.call(document.querySelectorAll(".panel"),function(p){p.style.display="none";p.classList.remove("open")});
+ setChatVisible(false);
+ var t=document.getElementById(id);
+ if(t){t.style.display="block";t.classList.add("open")}
+ currentView=id;
+ if(id==="panel-kharcha")renderKh();
+ if(id==="panel-habit")renderHb();
+ if(id==="panel-faq")renderFaqList();
+ if(id==="panel-bill")renderBillRows();
+ if(id==="panel-games"){renderTtt();renderSl()}
+}
+function showChat(){
+ Array.prototype.forEach.call(document.querySelectorAll(".panel"),function(p){p.style.display="none";p.classList.remove("open")});
+ setChatVisible(true);
+ currentView="chat";
+}
+function askInChat(mode,text){settings.mode=mode;saveSettings();applySettings();showChat();q.value=text;send();}
 // ---- Roadmap (aapke saved YouTube-jaisa app MVP plan se) ----
 var RM_STEPS=[
  {ph:"Plan — Features (MVP)",steps:["User sign up / login","Video upload karna","Videos ki list aur video play karna","Search","Like, comment, subscribe"]},
@@ -126,17 +287,25 @@ var rmDone={};
 try{var r0=JSON.parse(localStorage.getItem(RM_KEY)||"null");if(r0)rmDone=r0}catch(e){}
 function saveRm(){try{localStorage.setItem(RM_KEY,JSON.stringify(rmDone))}catch(e){}}
 function rmTotal(){var n=0;RM_STEPS.forEach(function(g){n+=g.steps.length});return n}
+function practiceStep(stepName){
+ settings.mode="coding";saveSettings();applySettings();showChat();
+ q.value="Mujhe is topic par ek chhota practice sawal do: "+stepName;send();
+}
 function renderRm(){
  var list=document.getElementById("rmlist");list.innerHTML="";var idx=0,done=0,total=rmTotal();
  RM_STEPS.forEach(function(g){
   var ph=document.createElement("div");ph.className="rmph";ph.textContent=g.ph;list.appendChild(ph);
   g.steps.forEach(function(st){
    var id="rm"+idx;idx++;
-   var row=document.createElement("label");row.className="rmstep"+(rmDone[id]?" done":"");
+   var row=document.createElement("div");row.className="rmstep"+(rmDone[id]?" done":"");
+   var lab=document.createElement("label");
    var cb=document.createElement("input");cb.type="checkbox";cb.checked=!!rmDone[id];
    cb.onchange=function(){if(cb.checked)rmDone[id]=1;else delete rmDone[id];saveRm();renderRm()};
    var sp=document.createElement("span");sp.textContent=st;
-   row.appendChild(cb);row.appendChild(sp);list.appendChild(row);
+   lab.appendChild(cb);lab.appendChild(sp);
+   var pb=document.createElement("button");pb.type="button";pb.className="mini";pb.textContent="❓ Practice";
+   (function(stepName){pb.onclick=function(ev){if(ev){ev.preventDefault();ev.stopPropagation()}practiceStep(stepName)}})(st);
+   row.appendChild(lab);row.appendChild(pb);list.appendChild(row);
    if(rmDone[id])done++;
   });
  });
@@ -170,6 +339,7 @@ fp.onchange=function(){
  im.src=url;
 };
 async function send(){
+ showChat();
  var t=q.value.trim();
  if(!t&&!photo)return;
  if(!t)t="Is photo ke baare mein batao.";
@@ -202,6 +372,7 @@ function attachEdit(box,origT){
  wrap.appendChild(inp);wrap.appendChild(go);box.appendChild(wrap);
 }
 async function draw(tOverride,labelOverride){
+ showChat();
  document.getElementById("styles").style.display="flex";
  var t=(tOverride!==undefined)?tOverride:q.value.trim();
  if(!t){alert("Pehle likho ki kaisi tasveer chahiye.");return}
@@ -246,8 +417,11 @@ document.getElementById("hindiBtn").onclick=function(){settings.hindi=settings.h
 Array.prototype.forEach.call(document.querySelectorAll("#styles .chip"),function(c){
  c.onclick=function(){settings.style=c.getAttribute("data-style");saveSettings();applySettings()};
 });
-document.getElementById("setBtn").onclick=function(){var p=document.getElementById("settings");p.style.display=p.style.display==="block"?"none":"block"};
-document.getElementById("rmBtn").onclick=function(){var p=document.getElementById("roadmap");p.style.display=p.style.display==="block"?"none":"block"};
+document.getElementById("setBtn").onclick=function(){if(currentView==="settings")showChat();else showPanel("settings")};
+document.getElementById("rmBtn").onclick=function(){if(currentView==="roadmap")showChat();else showPanel("roadmap")};
+document.getElementById("toolsBtn").onclick=function(){if(currentView==="tools")showChat();else showPanel("tools")};
+Array.prototype.forEach.call(document.querySelectorAll("#tools [data-open]"),function(btn){btn.onclick=function(){showPanel(btn.getAttribute("data-open"))}});
+Array.prototype.forEach.call(document.querySelectorAll("[data-back]"),function(btn){btn.onclick=function(){showChat()}});
 document.getElementById("clrBtn").onclick=function(){
  hist=[];try{localStorage.removeItem(HIST_KEY)}catch(e){}
  log.innerHTML="";showHint();
@@ -268,6 +442,419 @@ q.onkeydown=function(e){if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();send
   });
  }
 })();
+// ---- Feature Pack 2 ----
+// JSON jawab ko saaf karke parse karo: ``` fences aur aage-peeche ka text hatao.
+function parseJsonReply(txt){
+ if(!txt)return null;
+ var t=String(txt).trim().replace(/^```(?:json)?\s*/i,"").replace(/```\s*$/,"").trim();
+ var s=t.indexOf("{"),e=t.lastIndexOf("}");
+ if(s===-1||e===-1||e<=s)return null;
+ try{return JSON.parse(t.slice(s,e+1))}catch(err){return null}
+}
+// ---- Quiz App ----
+var quizData=null,quizIdx=0,quizScore=0,quizAnswered=false;
+function quizFail(area,topic){
+ area.innerHTML="";
+ var er=document.createElement("div");er.textContent="Quiz nahi ban paya, dobara try karo.";area.appendChild(er);
+ var cb=document.createElement("button");cb.type="button";cb.className="chip";cb.textContent="Chat mein poochho";
+ cb.onclick=function(){askInChat("quiz","Mujhe is topic par quiz banao: "+topic)};
+ area.appendChild(cb);
+}
+function renderQuizQ(){
+ var area=document.getElementById("quizArea");area.innerHTML="";quizAnswered=false;
+ if(!quizData||quizIdx>=quizData.length){
+  var sc=document.createElement("div");sc.style.cssText="font-size:1.2rem;font-weight:700;text-align:center;margin:12px 0";
+  sc.textContent="Score: "+quizScore+" / "+(quizData?quizData.length:0);area.appendChild(sc);
+  var again=document.createElement("button");again.type="button";again.className="chip";again.textContent="Dobara khelo";
+  again.onclick=function(){quizIdx=0;quizScore=0;renderQuizQ()};
+  area.appendChild(again);
+  return;
+ }
+ var qq=quizData[quizIdx];
+ var hd=document.createElement("div");hd.style.fontWeight="700";hd.textContent="Sawal "+(quizIdx+1)+" / "+quizData.length;area.appendChild(hd);
+ var qt=document.createElement("div");qt.style.margin="8px 0";qt.textContent=qq.q;area.appendChild(qt);
+ qq.options.forEach(function(op,i){
+  var ob=document.createElement("button");ob.type="button";ob.className="optbtn";ob.textContent=String.fromCharCode(65+i)+". "+op;
+  ob.onclick=function(){
+   if(quizAnswered)return;quizAnswered=true;
+   if(i===qq.answer){quizScore++;ob.classList.add("ok")}
+   else{ob.classList.add("bad");var cb=area.querySelectorAll(".optbtn")[qq.answer];if(cb)cb.classList.add("ok")}
+   Array.prototype.forEach.call(area.querySelectorAll(".optbtn"),function(x){x.disabled=true});
+   var nx=document.createElement("button");nx.type="button";nx.className="chip";
+   nx.textContent=quizIdx+1>=quizData.length?"Score dekho":"Aage →";
+   nx.onclick=function(){quizIdx++;renderQuizQ()};
+   area.appendChild(nx);
+  };
+  area.appendChild(ob);
+ });
+}
+document.getElementById("quizGo").onclick=async function(){
+ var topic=document.getElementById("quizTopic").value.trim();
+ if(!topic){alert("Pehle topic likho.");return}
+ var area=document.getElementById("quizArea");area.innerHTML="";area.textContent="Quiz bana raha hun...";
+ try{
+  var r=await fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({app:"quiz",messages:[{role:"user",text:topic}]})});
+  var d={};try{d=await r.json()}catch(e){}
+  if(!r.ok){quizFail(area,topic);return}
+  var j=parseJsonReply(d.reply||"");
+  if(!j||!Array.isArray(j.questions)||!j.questions.length){quizFail(area,topic);return}
+  var ok=j.questions.every(function(qq){return qq&&typeof qq.q==="string"&&Array.isArray(qq.options)&&qq.options.length===4&&typeof qq.answer==="number"&&qq.answer>=0&&qq.answer<=3});
+  if(!ok){quizFail(area,topic);return}
+  quizData=j.questions.slice(0,5);quizIdx=0;quizScore=0;renderQuizQ();
+ }catch(e){quizFail(area,topic)}
+};
+// ---- Flashcards ----
+var flCards=[],flIdx=0,flFlipped=false;
+function renderFl(){
+ var area=document.getElementById("flArea");area.innerHTML="";
+ if(!flCards.length){area.textContent="Pehle topic likhkar Cards banao.";return}
+ var c=flCards[flIdx];
+ var card=document.createElement("div");card.className="flcard";card.textContent=flFlipped?c.a:c.q;
+ card.onclick=function(){flFlipped=!flFlipped;renderFl()};
+ area.appendChild(card);
+ var nav=document.createElement("div");nav.className="row";
+ var prev=document.createElement("button");prev.type="button";prev.className="chip";prev.textContent="← Pehle";
+ prev.onclick=function(){if(flIdx>0){flIdx--;flFlipped=false;renderFl()}};
+ var cnt=document.createElement("span");cnt.style.flex="1";cnt.style.textAlign="center";cnt.textContent=(flIdx+1)+" / "+flCards.length;
+ var next=document.createElement("button");next.type="button";next.className="chip";next.textContent="Aage →";
+ next.onclick=function(){if(flIdx<flCards.length-1){flIdx++;flFlipped=false;renderFl()}};
+ nav.appendChild(prev);nav.appendChild(cnt);nav.appendChild(next);area.appendChild(nav);
+ var h=document.createElement("div");h.style.cssText="font-size:.85rem;color:var(--muted);text-align:center";h.textContent="Card par tap karo — jawab dikhega.";area.appendChild(h);
+}
+document.getElementById("flGo").onclick=async function(){
+ var topic=document.getElementById("flTopic").value.trim();
+ if(!topic){alert("Pehle topic likho.");return}
+ var area=document.getElementById("flArea");area.innerHTML="";area.textContent="Cards bana raha hun...";
+ try{
+  var r=await fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({app:"flashcards",messages:[{role:"user",text:topic}]})});
+  var d={};try{d=await r.json()}catch(e){}
+  if(!r.ok){area.innerHTML="";var er=document.createElement("div");er.textContent="Cards nahi ban paye, dobara try karo.";area.appendChild(er);return}
+  var j=parseJsonReply(d.reply||"");
+  if(!j||!Array.isArray(j.cards)||!j.cards.length||!j.cards.every(function(cc){return cc&&typeof cc.q==="string"&&typeof cc.a==="string"})){
+   area.innerHTML="";var er2=document.createElement("div");er2.textContent="Cards nahi ban paye, dobara try karo.";area.appendChild(er2);return;
+  }
+  flCards=j.cards.slice(0,8);flIdx=0;flFlipped=false;renderFl();
+ }catch(e){area.innerHTML="";var er3=document.createElement("div");er3.textContent="Cards nahi ban paye, dobara try karo.";area.appendChild(er3)}
+};
+// ---- Kharcha Tracker ----
+var KH_KEY="meraai-kharcha-v1"+suffix();
+function dayStr(d){d=d||new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
+function loadKh(){try{var a=JSON.parse(localStorage.getItem(KH_KEY)||"null");return Array.isArray(a)?a:[]}catch(e){return[]}}
+function saveKh(a){try{localStorage.setItem(KH_KEY,JSON.stringify(a))}catch(e){}}
+function renderKh(){
+ var list=loadKh();var area=document.getElementById("khList");area.innerHTML="";
+ var today=dayStr(),month=today.slice(0,7);
+ var totToday=0,totMonth=0;var byCat={};
+ list.forEach(function(e,i){
+  var d=String(e.ts||"").slice(0,10);
+  if(d===today)totToday+=e.amt;
+  if(d.slice(0,7)===month)totMonth+=e.amt;
+  byCat[e.cat]=(byCat[e.cat]||0)+e.amt;
+  var row=document.createElement("div");row.className="hbrow";
+  var nm=document.createElement("span");nm.className="nm";nm.textContent="₹"+e.amt+" · "+e.cat+(e.note?" — "+e.note:"");
+  var del=document.createElement("button");del.type="button";del.className="mini";del.textContent="✕";
+  del.onclick=function(){var a=loadKh();a.splice(i,1);saveKh(a);renderKh()};
+  row.appendChild(nm);row.appendChild(del);area.appendChild(row);
+ });
+ document.getElementById("khTotals").textContent="Aaj: ₹"+totToday+" · Is mahine: ₹"+totMonth;
+ var bars=document.getElementById("khBars");bars.innerHTML="";
+ var cats=Object.keys(byCat);var max=0;cats.forEach(function(c){if(byCat[c]>max)max=byCat[c]});
+ cats.forEach(function(c){
+  var row=document.createElement("div");
+  var lb=document.createElement("div");lb.style.fontSize=".85rem";lb.textContent=c+" — ₹"+byCat[c];row.appendChild(lb);
+  var bar=document.createElement("div");bar.className="bar";var fill=document.createElement("i");fill.style.width=(max?Math.round(byCat[c]/max*100):0)+"%";bar.appendChild(fill);row.appendChild(bar);
+  bars.appendChild(row);
+ });
+}
+document.getElementById("khAdd").onclick=function(){
+ var amt=parseFloat(document.getElementById("khAmt").value);
+ if(!amt||amt<=0){alert("Sahi rashi likho.");return}
+ var cat=document.getElementById("khCat").value;var note=document.getElementById("khNote").value.trim();
+ var a=loadKh();a.unshift({amt:Math.round(amt),cat:cat,note:note,ts:new Date().toISOString()});saveKh(a);
+ document.getElementById("khAmt").value="";document.getElementById("khNote").value="";renderKh();
+};
+// ---- Aadat + To-Do Tracker ----
+var HB_KEY="meraai-habit-v1"+suffix();
+function loadHb(){try{var o=JSON.parse(localStorage.getItem(HB_KEY)||"null");if(o&&Array.isArray(o.habits)&&Array.isArray(o.todos))return o}catch(e){}return{habits:[],todos:[]}}
+function saveHb(o){try{localStorage.setItem(HB_KEY,JSON.stringify(o))}catch(e){}}
+function streakOf(days){
+ if(!days||!days.length)return 0;
+ var set={};days.forEach(function(d){set[d]=1});
+ var d=new Date();var s=0;
+ if(!set[dayStr(d)])d.setDate(d.getDate()-1);
+ while(set[dayStr(d)]){s++;d.setDate(d.getDate()-1)}
+ return s;
+}
+function renderHb(){
+ var o=loadHb();var hl=document.getElementById("hbList");hl.innerHTML="";
+ o.habits.forEach(function(h,i){
+  var row=document.createElement("div");row.className="hbrow";
+  var nm=document.createElement("span");nm.className="nm";nm.textContent=h.name;
+  var st=document.createElement("span");st.className="streak";st.textContent="🔥 "+streakOf(h.days)+" din";
+  var tick=document.createElement("button");tick.type="button";tick.className="mini";
+  var done=!!(h.days&&h.days.indexOf(dayStr())!==-1);tick.textContent=done?"✓ Aaj ho gaya":"Aaj ✓";
+  tick.onclick=function(){var oo=loadHb();var hh=oo.habits[i];if(!hh)return;hh.days=hh.days||[];var t=dayStr();var ix=hh.days.indexOf(t);if(ix>=0)hh.days.splice(ix,1);else hh.days.push(t);saveHb(oo);renderHb()};
+  var del=document.createElement("button");del.type="button";del.className="mini";del.textContent="✕";
+  del.onclick=function(){var oo=loadHb();oo.habits.splice(i,1);saveHb(oo);renderHb()};
+  row.appendChild(nm);row.appendChild(st);row.appendChild(tick);row.appendChild(del);hl.appendChild(row);
+ });
+ var tl=document.getElementById("tdList");tl.innerHTML="";
+ o.todos.forEach(function(t,i){
+  var row=document.createElement("div");row.className="tdrow"+(t.done?" done":"");
+  var cb=document.createElement("input");cb.type="checkbox";cb.checked=!!t.done;
+  cb.onchange=function(){var oo=loadHb();oo.todos[i].done=cb.checked;saveHb(oo);renderHb()};
+  var tx=document.createElement("span");tx.style.flex="1";tx.textContent=t.text;
+  var del=document.createElement("button");del.type="button";del.className="mini";del.textContent="✕";
+  del.onclick=function(){var oo=loadHb();oo.todos.splice(i,1);saveHb(oo);renderHb()};
+  row.appendChild(cb);row.appendChild(tx);row.appendChild(del);tl.appendChild(row);
+ });
+}
+document.getElementById("hbAdd").onclick=function(){
+ var name=document.getElementById("hbName").value.trim();
+ if(!name){alert("Aadat likho.");return}
+ var o=loadHb();o.habits.push({name:name,days:[]});saveHb(o);
+ document.getElementById("hbName").value="";renderHb();
+};
+document.getElementById("tdAdd").onclick=function(){
+ var text=document.getElementById("tdName").value.trim();
+ if(!text){alert("Kaam likho.");return}
+ var o=loadHb();o.todos.push({text:text,done:false});saveHb(o);
+ document.getElementById("tdName").value="";renderHb();
+};
+// ---- Calculator ----
+document.getElementById("emiGo").onclick=function(){
+ var P=parseFloat(document.getElementById("emiP").value),an=parseFloat(document.getElementById("emiR").value),n=parseInt(document.getElementById("emiN").value,10);
+ var out=document.getElementById("emiOut");
+ if(!P||P<=0||!n||n<=0||isNaN(an)||an<0){out.textContent="Sahi number likho.";return}
+ var r=an/1200,emi;
+ if(r===0)emi=P/n;else{var f=Math.pow(1+r,n);emi=P*r*f/(f-1)}
+ out.textContent="EMI: ₹"+Math.round(emi).toLocaleString("en-IN")+" mahina · Kul: ₹"+Math.round(emi*n).toLocaleString("en-IN");
+};
+document.getElementById("pcGo").onclick=function(){
+ var X=parseFloat(document.getElementById("pcX").value),Y=parseFloat(document.getElementById("pcY").value);
+ var out=document.getElementById("pcOut");
+ if(isNaN(X)||isNaN(Y)){out.textContent="Sahi number likho.";return}
+ var pct=Y!==0?(X/Y*100):0;
+ out.textContent=X+"% of "+Y+" = "+(Math.round(X*Y/100*100)/100).toLocaleString("en-IN")+" · "+X+" is "+(Math.round(pct*10)/10)+"% of "+Y;
+};
+var UC_DEFS={
+ length:{label:"Lambai",units:[["km",1000],["m",1],["cm",0.01],["inch",0.0254]]},
+ weight:{label:"Vazan",units:[["kg",1000],["g",1]]},
+ temp:{label:"Temperature",units:[["°C","c"],["°F","f"]]}
+};
+function ucFill(){
+ var t=document.getElementById("ucType").value;
+ var def=UC_DEFS[t]||UC_DEFS.length;
+ var from=document.getElementById("ucFrom"),to=document.getElementById("ucTo");
+ from.innerHTML="";to.innerHTML="";
+ def.units.forEach(function(u){
+  var o1=document.createElement("option");o1.value=u[0];o1.textContent=u[0];from.appendChild(o1);
+  var o2=document.createElement("option");o2.value=u[0];o2.textContent=u[0];to.appendChild(o2);
+ });
+ to.selectedIndex=def.units.length>1?1:0;
+}
+document.getElementById("ucType").onchange=ucFill;
+document.getElementById("ucGo").onclick=function(){
+ var t=document.getElementById("ucType").value;var def=UC_DEFS[t]||UC_DEFS.length;
+ var v=parseFloat(document.getElementById("ucV").value);
+ var out=document.getElementById("ucOut");
+ if(isNaN(v)){out.textContent="Sahi number likho.";return}
+ var f=document.getElementById("ucFrom").value,to=document.getElementById("ucTo").value;
+ var res;
+ if(t==="temp"){
+  if(f===to)res=v;
+  else if(f==="°C")res=v*9/5+32;
+  else res=(v-32)*5/9;
+ }else{
+  var fm=1,tm=1;
+  def.units.forEach(function(u){if(u[0]===f)fm=u[1];if(u[0]===to)tm=u[1]});
+  res=v*fm/tm;
+ }
+ out.textContent=v+" "+f+" = "+(Math.round(res*1000)/1000).toLocaleString("en-IN")+" "+to;
+};
+ucFill();
+// ---- Bill Banane Wala ----
+var billRows=[];
+function billTotal(){var t=0;billRows.forEach(function(r){t+=r.qty*r.price});return t}
+function renderBillTotal(){var el=document.getElementById("billTotal");if(el)el.textContent="Total: ₹"+billTotal().toLocaleString("en-IN")}
+function renderBillRows(){
+ if(!billRows.length)billRows=[{name:"",qty:1,price:0}];
+ var wrap=document.getElementById("billItems");wrap.innerHTML="";
+ billRows.forEach(function(r,i){
+  var row=document.createElement("div");row.className="row";
+  var n=document.createElement("input");n.className="fld";n.style.flex="2";n.style.margin="0";n.placeholder="Item";n.value=r.name;
+  n.onchange=function(){billRows[i].name=n.value};
+  var qt=document.createElement("input");qt.className="fld";qt.style.flex="1";qt.style.margin="0";qt.type="number";qt.min="1";qt.value=r.qty;
+  qt.onchange=function(){billRows[i].qty=Math.max(1,parseInt(qt.value,10)||1);renderBillTotal()};
+  var pr=document.createElement("input");pr.className="fld";pr.style.flex="1";pr.style.margin="0";pr.type="number";pr.min="0";pr.value=r.price;
+  pr.onchange=function(){billRows[i].price=Math.max(0,parseFloat(pr.value)||0);renderBillTotal()};
+  var del=document.createElement("button");del.type="button";del.className="mini";del.textContent="✕";
+  del.onclick=function(){billRows.splice(i,1);renderBillRows()};
+  row.appendChild(n);row.appendChild(qt);row.appendChild(pr);row.appendChild(del);wrap.appendChild(row);
+ });
+ renderBillTotal();
+}
+document.getElementById("billAddRow").onclick=function(){billRows.push({name:"",qty:1,price:0});renderBillRows()};
+document.getElementById("billGo").onclick=function(){
+ if(!billRows.length||!billRows.some(function(r){return r.name.trim()&&r.price>0})){alert("Pehle kam se kam ek item jodo.");return}
+ var shop=document.getElementById("billShop").value.trim()||"Fashion Goals";
+ var cust=document.getElementById("billCust").value.trim();
+ var no="FG-BILL-"+Date.now();
+ var out=document.getElementById("billOut");out.innerHTML="";
+ var box=document.createElement("div");box.className="billbox";
+ var h4=document.createElement("h4");h4.style.margin="0 0 6px";h4.textContent=shop;box.appendChild(h4);
+ var meta=document.createElement("div");meta.style.cssText="font-size:.85rem;color:var(--muted)";
+ meta.textContent=new Date().toLocaleDateString("en-IN")+" · Bill No: "+no+(cust?" · Customer: "+cust:"");box.appendChild(meta);
+ var tbl=document.createElement("table");
+ var head=document.createElement("tr");
+ ["Item","Qty","Price","Total"].forEach(function(t){var th=document.createElement("th");th.textContent=t;head.appendChild(th)});
+ tbl.appendChild(head);
+ billRows.forEach(function(r){
+  if(!r.name.trim()||r.price<=0)return;
+  var tr=document.createElement("tr");
+  [r.name,String(r.qty),"₹"+r.price.toLocaleString("en-IN"),"₹"+(r.qty*r.price).toLocaleString("en-IN")].forEach(function(t){var td=document.createElement("td");td.textContent=t;tr.appendChild(td)});
+  tbl.appendChild(tr);
+ });
+ box.appendChild(tbl);
+ var tot=document.createElement("div");tot.style.cssText="font-weight:700;text-align:right;margin-top:8px";tot.textContent="Total: ₹"+billTotal().toLocaleString("en-IN");box.appendChild(tot);
+ out.appendChild(box);
+ var pr=document.createElement("button");pr.type="button";pr.className="chip";pr.textContent="🖨️ Print";
+ pr.onclick=function(){if(typeof window.print==="function")window.print()};
+ out.appendChild(pr);
+};
+// ---- FAQ (dukaan ke asli sawal-jawab) ----
+var FAQ_SEED=[
+ {q:"Delivery kitne din mein?",a:"Order confirm hone ke baad 6–8 din mein.",k:["delivery","din","kab","milega","pahunchega"]},
+ {q:"Return kaise karein?",a:"Delivery ke 3 din ke andar, FREE return.",k:["return","wapas","badalna"]},
+ {q:"Refund kab milega?",a:"48 ghante mein, usi account mein.",k:["refund","paisa","wapas","kab"]},
+ {q:"Price kya hai?",a:"6 featured products, sab ₹700.",k:["price","daam","kitne","rate","700"]},
+ {q:"Size kaun se hain?",a:"S, M, L, XL (M default hai).",k:["size","s","m","l","xl"]},
+ {q:"Order kaise karein?",a:"WhatsApp par order bhejkar — Advance Payment (UPI) ya Cash on Delivery.",k:["order","kaise","kharidna","buy","whatsapp"]},
+ {q:"Galat ya damage product aaye to?",a:"Free return + poora refund.",k:["galat","damage","kharaab","toota"]}
+];
+var FAQ_KEY="meraai-faq-v1"+suffix();
+function loadFaqExtra(){try{var a=JSON.parse(localStorage.getItem(FAQ_KEY)||"null");return Array.isArray(a)?a:[]}catch(e){return[]}}
+function saveFaqExtra(a){try{localStorage.setItem(FAQ_KEY,JSON.stringify(a))}catch(e){}}
+function allFaq(){return FAQ_SEED.concat(loadFaqExtra())}
+function faqSearch(text){
+ var toks=String(text||"").toLowerCase().split(/[^a-z0-9\u0900-\u097f]+/).filter(Boolean);
+ var best=null,bestScore=0;
+ allFaq().forEach(function(f){
+  var hay=(f.q+" "+f.a+" "+(f.k||[]).join(" ")).toLowerCase();
+  var s=0;toks.forEach(function(t){if(t.length>=2&&hay.indexOf(t)!==-1)s++});
+  if(s>bestScore){bestScore=s;best=f}
+ });
+ return bestScore>0?best:null;
+}
+function showFaqAns(f){
+ var ans=document.getElementById("faqAns");ans.innerHTML="";
+ var qq=document.createElement("div");qq.style.fontWeight="700";qq.textContent=f.q;
+ var aa=document.createElement("div");aa.textContent=f.a;
+ ans.appendChild(qq);ans.appendChild(aa);
+}
+function renderFaqList(){
+ var list=document.getElementById("faqList");list.innerHTML="";
+ allFaq().forEach(function(f){
+  var b=document.createElement("button");b.type="button";b.className="optbtn";b.textContent=f.q;
+  b.onclick=function(){showFaqAns(f)};
+  list.appendChild(b);
+ });
+}
+document.getElementById("faqGo").onclick=function(){
+ var t=document.getElementById("faqQ").value.trim();
+ if(!t)return;
+ var f=faqSearch(t);
+ var ans=document.getElementById("faqAns");ans.innerHTML="";
+ if(f){showFaqAns(f)}
+ else{
+  var d=document.createElement("div");d.textContent="Iska jawab yahan nahi mila.";
+  var b=document.createElement("button");b.type="button";b.className="chip";b.textContent="Mera AI se poochho";
+  b.onclick=function(){askInChat("aam",t)};
+  ans.appendChild(d);ans.appendChild(b);
+ }
+};
+document.getElementById("faqAdd").onclick=function(){
+ var fq=document.getElementById("faqNewQ").value.trim(),fa=document.getElementById("faqNewA").value.trim();
+ if(!fq||!fa){alert("Sawal aur jawab dono likho.");return}
+ var ex=loadFaqExtra();ex.push({q:fq,a:fa});saveFaqExtra(ex);
+ document.getElementById("faqNewQ").value="";document.getElementById("faqNewA").value="";renderFaqList();
+};
+// ---- Games ----
+// Tic-Tac-Toe: tum X, computer O (jeet sake to jeetega, block karega, warna random)
+var tttBoard=["","","","","","","","",""];var tttOver=false;
+var TTT_LINES=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+function tttWinner(bd){
+ for(var i=0;i<TTT_LINES.length;i++){var l=TTT_LINES[i];if(bd[l[0]]&&bd[l[0]]===bd[l[1]]&&bd[l[1]]===bd[l[2]])return bd[l[0]]}
+ if(bd.every(function(c){return c}))return "draw";
+ return null;
+}
+function showTttStatus(w){
+ document.getElementById("tttStatus").textContent=w==="draw"?"Draw ho gaya!":(w==="X"?"Tum jeet gaye! 🎉":"Computer jeet gaya!");
+}
+function tttComputerMove(){
+ var move=-1;
+ for(var i=0;i<9;i++){if(!tttBoard[i]){tttBoard[i]="O";if(tttWinner(tttBoard)==="O"){move=i;break}tttBoard[i]=""}}
+ if(move<0){for(var j=0;j<9;j++){if(!tttBoard[j]){tttBoard[j]="X";if(tttWinner(tttBoard)==="X"){tttBoard[j]="O";move=j;break}tttBoard[j]=""}}}
+ if(move<0){var empty=[];for(var k=0;k<9;k++)if(!tttBoard[k])empty.push(k);if(empty.length){move=empty[Math.floor(Math.random()*empty.length)];tttBoard[move]="O"}}
+}
+function renderTtt(){
+ var bd=document.getElementById("tttBoard");bd.innerHTML="";
+ tttBoard.forEach(function(c,i){
+  var cell=document.createElement("button");cell.type="button";cell.textContent=c;
+  cell.onclick=function(){
+   if(tttOver||tttBoard[i])return;
+   tttBoard[i]="X";renderTtt();
+   var w=tttWinner(tttBoard);
+   if(w){tttOver=true;showTttStatus(w);return}
+   tttComputerMove();renderTtt();
+   var w2=tttWinner(tttBoard);
+   if(w2){tttOver=true;showTttStatus(w2);return}
+   document.getElementById("tttStatus").textContent="Tumhari baari — X";
+  };
+  bd.appendChild(cell);
+ });
+}
+document.getElementById("tttReset").onclick=function(){tttBoard=["","","","","","","","",""];tttOver=false;document.getElementById("tttStatus").textContent="Tumhari baari — X";renderTtt()};
+// Saanp-Seedhi: tum (laal) vs computer (neela), 100 par jeet (exact chahiye)
+var SL_LADDERS={4:25,13:46,33:49,42:63,50:69,62:81,74:92};
+var SL_SNAKES={27:5,40:3,54:31,66:45,76:58,89:53,99:41};
+var slMe=0,slCp=0,slOver=false;
+function slMove(pos,roll){
+ var np=pos+roll;
+ if(np>100)return pos;
+ if(SL_LADDERS[np])np=SL_LADDERS[np];
+ else if(SL_SNAKES[np])np=SL_SNAKES[np];
+ return np;
+}
+function renderSl(){
+ var bd=document.getElementById("slBoard");bd.innerHTML="";
+ for(var r=9;r>=0;r--){
+  for(var c=0;c<10;c++){
+   var n=r%2===0?r*10+c+1:r*10+10-c;
+   var cell=document.createElement("div");cell.className="slcell";
+   var num=document.createElement("div");num.textContent=n;cell.appendChild(num);
+   if(SL_LADDERS[n]){var up=document.createElement("div");up.textContent="↑"+SL_LADDERS[n];cell.appendChild(up)}
+   if(SL_SNAKES[n]){var dn=document.createElement("div");dn.textContent="↓"+SL_SNAKES[n];cell.appendChild(dn)}
+   if(slMe===n){var dm=document.createElement("span");dm.className="dot me";cell.appendChild(dm)}
+   if(slCp===n){var dc=document.createElement("span");dc.className="dot cp";cell.appendChild(dc)}
+   bd.appendChild(cell);
+  }
+ }
+}
+document.getElementById("slRoll").onclick=function(){
+ if(slOver)return;
+ var roll=1+Math.floor(Math.random()*6);
+ slMe=slMove(slMe,roll);
+ var msg="Tumne "+roll+" phenca → "+(slMe||"shuruaat");
+ if(slMe===100){slOver=true;document.getElementById("slStatus").textContent="Tum jeet gaye! 🎉";renderSl();return}
+ var croll=1+Math.floor(Math.random()*6);
+ slCp=slMove(slCp,croll);
+ msg+=" · Computer ne "+croll+" phenca → "+(slCp||"shuruaat");
+ if(slCp===100){slOver=true;document.getElementById("slStatus").textContent="Computer jeet gaya!";renderSl();return}
+ document.getElementById("slStatus").textContent=msg;
+ renderSl();
+};
+document.getElementById("slReset").onclick=function(){slMe=0;slCp=0;slOver=false;document.getElementById("slStatus").textContent="Dice dabao!";renderSl()};
 </script>
 </body>
 </html>

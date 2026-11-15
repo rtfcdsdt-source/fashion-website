@@ -12,8 +12,15 @@ var SYS_MODES = {
   translator: "MODE-TRANSLATOR: Tum ek Translator ho. User jo text bhejta hai use doosri language mein translate karo — Hindi/Hinglish ho to English, English ho to Hindi. Pehle ek line mein batayo source language kaun si thi, phir saaf translation do. Matlab bilkul wahi rahe, kuch naya mat jodo. Jawab hamesha Devanagari (Hindi) script mein likho, Urdu script kabhi nahi.",
   kahani: "MODE-KAHANI: Tum ek Kahani Sunane Wale ho. User ke topic par ek chhoti, mazedaar kahani sunao — user jis language mein likhe usi mein. Kahani 150-250 shabdon ki, aasan aur dilchasp ho.",
   quiz: "MODE-QUIZ: Tum ek Quiz Maker ho. User ke topic par 5 quiz sawal banao (har sawal ke 4 options: A, B, C, D), phir 5 flashcards banao (Q → A jode). Answers sabse aakhir mein, alag 'Jawab' section mein do.",
-  summary: "MODE-SUMMARY: Tum ek Summary karne wale ho. User ka lamba text chhota karke aasan Hindi/Hinglish mein samjhao — sirf khaas points, 5-8 bullets mein. Kuch bhi naya mat jodo."
+  summary: "MODE-SUMMARY: Tum ek Summary karne wale ho. User ka lamba text chhota karke aasan Hindi/Hinglish mein samjhao — sirf khaas points, 5-8 bullets mein. Kuch bhi naya mat jodo.",
+  homework: "MODE-HOMEWORK: Tum ek Homework Helper ho. User ka sawal step-by-step samjhao, par AAKHRI jawab seedha mat do — pehle hint do, steps samjhao, aur aakhir mein student se ek chhota sa sawal poochho taaki woh khud soche. Seedha final answer kabhi nahi dena.",
+  english: "MODE-ENGLISH: Tum ek English Practice dost ho. User se simple English mein baat karo. User ki English mein galti ho to use nazakat se sudharo aur har galti ko ek line mein samjhao. Apna jawab hamesha simple, aasan English mein do.",
+  likho: "MODE-LIKHO: Tum ek Draft Likhne Wale ho. User jo bhi likhwana chahe (email, application, resume, letter) uska ready, saaf draft banao — user ki batayi language mein. Draft turant bhejane layak ho, sahi salutation aur format ke saath. Kuch extra explanation mat do, bas draft do.",
+  kirdar: "MODE-KIRDAR: Tum ek Kirdar ho. User jis kirdar ka naam bole (detective, dukandaar, teacher...) tum wahi kirdar ban jao aur usi kirdar ki tarah baat karo — uski bhasha, andaaz aur kaam ke hisaab se. Kirdar se bahar mat niklo, aur kirdar ki pehchan har jawab mein bani rahe."
 };
+// ---- Quiz / Flashcards apps (sirf topic se JSON banao; chat history nahi bhejte) ----
+var SYS_QUIZAPP = "APP-QUIZ: Tum ek Quiz Maker ho. User ke topic par EXACTLY 5 multiple-choice quiz sawal banao. Jawab SIRF ek JSON object ho — koi aur text, markdown ya backticks bilkul nahi. Format: {\"questions\":[{\"q\":\"sawal\",\"options\":[\"pehla\",\"doosra\",\"teesra\",\"chautha\"],\"answer\":0}]} — har sawal ke hamesha 4 options hon, answer 0-3 ke beech correct option ka index ho. Sawal user ki language mein (Hindi/Hinglish/English) ho.";
+var SYS_FLASH = "APP-FLASH: Tum ek Flashcards Maker ho. User ke topic par 5-8 flashcards banao. Jawab SIRF ek JSON object ho — koi aur text, markdown ya backticks bilkul nahi. Format: {\"cards\":[{\"q\":\"sawal ya shabd\",\"a\":\"jawab ya matlab\"}]}. Cards user ki language mein ho.";
 var MODEL = "gemini-3.5-flash-lite";
 var MAX_TURNS = 12; // aakhri 12 turns (user + assistant) bhejte hain
 var MAX_TEXT = 4000; // har message ki limit, kharcha bandhne ke liye
@@ -183,7 +190,27 @@ module.exports = async function (req, res) {
   var mode = reqMode === "image" ? "image" : "chat";
   var chatMode = SYS_MODES[reqMode] ? reqMode : "aam";
   var contents, sysText, maxTokens;
-  if (mode === "image") {
+  // app quiz/flashcards: sirf topic se JSON sawal/card banao. History nahi,
+  // photo nahi, dukaan match nahi, mode field ignore hota hai.
+  var app = body && typeof body.app === "string" ? body.app : "";
+  if (app) {
+    if (app !== "quiz" && app !== "flashcards") {
+      return json(res, 400, { error: "Ye wala kaam nahi hota. Dobara try karo." });
+    }
+    var topic = "";
+    if (body && Array.isArray(body.messages)) {
+      for (var i = body.messages.length - 1; i >= 0; i--) {
+        var tm = body.messages[i];
+        if (tm && tm.role === "user" && typeof tm.text === "string" && tm.text.trim()) { topic = tm.text.trim(); break; }
+      }
+    }
+    if (!topic) {
+      return json(res, 400, { error: "Pehle topic likho." });
+    }
+    contents = [{ role: "user", parts: [{ text: "Topic: " + topic.slice(0, MAX_TEXT) }] }];
+    sysText = app === "quiz" ? SYS_QUIZAPP : SYS_FLASH;
+    maxTokens = 2048;
+  } else if (mode === "image") {
     var lastUser = "";
     if (body && Array.isArray(body.messages)) {
       for (var i = body.messages.length - 1; i >= 0; i--) {
