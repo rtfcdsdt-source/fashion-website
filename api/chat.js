@@ -28,6 +28,17 @@ var SYS_QUIZAPP = "APP-QUIZ: Tum ek Quiz Maker ho. User ke topic par EXACTLY 5 m
 var SYS_FLASH = "APP-FLASH: Tum ek Flashcards Maker ho. User ke topic par 5-8 flashcards banao. Jawab SIRF ek JSON object ho — koi aur text, markdown ya backticks bilkul nahi. Format: {\"cards\":[{\"q\":\"sawal ya shabd\",\"a\":\"jawab ya matlab\"}]}. Cards user ki language mein ho.";
 var SYS_COMIC = "APP-COMIC: Tum ek Comic Maker ho. User ki kahani ko EXACTLY 3 scenes mein todo. Jawab SIRF ek JSON object ho — koi aur text, markdown ya backticks bilkul nahi. Format: {\"scenes\":[{\"text\":\"scene ki kahani, 1-2 lines\",\"image\":\"drawing ke liye chhota English description\"}]} — text user ki language mein (Hindi/Hinglish), image field mein sirf chhota sa English description (jaise \"a brave boy with a lantern in a dark forest, cartoon style\").";
 var SYS_MINDMAP = "APP-MINDMAP: Tum ek Mind Map Maker ho. User ke topic ka naksha banao. Jawab SIRF ek JSON object ho — koi aur text, markdown ya backticks bilkul nahi. Format: {\"topic\":\"topic\",\"branches\":[{\"label\":\"shaakha\",\"children\":[\"bachcha\",\"bachcha\"]}]} — 4-6 branches, har branch ke 2-4 children. Labels chhote aur saaf hon.";
+// ---- Website banana (demo website: HTML/CSS/JS, Claude v5 jaisa format) ----
+var SYS_WEBSITE = "Tum ek web developer ho. Ek chhoti, sundar, mobile-friendly demo website banao. Visible text user ki language mein rakho (Hindi ya Hinglish ya English). Koi external link, image, font ya library nahi, sirf emoji aur CSS use karo. HTML mein sirf body ke andar ka content do (html, head, body tags nahi). Jawab sirf is format mein do, koi explanation ya markdown nahi:\n===HTML===\n(html)\n===CSS===\n(css)\n===JS===\n(javascript, khaali bhi ho sakta hai)";
+// Website jawab se ===HTML=== / ===CSS=== / ===JS=== sections nikaalo (Claude v5 jaisa).
+function webPart(t, a, b) {
+  var i = t.indexOf(a);
+  if (i < 0) return null;
+  i += a.length;
+  var j = b ? t.indexOf(b, i) : -1;
+  var r = j < 0 ? t.slice(i) : t.slice(i, j);
+  return r.replace(/^\s*```[a-z]*\s*/i, "").replace(/\s*```\s*$/, "").trim();
+}
 var MODEL = "gemini-3.5-flash-lite";
 var MAX_TURNS = 12; // aakhri 12 turns (user + assistant) bhejte hain
 var MAX_TEXT = 4000; // har message ki limit, kharcha bandhne ke liye
@@ -201,7 +212,7 @@ module.exports = async function (req, res) {
   // photo nahi, dukaan match nahi, mode field ignore hota hai.
   var app = body && typeof body.app === "string" ? body.app : "";
   if (app) {
-    if (app !== "quiz" && app !== "flashcards" && app !== "comic" && app !== "mindmap") {
+    if (app !== "quiz" && app !== "flashcards" && app !== "comic" && app !== "mindmap" && app !== "website") {
       return json(res, 400, { error: "Ye wala kaam nahi hota. Dobara try karo." });
     }
     var topic = "";
@@ -214,9 +225,21 @@ module.exports = async function (req, res) {
     if (!topic) {
       return json(res, 400, { error: "Pehle topic likho." });
     }
-    contents = [{ role: "user", parts: [{ text: "Topic: " + topic.slice(0, MAX_TEXT) }] }];
-    sysText = app === "quiz" ? SYS_QUIZAPP : app === "flashcards" ? SYS_FLASH : app === "comic" ? SYS_COMIC : SYS_MINDMAP;
-    maxTokens = 2048;
+    if (app === "website") {
+      // Website: sirf user ki maang, history nahi, dukaan match nahi, photo nahi.
+      contents = [{ role: "user", parts: [{ text: "User ki maang: " + topic.slice(0, MAX_TEXT) }] }];
+      sysText = SYS_WEBSITE;
+      // Edit: maujooda code bhi prompt mein do, poora updated code wapas aaye.
+      var oldSite = body && body.website && typeof body.website === "object" ? body.website : null;
+      if (oldSite && typeof oldSite.html === "string" && typeof oldSite.css === "string" && typeof oldSite.js === "string") {
+        sysText += "\n\nYeh maujooda code hai, isi mein user ke kehne ke hisaab se badlav karo. Poora updated code wapas do, sirf badla hua hissa nahi:\n===HTML===\n" + oldSite.html.slice(0, 4000) + "\n===CSS===\n" + oldSite.css.slice(0, 4000) + "\n===JS===\n" + oldSite.js.slice(0, 4000);
+      }
+      maxTokens = 4096;
+    } else {
+      contents = [{ role: "user", parts: [{ text: "Topic: " + topic.slice(0, MAX_TEXT) }] }];
+      sysText = app === "quiz" ? SYS_QUIZAPP : app === "flashcards" ? SYS_FLASH : app === "comic" ? SYS_COMIC : SYS_MINDMAP;
+      maxTokens = 2048;
+    }
   } else if (mode === "image") {
     var lastUser = "";
     if (body && Array.isArray(body.messages)) {
@@ -309,6 +332,16 @@ module.exports = async function (req, res) {
   } catch (e) { reply = ""; }
   if (!reply) {
     return json(res, 502, { error: "Gemini ne khali jawab diya. Dobara try karo." });
+  }
+  // Website: sections parse karo; HTML na mile to saaf Hinglish error.
+  if (app === "website") {
+    var wHtml = webPart(reply, "===HTML===", "===CSS===");
+    var wCss = webPart(reply, "===CSS===", "===JS===");
+    var wJs = webPart(reply, "===JS===", null);
+    if (wHtml === null) {
+      return json(res, 502, { error: "Website ka jawab samajh nahi aaya. Dobara bhejo." });
+    }
+    return json(res, 200, { ok: true, reply: reply, website: { html: wHtml, css: wCss || "", js: wJs || "" } });
   }
   return json(res, 200, { reply: reply });
 };

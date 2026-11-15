@@ -84,6 +84,15 @@ button:disabled{opacity:.6}
 .billbox{border:1px solid var(--border);border-radius:12px;padding:12px;background:var(--bg);margin:10px 0}
 .billbox table{width:100%;border-collapse:collapse;font-size:.9rem}
 .billbox td,.billbox th{border-bottom:1px solid var(--border);padding:5px 4px;text-align:left}
+#sp{display:none;position:fixed;top:0;right:0;bottom:0;width:100%;background:var(--card);z-index:20;flex-direction:column;border-left:1px solid var(--border);padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (min-width:900px){#sp{width:min(560px,50vw);box-shadow:-8px 0 24px rgba(0,0,0,.2)}}
+.sph{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--border)}
+.sph .sbtn{margin:0 0 0 4px}
+.sbtn{margin:8px 6px 0 0;padding:6px 12px;font-size:.85rem;background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:10px;cursor:pointer}
+.sbtn.on{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
+#spf{flex:1;width:100%;border:0;background:#fff}
+#spc{flex:1;margin:0;padding:12px;overflow:auto;font:12px/1.5 ui-monospace,Menlo,Consolas,monospace;white-space:pre-wrap;word-wrap:break-word;background:var(--bg);display:none}
+.card2{margin-top:8px;padding:10px;border:1px solid var(--border);border-radius:12px;background:var(--bg)}
 </style>
 </head>
 <body>
@@ -374,12 +383,58 @@ fp.onchange=function(){
  im.onerror=function(){URL.revokeObjectURL(url);alert("Photo khul nahi payi. Doosri photo try karo.");fp.value=""};
  im.src=url;
 };
+// ---- Website banana (demo website: HTML/CSS/JS, Claude v5 jaisa flow) ----
+// "website" jaisa shabd aaye to chat ki jagah website banti hai. Backend
+// streaming nahi karta, isliye stage fake nahi karte — sirf elapsed seconds.
+var WEB=/(website|web\s?site|webpage|web page|landing page|portfolio|वेबसाइट)/i;
+var lastSite=null,webEditing=false;
+var sp=document.createElement("div");sp.id="sp";
+sp.innerHTML='<div class="sph"><b id="spt"></b><span><button type="button" id="sp1" class="sbtn on">Preview</button><button type="button" id="sp2" class="sbtn">Code</button><button type="button" id="spx" class="sbtn">✕</button></span></div><iframe id="spf" sandbox="allow-scripts" title="website"></iframe><pre id="spc"></pre>';
+document.body.appendChild(sp);
+function $i(x){return document.getElementById(x)}
+function spTab(n){$i("spf").style.display=n===1?"block":"none";$i("spc").style.display=n===2?"block":"none";$i("sp1").className="sbtn"+(n===1?" on":"");$i("sp2").className="sbtn"+(n===2?" on":"")}
+function srcOf(x){return "<!DOCTYPE html><html><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><style>"+x.css.replace(/<\/style/gi,"<\\/style")+"</style></head><body>"+x.html+"<script>try{"+x.js.replace(/<\/script/gi,"<\\/script")+"}catch(e){}<\/script></body></html>"}
+function openSite(x){$i("spt").textContent=x.title.length>28?x.title.slice(0,28)+"...":x.title;$i("spf").srcdoc=srcOf(x);$i("spc").textContent="HTML:\n"+x.html+"\n\nCSS:\n"+x.css+"\n\nJS:\n"+x.js;spTab(1);sp.style.display="flex"}
+function closeSite(){sp.style.display="none"}
+$i("sp1").onclick=function(){spTab(1)};$i("sp2").onclick=function(){spTab(2)};$i("spx").onclick=closeSite;
+async function buildSite(t){
+ showChat();
+ var box=add("a",""),head=document.createElement("div"),out=document.createElement("div");
+ head.style.whiteSpace="pre-wrap";
+ box.appendChild(head);box.appendChild(out);
+ var t0=Date.now(),done=false;
+ function drawHead(){var sec=Math.floor((Date.now()-t0)/1000);head.textContent=done?"✅ Website tayyar!":"🛠 Website ban rahi hai... "+sec+" sec"}
+ var timer=setInterval(drawHead,500);drawHead();
+ var isEdit=webEditing&&lastSite;webEditing=false;q.placeholder="Yahan likho...";
+ b.disabled=true;cam.disabled=true;ib.disabled=true;q.disabled=true;
+ try{
+  var payload={app:"website",messages:[{role:"user",text:t}]};
+  if(isEdit)payload.website=lastSite;
+  var r=await fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
+  var d={};try{d=await r.json()}catch(e){}
+  clearInterval(timer);
+  if(!r.ok||!d.website){head.textContent=d.error||"Website nahi ban payi. Dobara try karo.";return}
+  done=true;drawHead();
+  lastSite={html:d.website.html||"",css:d.website.css||"",js:d.website.js||""};
+  var site={title:t,html:lastSite.html,css:lastSite.css,js:lastSite.js};
+  var card=document.createElement("div");card.className="card2";
+  var ttl=document.createElement("b");ttl.textContent="🌐 "+(t.length>40?t.slice(0,40)+"...":t);card.appendChild(ttl);card.appendChild(document.createElement("br"));
+  out.appendChild(card);
+  function wbtn(label,fn){var x=document.createElement("button");x.type="button";x.className="sbtn";x.textContent=label;x.onclick=fn;card.appendChild(x)}
+  wbtn("▶ Kholo",function(){openSite(site)});
+  wbtn("✏️ Badlav karo",function(){webEditing=true;q.placeholder="Kya badlav chahiye?";closeSite();showChat();q.focus()});
+  openSite(site);
+  log.scrollTop=log.scrollHeight;
+ }catch(e){clearInterval(timer);head.textContent="Internet ya server se jod nahi paya. Dobara try karo."}
+ b.disabled=false;cam.disabled=false;ib.disabled=false;q.disabled=false;q.focus();
+}
 async function send(){
  showChat();
  var t=q.value.trim();
  if(!t&&!photo)return;
  if(!t)t="Is photo ke baare mein batao.";
  var h=document.getElementById("hint");if(h)h.remove();
+ if(WEB.test(t)||webEditing){q.value="";add("u",t);clearPhoto();return buildSite(t)}
  q.value="";var ub=add("u",t);
  if(photoUrl){var pim=document.createElement("img");pim.alt="photo";pim.style.cssText="width:100%;max-width:220px;border-radius:10px;display:block;margin-top:8px";pim.src=photoUrl;ub.appendChild(pim);log.scrollTop=log.scrollHeight}
  hist.push({role:"user",text:t});
@@ -410,6 +465,7 @@ function attachEdit(box,origT){
 async function draw(tOverride,labelOverride){
  showChat();
  document.getElementById("styles").style.display="flex";
+ webEditing=false;q.placeholder="Yahan likho...";
  var t=(tOverride!==undefined)?tOverride:q.value.trim();
  if(!t){alert("Pehle likho ki kaisi tasveer chahiye.");return}
  var h=document.getElementById("hint");if(h)h.remove();
