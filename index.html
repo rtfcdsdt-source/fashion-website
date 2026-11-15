@@ -2857,7 +2857,7 @@ const SHOP_PRODUCTS=[["76v4n1","Urban Style Men's Black Fleece Hoodie",600,"http
              opens WhatsApp exactly as before; the same tap also
              shows the Congratulations panel with that order's ID */
           if (upiWa){
-            upiWa.addEventListener("click", function(){ refreshUpiWa(); showCongrats(lastOrderId); });
+            upiWa.addEventListener("click", function(){ refreshUpiWa(); saveOrder(lastOrderId, "Advance", true); showCongrats(lastOrderId); });
           }
           var addrBox = sec.querySelector(".m-addr");
           var nameIn = addrBox ? addrBox.querySelector(".addr-name") : null;
@@ -2898,6 +2898,43 @@ const SHOP_PRODUCTS=[["76v4n1","Urban Style Men's Black Fleece Hoodie",600,"http
           var refreshUpiWa = function(){
             if (!upiWa || !lastOrderId) return;
             upiWa.href = "https://wa.me/918595318608?text=" + encodeURIComponent(buildWaMessage(lastOrderId, lastWaEnding));
+          };
+          /* Dashboard save: the same order that goes out on
+             WhatsApp is also POSTed to /api/orders so it lists in
+             the My Orders dashboard. Fire-and-forget only — a
+             failed save never blocks, delays or changes the
+             WhatsApp / UPI / Razorpay flow and never shows the
+             customer an error. Repeat saves of the same Order ID
+             are skipped, except the after-payment WhatsApp
+             button, which re-saves with force: a size / colour /
+             address change made after the Pay tap is then saved
+             with its current values, so the saved order always
+             matches the WhatsApp message actually sent. */
+          var savedOrderIds = {};
+          var saveOrder = function(oid, paymentLabel, force){
+            if (!oid) return;
+            if (!force && savedOrderIds[oid]) return;
+            savedOrderIds[oid] = true;
+            try {
+              var v = addrValues();
+              fetch("/api/orders", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  orderId: oid,
+                  product: titleEl ? titleEl.textContent : "",
+                  price: secPrice,
+                  size: selSize,
+                  colour: selColour || "",
+                  name: v.name,
+                  mobile: v.mobile,
+                  pincode: v.pin,
+                  address: v.addr,
+                  payment: paymentLabel
+                }),
+                keepalive: true
+              }).catch(function(){});
+            } catch(e){}
           };
           sizeRow.querySelectorAll(".size-chip").forEach(function(chip){
             chip.addEventListener("click", function(){
@@ -3003,6 +3040,7 @@ const SHOP_PRODUCTS=[["76v4n1","Urban Style Men's Black Fleece Hoodie",600,"http
                   upiWa.href = "https://wa.me/918595318608?text=" + encodeURIComponent(buildWaMessage(orderId, lastWaEnding));
                 }
                 if (upiPanel) upiPanel.hidden = false;
+                saveOrder(orderId, "Advance");
                 /* open the UPI app through a throwaway link click,
                    still inside this tap's user gesture — and always
                    in a NEW tab, never this one: a same-tab upi://
@@ -3034,6 +3072,7 @@ const SHOP_PRODUCTS=[["76v4n1","Urban Style Men's Black Fleece Hoodie",600,"http
               if (titleEl){
                 buyLink.href = "https://wa.me/918595318608?text=" + encodeURIComponent(buildWaMessage(codOrderId, lastWaEnding));
               }
+              saveOrder(codOrderId, "COD");
               showCongrats(codOrderId);
             });
           }
@@ -3115,6 +3154,7 @@ const SHOP_PRODUCTS=[["76v4n1","Urban Style Men's Black Fleece Hoodie",600,"http
                           upiWa.href = "https://wa.me/918595318608?text=" + encodeURIComponent(buildWaMessage(receipt, lastWaEnding));
                         }
                         if (upiPanel) upiPanel.hidden = false;
+                        saveOrder(receipt, "Advance");
                       }).catch(function(){
                         resetBtn();
                         showErr("Payment verify nahi hua — UPI wale button se try karein.");
