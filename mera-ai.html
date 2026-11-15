@@ -16,16 +16,15 @@ html[data-hindi="1"] body{font-family:"Noto Sans Devanagari",system-ui,-apple-sy
 html,body{height:100%}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;line-height:1.55;display:flex;flex-direction:column}
-header{padding:12px 16px;border-bottom:1px solid var(--border);font-weight:700;background:var(--card);display:flex;align-items:center;gap:8px}
+header{padding:8px 8px;border-bottom:1px solid var(--border);font-weight:700;font-size:.95rem;background:var(--card);display:flex;align-items:center;gap:6px}
 header .t{flex:1}
-header .t span{color:var(--muted);font-weight:400;font-size:.85rem;margin-left:8px}
-.hbtn{background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:10px;padding:6px 10px;font-size:.85rem;font-weight:600;cursor:pointer}
-#who{font-size:.8rem;color:var(--muted);text-align:center;padding:5px 16px 0;background:var(--card)}
-#modes{display:flex;gap:6px;overflow-x:auto;padding:8px 12px;background:var(--card);border-bottom:1px solid var(--border);scrollbar-width:none}
+.hbtn{background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:10px;padding:5px 8px;font-size:.85rem;font-weight:600;cursor:pointer}
+#who{font-size:.8rem;color:var(--muted);text-align:center;padding:5px 8px 0;background:var(--card)}
+#modes{display:flex;gap:6px;overflow-x:auto;padding:8px 8px;background:var(--card);border-bottom:1px solid var(--border);scrollbar-width:none}
 #modes::-webkit-scrollbar{display:none}
 .chip{flex:0 0 auto;border:1px solid var(--border);background:var(--bg);color:var(--text);border-radius:999px;padding:5px 12px;font-size:.85rem;font-weight:600;cursor:pointer;white-space:nowrap}
 .chip.on{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
-.panel{display:none;max-width:720px;width:100%;margin:0 auto;padding:12px 16px;background:var(--card);border-bottom:1px solid var(--border)}
+.panel{display:none;max-width:720px;width:100%;margin:0 auto;padding:12px 8px;background:var(--card);border-bottom:1px solid var(--border)}
 .panel h3{margin:0 0 8px;font-size:1rem}
 .panel .row{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:8px 0}
 .panel .lbl{font-size:.85rem;color:var(--muted);min-width:74px}
@@ -35,30 +34,31 @@ header .t span{color:var(--muted);font-weight:400;font-size:.85rem;margin-left:8
 .rmstep{display:flex;gap:8px;align-items:flex-start;padding:6px 0;border-bottom:1px solid var(--border);font-size:.92rem}
 .rmstep input{margin-top:3px;flex:0 0 auto}
 .rmstep.done span{text-decoration:line-through;color:var(--muted)}
-#log{flex:1;overflow-y:auto;padding:16px;max-width:720px;width:100%;margin:0 auto}
-.m{padding:10px 14px;border-radius:14px;margin:8px 0;white-space:pre-wrap;word-wrap:break-word;max-width:88%}
+#log{flex:1;overflow-y:auto;padding:12px 8px;max-width:720px;width:100%;margin:0 auto}
+.m{padding:10px 14px;border-radius:14px;margin:8px 0;white-space:pre-wrap;word-wrap:break-word;max-width:94%}
 .u{background:var(--me);margin-left:auto}
 .a{background:var(--card);border:1px solid var(--border)}
 .copy{display:block;margin-top:8px;border:1px solid var(--border);background:var(--bg);color:var(--muted);border-radius:8px;padding:3px 10px;font-size:.78rem;font-weight:600;cursor:pointer}
 .editrow{display:flex;gap:6px;margin-top:8px}
 .editrow input{flex:1;font:inherit;padding:7px 10px;border:1px solid var(--border);border-radius:10px;background:var(--bg);color:var(--text)}
 .editrow button{font:inherit;border:0;border-radius:10px;padding:0 14px;background:var(--accent);color:var(--on-accent);font-weight:600;cursor:pointer}
-form{display:flex;gap:8px;padding:12px 16px;border-top:1px solid var(--border);background:var(--card);max-width:720px;width:100%;margin:0 auto}
-textarea{flex:1;font:inherit;padding:10px 12px;border:1px solid var(--border);border-radius:12px;background:var(--bg);color:var(--text);resize:none;height:46px}
+form{display:flex;gap:6px;padding:10px 8px;border-top:1px solid var(--border);background:var(--card);max-width:720px;width:100%;margin:0 auto}
+form button{padding:0 14px}
+textarea{flex:1;font:inherit;padding:12px 14px;border:1px solid var(--border);border-radius:16px;background:var(--bg);color:var(--text);resize:none;height:56px}
 button{font:inherit;border:0;border-radius:12px;padding:0 18px;background:var(--accent);color:var(--on-accent);font-weight:600;cursor:pointer}
 button:disabled{opacity:.6}
 #cam{background:var(--card);color:var(--text);border:1px solid var(--border)}
-#pv{display:none;max-width:720px;width:100%;margin:0 auto;padding:10px 16px 0;align-items:center;gap:10px}
+#pv{display:none;max-width:720px;width:100%;margin:0 auto;padding:10px 8px 0;align-items:center;gap:10px}
 #pv img{width:64px;height:64px;object-fit:cover;border-radius:10px;border:1px solid var(--border);background:#fff}
 #pv span{color:var(--muted);font-size:.85rem;flex:1}
 #pvx{border:1px solid var(--border);background:var(--card);color:var(--text);border-radius:50%;width:28px;height:28px;padding:0;font-size:14px;line-height:1}
-#styles{display:none;max-width:720px;width:100%;margin:0 auto;padding:8px 16px 0;gap:6px;flex-wrap:wrap;align-items:center}
+#styles{display:none;max-width:720px;width:100%;margin:0 auto;padding:8px 8px 0;gap:6px;flex-wrap:wrap;align-items:center}
 #styles .lbl{font-size:.85rem;color:var(--muted)}
-#hint{color:var(--muted);text-align:center;margin-top:40px}
+#hint{color:var(--muted);text-align:center;margin-top:24px;font-size:.9rem}
 </style>
 </head>
 <body>
-<header><span class="t">✨ Mera AI<span>Kuch bhi poocho</span></span><button type="button" class="hbtn" id="rmBtn" title="Coding roadmap">📋 Roadmap</button><button type="button" class="hbtn" id="clrBtn" title="Nayi baat-cheet">🗑️</button><button type="button" class="hbtn" id="setBtn" title="Settings">⚙️</button></header>
+<header><span class="t">✨ Mera AI</span><button type="button" class="hbtn" id="rmBtn" title="Coding roadmap">📋 Roadmap</button><button type="button" class="hbtn" id="clrBtn" title="Nayi baat-cheet">🗑️</button><button type="button" class="hbtn" id="setBtn" title="Settings">⚙️</button></header>
 <div id="who"></div>
 <div id="modes"><button type="button" class="chip on" data-mode="aam">💬 Aam</button><button type="button" class="chip" data-mode="padhai">📚 Padhai</button><button type="button" class="chip" data-mode="coding">💻 Coding</button><button type="button" class="chip" data-mode="translator">🌐 Translator</button><button type="button" class="chip" data-mode="kahani">📖 Kahani</button><button type="button" class="chip" data-mode="quiz">❓ Quiz</button><button type="button" class="chip" data-mode="summary">📝 Summary</button></div>
 <div id="settings" class="panel"><h3>⚙️ Settings</h3>
@@ -72,7 +72,7 @@ button:disabled{opacity:.6}
 <div id="rmlist"></div>
 <div class="row"><button type="button" class="chip" id="rmReset">↺ Reset</button></div>
 </div>
-<div id="log"><div id="hint">Namaste! Apna sawal neeche likho. Hindi, Hinglish ya English, jo bhi chalega. Tasveer chahiye? Likho kaisi (jaise: pahadon ke beech ek ghar) aur 🎨 dabao. Dukaan ke baare mein bhi poochh sakte ho — jaise "₹700 wala shirt kaunsa hai". Photo ke saath sawal bhi poochh sakte ho — 📷 dabao. Upar se mode chuno — Padhai, Coding, Translator, Kahani, Quiz ya Summary. 📋 Roadmap se apna coding plan tick karo.</div></div>
+<div id="log"><div id="hint">Namaste! Apna sawal neeche likho.</div></div>
 <input type="file" id="fp" accept="image/*" hidden>
 <div id="pv"><img id="pvi" alt="photo"><span>Photo jod di gayi hai</span><button type="button" id="pvx" title="Photo hatao">✕</button></div>
 <div id="styles"><span class="lbl">Tasveer ka style:</span><button type="button" class="chip on" data-style="simple">🎨 Simple</button><button type="button" class="chip" data-style="cartoon">🎭 Cartoon</button><button type="button" class="chip" data-style="naksha">🗺️ Naksha</button><button type="button" class="chip" data-style="logo">🔰 Logo</button></div>
@@ -102,7 +102,7 @@ var HIST_KEY="meraai-history-v1"+suffix();
 var log=document.getElementById("log"),q=document.getElementById("q"),b=document.getElementById("b"),hist=[];
 function saveHist(){try{localStorage.setItem(HIST_KEY,JSON.stringify(hist.slice(-12)))}catch(e){}}
 function loadHist(){try{var h=JSON.parse(localStorage.getItem(HIST_KEY)||"null");if(Array.isArray(h))return h.filter(function(m){return m&&typeof m.text==="string"})}catch(e){}return[]}
-function showHint(){if(!log.querySelector("#hint")){var h=document.createElement("div");h.id="hint";h.textContent="Namaste! Apna sawal neeche likho. Hindi, Hinglish ya English, jo bhi chalega. Tasveer chahiye? Likho kaisi (jaise: pahadon ke beech ek ghar) aur 🎨 dabao. Dukaan ke baare mein bhi poochh sakte ho — jaise \"₹700 wala shirt kaunsa hai\". Photo ke saath sawal bhi poochh sakte ho — 📷 dabao. Upar se mode chuno — Padhai, Coding, Translator, Kahani, Quiz ya Summary. 📋 Roadmap se apna coding plan tick karo.";log.appendChild(h)}}
+function showHint(){if(!log.querySelector("#hint")){var h=document.createElement("div");h.id="hint";h.textContent="Namaste! Apna sawal neeche likho.";log.appendChild(h)}}
 function add(cls,txt){var d=document.createElement("div");d.className="m "+cls;d.textContent=txt;log.appendChild(d);log.scrollTop=log.scrollHeight;return d}
 // ---- Copy button ----
 function copyText(t){
