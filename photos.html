@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>My Photos — Fashion Goals</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; background: #0b0b0b; color: #f5f5f5; }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 14px 12px 40px; }
+  header { display: flex; align-items: center; gap: 10px; padding: 6px 2px 14px; }
+  header h1 { font-size: 22px; margin: 0; }
+  .pill { background: #E7000C; color: #fff; border-radius: 999px; padding: 4px 10px; font-size: 12px; font-weight: 700; }
+  .card { background: #171717; border: 1px solid #2a2a2a; border-radius: 12px; padding: 14px; margin-bottom: 12px; }
+  .card h2 { margin: 0 0 8px; font-size: 16px; }
+  .card p { margin: 6px 0; color: #ddd; font-size: 14px; line-height: 1.5; }
+  .muted { color: #999; font-size: 13px; }
+  input, button { font-size: 16px; }
+  input[type=password], input[type=text] { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #333; background: #111; color: #fff; }
+  button { background: #E7000C; color: #fff; border: 0; border-radius: 10px; padding: 12px 16px; font-weight: 700; cursor: pointer; }
+  button.ghost { background: #222; color: #fff; border: 1px solid #444; }
+  button.small { padding: 8px 12px; font-size: 14px; }
+  button:disabled { opacity: .5; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .row input { flex: 1; min-width: 160px; }
+  .err { color: #fca5a5; font-size: 14px; margin-top: 8px; }
+  .ok { color: #86efac; font-size: 14px; margin-top: 8px; }
+  .empty { text-align: center; color: #999; padding: 30px 10px; }
+  #preview { max-width: 100%; border-radius: 10px; margin-top: 10px; display: none; }
+  .linkbox { display: flex; gap: 8px; margin-top: 10px; }
+  .linkbox input { flex: 1; min-width: 0; font-size: 13px; }
+  .photo { background: #171717; border: 1px solid #2a2a2a; border-radius: 12px; padding: 12px; margin-bottom: 10px; }
+  .photo img { width: 100%; border-radius: 10px; display: block; }
+  .photo .meta { color: #ccc; font-size: 13px; margin-top: 8px; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+  a { color: #fff; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>📷 My Photos</h1>
+    <span class="pill">Fashion Goals</span>
+  </header>
+  <p class="sub muted">Apni product photo yahan upload karo — har photo ka ek link banega. Wo link Fashion Goals mein product add karte waqt paste kar dena. Sirf tum (admin code se) upload kar sakte ho.</p>
+
+  <div class="card" id="loginCard">
+    <h2>Admin code daalo</h2>
+    <p class="muted">Wahi code jo dashboard / shared reels ke liye use hota hai.</p>
+    <div class="row">
+      <input type="password" id="codeInput" placeholder="Admin code" autocomplete="off">
+      <button id="loginBtn">Kholo</button>
+    </div>
+    <div class="err" id="loginErr" style="display:none"></div>
+  </div>
+
+  <div id="main" style="display:none">
+    <div class="card">
+      <h2>Photo upload karo</h2>
+      <p class="muted">Phone se photo chuno. Photo apne aap halki (1024px) ho jayegi, taaki website bhari na ho.</p>
+      <input type="file" id="fileInput" accept="image/*" style="width:100%">
+      <img id="preview" alt="">
+      <div class="row" style="margin-top:10px">
+        <button id="uploadBtn" disabled>Upload karo</button>
+        <button class="ghost small" id="logoutBtn">Code badlo</button>
+        <a href="/" style="margin-left:auto;font-size:14px">← Shop par wapas</a>
+      </div>
+      <div class="err" id="upErr" style="display:none"></div>
+      <div id="upResult" style="display:none">
+        <p class="ok">Photo upload ho gayi! Is link ko copy karke product mein paste karo:</p>
+        <div class="linkbox">
+          <input type="text" id="linkOut" readonly>
+          <button class="small" id="copyNewBtn">Copy karo</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Tumhari photos</h2>
+      <div class="row" style="margin-bottom:10px">
+        <button class="ghost small" id="refreshBtn">↻ Refresh</button>
+      </div>
+      <div id="list"></div>
+    </div>
+    <div class="ok" id="msg" style="display:none"></div>
+  </div>
+</div>
+<script>
+(function () {
+  var API = "/api/photos";
+  var code = "";
+  try { code = localStorage.getItem("fg-photos-code") || ""; } catch (e) { code = ""; }
+
+  var loginCard = document.getElementById("loginCard");
+  var main = document.getElementById("main");
+  var codeInput = document.getElementById("codeInput");
+  var loginBtn = document.getElementById("loginBtn");
+  var loginErr = document.getElementById("loginErr");
+  var fileInput = document.getElementById("fileInput");
+  var preview = document.getElementById("preview");
+  var uploadBtn = document.getElementById("uploadBtn");
+  var upErr = document.getElementById("upErr");
+  var upResult = document.getElementById("upResult");
+  var linkOut = document.getElementById("linkOut");
+  var listEl = document.getElementById("list");
+  var msgEl = document.getElementById("msg");
+
+  var picked = null; // {dataUrl, mime}
+
+  function showMsg(t, isErr) {
+    msgEl.style.display = "block";
+    msgEl.className = isErr ? "err" : "ok";
+    msgEl.textContent = t;
+    setTimeout(function () { msgEl.style.display = "none"; }, 4000);
+  }
+  function esc(s) {
+    return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+  function fmtDate(d) {
+    try { return new Date(d).toLocaleString("en-IN", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }); } catch (e) { return ""; }
+  }
+  function fullUrl(id) {
+    return location.origin + "/api/photo?id=" + id;
+  }
+  function copyText(t, btn) {
+    function done() { if (btn) { var o = btn.textContent; btn.textContent = "Copy ho gaya ✓"; setTimeout(function () { btn.textContent = o; }, 2000); } }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(t).then(done, function () { fallbackCopy(t); done(); });
+    } else { fallbackCopy(t); done(); }
+  }
+  function fallbackCopy(t) {
+    var ta = document.createElement("textarea");
+    ta.value = t; ta.style.position = "fixed"; ta.style.opacity = "0";
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand("copy"); } catch (e) {}
+    document.body.removeChild(ta);
+  }
+
+  // Downscale picked image to max 1024px wide, JPEG 0.8.
+  fileInput.addEventListener("change", function () {
+    var f = fileInput.files && fileInput.files[0];
+    upErr.style.display = "none";
+    upResult.style.display = "none";
+    uploadBtn.disabled = true;
+    picked = null;
+    if (!f) { preview.style.display = "none"; return; }
+    if (f.type.indexOf("image/") !== 0) {
+      upErr.style.display = "block";
+      upErr.textContent = "Sirf photo (image) chuno.";
+      return;
+    }
+    var reader = new FileReader();
+    reader.onload = function () {
+      var img = new Image();
+      img.onload = function () {
+        var w = img.width, h = img.height;
+        var maxW = 1024;
+        if (w > maxW) { h = Math.round(h * maxW / w); w = maxW; }
+        var cv = document.createElement("canvas");
+        cv.width = w; cv.height = h;
+        var ctx = cv.getContext("2d");
+        ctx.drawImage(img, 0, 0, w, h);
+        var dataUrl = cv.toDataURL("image/jpeg", 0.8);
+        picked = { dataUrl: dataUrl, mime: "image/jpeg" };
+        preview.src = dataUrl;
+        preview.style.display = "block";
+        uploadBtn.disabled = false;
+      };
+      img.onerror = function () {
+        upErr.style.display = "block";
+        upErr.textContent = "Ye photo khul nahi rahi. Dusri photo chuno.";
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(f);
+  });
+
+  uploadBtn.addEventListener("click", async function () {
+    if (!picked) return;
+    uploadBtn.disabled = true;
+    upErr.style.display = "none";
+    try {
+      var r = await fetch(API, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: code, data: picked.dataUrl, mime: picked.mime })
+      });
+      var d = null; try { d = await r.json(); } catch (e) {}
+      if (r.ok && d && d.ok) {
+        var url = fullUrl(d.id);
+        linkOut.value = url;
+        upResult.style.display = "block";
+        showMsg("Photo upload ho gayi.");
+        fileInput.value = "";
+        picked = null;
+        preview.style.display = "none";
+        loadPhotos();
+      } else if (r.status === 401) {
+        upErr.style.display = "block";
+        upErr.textContent = "Galat code. Dobara code daalo.";
+        showLogin();
+      } else if (d && d.error === "too_big") {
+        upErr.style.display = "block";
+        upErr.textContent = "Photo bahut badi hai. Chhoti photo chuno.";
+      } else {
+        upErr.style.display = "block";
+        upErr.textContent = "Upload nahi hua. Dobara try karo.";
+      }
+    } catch (e) {
+      upErr.style.display = "block";
+      upErr.textContent = "Net nahi mila. Dobara try karo.";
+    }
+    uploadBtn.disabled = !picked;
+  });
+
+  document.getElementById("copyNewBtn").addEventListener("click", function () {
+    copyText(linkOut.value, this);
+  });
+
+  async function loadPhotos() {
+    listEl.innerHTML = '<div class="empty">Load ho raha hai…</div>';
+    var r;
+    try {
+      r = await fetch(API + "?code=" + encodeURIComponent(code));
+    } catch (e) {
+      listEl.innerHTML = '<div class="empty">Net nahi mila. Dobara try karo.</div>';
+      return;
+    }
+    var d = null;
+    try { d = await r.json(); } catch (e) {}
+    if (!r.ok || !d || !d.ok) {
+      if (r.status === 401) {
+        loginErr.style.display = "block";
+        loginErr.textContent = "Galat code. Dobara daalo.";
+        showLogin();
+      } else {
+        listEl.innerHTML = '<div class="empty">Photos nahi mile. Dobara try karo.</div>';
+      }
+      return;
+    }
+    var photos = d.photos || [];
+    if (!photos.length) {
+      listEl.innerHTML = '<div class="empty">Abhi koi photo upload nahi ki.</div>';
+      return;
+    }
+    listEl.innerHTML = photos.map(function (p) {
+      var url = fullUrl(p.id);
+      return '<div class="photo" data-id="' + p.id + '">' +
+        '<img src="' + esc(url) + '" alt="photo ' + p.id + '" loading="lazy">' +
+        '<div class="meta">Photo #' + p.id + ' · ' + fmtDate(p.created_at) + '</div>' +
+        '<div class="linkbox"><input type="text" value="' + esc(url) + '" readonly><button class="small copyBtn">Copy karo</button></div>' +
+        '<div class="actions"><button class="small ghost delBtn">Delete</button></div>' +
+        '</div>';
+    }).join("");
+    listEl.querySelectorAll(".photo").forEach(function (card) {
+      var id = card.getAttribute("data-id");
+      var input = card.querySelector("input");
+      card.querySelector(".copyBtn").addEventListener("click", function () {
+        copyText(input.value, this);
+      });
+      card.querySelector(".delBtn").addEventListener("click", function () {
+        if (!confirm("Ye photo delete kar dun? Iska link bhi kaam nahi karega.")) return;
+        deletePhoto(id);
+      });
+    });
+  }
+
+  async function deletePhoto(id) {
+    try {
+      var r = await fetch(API + "?action=delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: code, id: Number(id) })
+      });
+      var d = null; try { d = await r.json(); } catch (e) {}
+      if (r.ok && d && d.ok) { showMsg("Photo delete ho gayi."); loadPhotos(); }
+      else showMsg("Delete nahi hua. Dobara try karo.", true);
+    } catch (e) { showMsg("Net nahi mila.", true); }
+  }
+
+  function showLogin() {
+    loginCard.style.display = "block";
+    main.style.display = "none";
+  }
+  function showMain() {
+    loginCard.style.display = "none";
+    main.style.display = "block";
+    loadPhotos();
+  }
+
+  loginBtn.addEventListener("click", function () {
+    var v = codeInput.value.trim();
+    if (!v) { loginErr.style.display = "block"; loginErr.textContent = "Pehle code daalo."; return; }
+    code = v;
+    try { localStorage.setItem("fg-photos-code", code); } catch (e) {}
+    loginErr.style.display = "none";
+    showMain();
+  });
+  codeInput.addEventListener("keydown", function (e) { if (e.key === "Enter") loginBtn.click(); });
+  document.getElementById("refreshBtn").addEventListener("click", loadPhotos);
+  document.getElementById("logoutBtn").addEventListener("click", function () {
+    try { localStorage.removeItem("fg-photos-code"); } catch (e) {}
+    code = "";
+    codeInput.value = "";
+    showLogin();
+  });
+
+  if (code) { codeInput.value = code; showMain(); }
+})();
+</script>
+</body>
+</html>
