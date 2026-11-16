@@ -281,7 +281,9 @@ module.exports = async function (req, res) {
       if (oldSite && typeof oldSite.html === "string" && typeof oldSite.css === "string" && typeof oldSite.js === "string") {
         sysText += "\n\nYeh maujooda code hai, isi mein user ke kehne ke hisaab se badlav karo. Poora updated code wapas do, sirf badla hua hissa nahi:\n===HTML===\n" + oldSite.html.slice(0, 4000) + "\n===CSS===\n" + oldSite.css.slice(0, 4000) + "\n===JS===\n" + oldSite.js.slice(0, 4000);
       }
-      maxTokens = 8192;
+      // Website pehli call 4096 tokens: lambi generation (8192) busy model par 503 deti hai;
+      // badi site ho to neeche continuation ek baar aur 4096 tokens jod deta hai.
+      maxTokens = 4096;
     } else {
       contents = [{ role: "user", parts: [{ text: "Topic: " + topic.slice(0, MAX_TEXT) }] }];
       sysText = app === "quiz" ? SYS_QUIZAPP : app === "flashcards" ? SYS_FLASH : app === "comic" ? SYS_COMIC : SYS_MINDMAP;
@@ -356,15 +358,30 @@ module.exports = async function (req, res) {
     generationConfig: { temperature: 0.7, maxOutputTokens: maxTokens }
   };
 
-  var upstream;
-  try {
-    upstream = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS)
-    });
-  } catch (e) {
+  var upstream = null;
+  var attempt = 0;
+  while (attempt < 2) {
+    attempt++;
+    try {
+      upstream = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+        signal: AbortSignal.timeout(FETCH_TIMEOUT_MS)
+      });
+    } catch (e) {
+      upstream = null;
+      break;
+    }
+    // Server error (500/503 overload) par ek baar dobara try karo — sirf jab
+    // pehli koshish jaldi fail hui ho (time bacha ho). 429/400/403 par retry nahi.
+    if (!upstream.ok && upstream.status !== 429 && upstream.status !== 400 && upstream.status !== 403 && attempt === 1 && (Date.now() - t0) < 4000) {
+      upstream = null;
+      continue;
+    }
+    break;
+  }
+  if (!upstream) {
     return json(res, 504, { error: "Gemini se jod nahi paya. Thodi der baad dobara try karo." });
   }
 
