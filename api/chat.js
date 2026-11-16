@@ -187,10 +187,11 @@ function cleanMessages(input) {
   return out;
 }
 
-// ---- Live web search (DuckDuckGo Lite, free, koi key nahi) ----
-// Sawal aaj ki jaankari maange (bhav, news, mausam...) to web se taza results
-// nikaal kar Gemini ko dete hain, taaki jawab aaj ka ho. Search fail ho to
-// khaali list — chat kabhi nahi rukta.
+// ---- Live web search (Serper.dev Google Search API, key SERPER_API_KEY se) ----
+// Sawal aaj ki jaankari maange (bhav, news, mausam...) to Google se taza results
+// nikaal kar Gemini ko dete hain, taaki jawab aaj ka ho. Key na ho ya search
+// fail ho to khaali list — chat kabhi nahi rukta. (DuckDuckGo block hai, isliye
+// Serper use hota hai — 2,500 free queries, bina card.)
 var LIVE_WORDS = ["aaj", "आज", "today", "abhi", "अभी", "current", "latest", "live", "taza", "ताज़ा", "fresh", "price", "bhav", "भाव", "rate", "daam", "दाम", "kimat", "कीमत", "sona", "gold", "chandi", "silver", "bitcoin", "crypto", "petrol", "diesel", "stock", "share", "sensex", "nifty", "dollar", "rupee", "news", "khabar", "खबर", "mausam", "मौसम", "weather", "barish", "बारिश", "temperature", "match", "cricket", "score"];
 function needsLiveInfo(text) {
   if (!text) return false;
@@ -200,30 +201,32 @@ function needsLiveInfo(text) {
   }
   return false;
 }
-function stripTags(s) {
-  return String(s || "").replace(/<[^>]+>/g, "").replace(/&amp;/g, "&").replace(/&quot;/g, '"').replace(/&#039;/g, "'").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&nbsp;/g, " ").trim();
-}
 async function webSearch(query) {
   var out = [];
+  var key = process.env.SERPER_API_KEY;
+  if (!key || !String(key).trim()) return out;
   try {
-    var u = "https://lite.duckduckgo.com/lite/?q=" + encodeURIComponent(String(query).slice(0, 200));
-    var r = await fetch(u, {
-      headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36", "Accept-Language": "en-US,en;q=0.9,hi;q=0.8" },
-      signal: AbortSignal.timeout(2500)
+    var r = await fetch("https://google.serper.dev/search", {
+      method: "POST",
+      headers: { "X-API-KEY": String(key).trim(), "Content-Type": "application/json" },
+      body: JSON.stringify({ q: String(query).slice(0, 200), gl: "in", hl: "en", num: 5 }),
+      signal: AbortSignal.timeout(3000)
     });
     if (!r || !r.ok) return out;
-    var t = await r.text();
-    if (!t || t.length < 500) return out;
-    var titles = [];
-    var reT = /class='result-link'[^>]*>([\s\S]*?)<\/a>/g;
-    var m;
-    while ((m = reT.exec(t)) && titles.length < 5) titles.push(stripTags(m[1]));
-    var snips = [];
-    var reS = /class='result-snippet'[^>]*>([\s\S]*?)<\/td>/g;
-    while ((m = reS.exec(t)) && snips.length < 5) snips.push(stripTags(m[1]));
-    for (var i = 0; i < titles.length; i++) {
-      if (!titles[i]) continue;
-      out.push({ title: titles[i].slice(0, 120), snippet: (snips[i] || "").slice(0, 220) });
+    var d = null;
+    try { d = await r.json(); } catch (e) { return out; }
+    if (!d || typeof d !== "object") return out;
+    // answerBox (seedha jawab) sabse pehle — bhav/rate jaise sawalon ke liye.
+    if (d.answerBox) {
+      var ab = d.answerBox;
+      var aText = ab.answer || ab.snippet || ab.title || "";
+      if (aText) out.push({ title: "Seedha jawab", snippet: String(aText).slice(0, 220) });
+    }
+    var org = Array.isArray(d.organic) ? d.organic : [];
+    for (var i = 0; i < org.length && out.length < 5; i++) {
+      var o = org[i] || {};
+      if (!o.title) continue;
+      out.push({ title: String(o.title).slice(0, 120), snippet: String(o.snippet || "").slice(0, 220) });
     }
   } catch (e) { return []; }
   return out;
