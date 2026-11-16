@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /orders
+Disallow: /photos
+Disallow: /add-product
+Sitemap: https://fashion-website-theta-taupe.vercel.app/sitemap.xml
