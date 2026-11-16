@@ -265,9 +265,10 @@ button:disabled{opacity:.6}
 </div>
 <div id="log"><div id="hint">Namaste! Apna sawal neeche likho.</div></div>
 <input type="file" id="fp" accept="image/*" hidden>
+<input type="file" id="ff" hidden>
 <div id="pv"><img id="pvi" alt="photo"><span>Photo jod di gayi hai</span><button type="button" id="pvx" title="Photo hatao">✕</button></div>
 <div id="styles"><span class="lbl">Tasveer ka style:</span><button type="button" class="chip on" data-style="simple">🎨 Simple</button><button type="button" class="chip" data-style="cartoon">🎭 Cartoon</button><button type="button" class="chip" data-style="naksha">🗺️ Naksha</button><button type="button" class="chip" data-style="logo">🔰 Logo</button></div>
-<form id="f"><div id="qwrap"><button type="button" id="plusBtn" title="Jodo">+</button><textarea id="q" placeholder="Yahan likho..."></textarea></div><button id="b">Bhejo</button><button type="button" id="cam" title="Photo jodo" hidden>📷</button><button type="button" id="ib" title="Tasveer banao" hidden>🎨</button><div id="plusMenu"><button type="button" id="pmPhoto">📷 Photo se sawal</button><button type="button" id="pmDraw">🎨 Tasveer banao</button><button type="button" id="pmTools">🧰 Tools</button><button type="button" id="pmRoadmap">📋 Roadmap</button><button type="button" id="pmClear">🗑️ Chat saaf karo</button><button type="button" id="pmSettings">⚙️ Settings</button></div></form>
+<form id="f"><div id="qwrap"><button type="button" id="plusBtn" title="Jodo">+</button><textarea id="q" placeholder="Yahan likho..."></textarea></div><button id="b">Bhejo</button><button type="button" id="cam" title="Photo jodo" hidden>📷</button><button type="button" id="ib" title="Tasveer banao" hidden>🎨</button><div id="plusMenu"><button type="button" id="pmPhoto">📷 Photo se sawal</button><button type="button" id="pmDraw">🎨 Tasveer banao</button><button type="button" id="pmFile">📁 File</button><button type="button" id="pmTools">🧰 Tools</button><button type="button" id="pmRoadmap">📋 Roadmap</button><button type="button" id="pmClear">🗑️ Chat saaf karo</button><button type="button" id="pmSettings">⚙️ Settings</button></div></form>
 <script>
 // ---- Profile (fashion site ki Google login se) ----
 function prof(){try{var p=JSON.parse(localStorage.getItem("fgProfile")||"null");if(p&&p.id)return{name:p.name||"",email:String(p.id)}}catch(e){}return{name:"",email:""}}
@@ -447,9 +448,19 @@ document.getElementById("rmReset").onclick=function(){rmDone={};saveRm();renderR
 // ---- Photo jodna ----
 // Photo ko pehle yahin chhota karte hain (max side 1024px, JPEG 0.8) taaki upload
 // ~100-300KB rahe. Photo sirf usi message ke saath jaati hai, history mein nahi.
-var cam=document.getElementById("cam"),fp=document.getElementById("fp"),pv=document.getElementById("pv"),pvi=document.getElementById("pvi"),pvx=document.getElementById("pvx");
+var cam=document.getElementById("cam"),fp=document.getElementById("fp"),pv=document.getElementById("pv"),pvi=document.getElementById("pvi"),pvx=document.getElementById("pvx"),ff=document.getElementById("ff");
 var photo=null,photoUrl=""; // {mime,data} — base64, "data:..." prefix nahi
-function clearPhoto(){photo=null;photoUrl="";pv.style.display="none";pvi.removeAttribute("src");fp.value=""}
+var fileData=null; // {mime,data,name} — PDF / gaana / video (base64 bina prefix)
+var fileText=null; // {name,text} — text file ka content
+var fileName=""; // preview + chat bubble mein dikhane ke liye
+function clearPhoto(){photo=null;photoUrl="";fileData=null;fileText=null;fileName="";pv.style.display="none";pvi.removeAttribute("src");pvi.style.display="";pv.querySelector("span").textContent="Photo jod di gayi hai";fp.value="";ff.value=""}
+function note(m){var b=add("a",m);return b}
+function showFilePreview(name){
+ fileName=name;
+ pvi.removeAttribute("src");pvi.style.display="none";
+ pv.querySelector("span").textContent="📁 "+name;
+ pv.style.display="flex";q.focus();
+}
 cam.onclick=function(){fp.click()};
 pvx.onclick=clearPhoto;
 fp.onchange=function(){
@@ -464,17 +475,151 @@ fp.onchange=function(){
   URL.revokeObjectURL(url);
   var d=c.toDataURL("image/jpeg",0.8);
   photo={mime:"image/jpeg",data:d.split(",")[1]};photoUrl=d;
+  pvi.style.display="";pv.querySelector("span").textContent="Photo jod di gayi hai";
   pvi.src=d;pv.style.display="flex";q.focus();
  };
  im.onerror=function(){URL.revokeObjectURL(url);alert("Photo khul nahi payi. Doosri photo try karo.");fp.value=""};
  im.src=url;
 };
+// ---- File bhejo (Photo / Text / PDF / Gaana / Video / Zip) ----
+var TEXT_EXTS=["txt","md","csv","json","html","htm","js","css","xml","log","py","java","c","cpp","h","ts","sh","yaml","yml","ini","cfg"];
+var TEXT_MIMES={"text/plain":1,"text/markdown":1,"text/csv":1,"application/json":1,"text/html":1,"text/javascript":1,"application/javascript":1,"text/css":1,"text/xml":1,"application/xml":1};
+var AUDIO_MIMES={"mp3":"audio/mpeg","wav":"audio/wav","ogg":"audio/ogg","m4a":"audio/x-m4a","aac":"audio/aac","flac":"audio/flac"};
+var VIDEO_MIMES={"mp4":"video/mp4","webm":"video/webm","mov":"video/quicktime"};
+function extOf(name){var i=(name||"").lastIndexOf(".");return i>=0?name.slice(i+1).toLowerCase():""}
+function readAsDataURL(f){return new Promise(function(res,rej){var r=new FileReader();r.onload=function(){res(r.result)};r.onerror=function(){rej(new Error("read"))};r.readAsDataURL(f)})}
+function readAsText(f){return new Promise(function(res,rej){var r=new FileReader();r.onload=function(){res(r.result)};r.onerror=function(){rej(new Error("read"))};r.readAsText(f)})}
+function readAsBuf(f){return new Promise(function(res,rej){var r=new FileReader();r.onload=function(){res(r.result)};r.onerror=function(){rej(new Error("read"))};r.readAsArrayBuffer(f)})}
+function b64Of(u8){var s="";var CH=8192;for(var i=0;i<u8.length;i+=CH){s+=String.fromCharCode.apply(null,u8.subarray(i,i+CH))}return btoa(s)}
+async function inflateEntry(e){
+ if(e.method===0)return e.data;
+ if(e.method===8){
+  // ZIP ka deflate RAW hota hai (zlib wrapper nahi) — isliye 'deflate-raw'.
+  var ds=new DecompressionStream("deflate-raw");
+  var wr=ds.writable.getWriter();
+  await wr.write(e.data);await wr.close();
+  var chunks=[],total=0;
+  var rd=ds.readable.getReader();
+  while(true){var r=await rd.read();if(r.done)break;chunks.push(r.value);total+=r.value.length}
+  var out=new Uint8Array(total),o=0;
+  for(var i=0;i<chunks.length;i++){out.set(chunks[i],o);o+=chunks[i].length}
+  return out;
+ }
+ return null;
+}
+async function extractZip(f){
+ var buf=await readAsBuf(f);var u8=new Uint8Array(buf);var dv=new DataView(buf);
+ var eocd=-1;var start=Math.max(0,u8.length-65557);
+ for(var i=u8.length-22;i>=start;i--){if(u8[i]===0x50&&u8[i+1]===0x4b&&u8[i+2]===0x05&&u8[i+3]===0x06){eocd=i;break}}
+ if(eocd<0)return null;
+ var count=dv.getUint16(eocd+10,true),cdOff=dv.getUint32(eocd+16,true);
+ var out=[],p=cdOff;
+ for(var n=0;n<count&&out.length<8;n++){
+  if(dv.getUint32(p,true)!==0x02014b50)break;
+  var method=dv.getUint16(p+10,true),compSize=dv.getUint32(p+20,true);
+  var nameLen=dv.getUint16(p+28,true),extraLen=dv.getUint16(p+30,true),cmtLen=dv.getUint16(p+32,true);
+  var localOff=dv.getUint32(p+42,true);
+  var name="";try{name=new TextDecoder("utf-8").decode(u8.slice(p+46,p+46+nameLen))}catch(e){name=""}
+  var lhNameLen=dv.getUint16(localOff+26,true),lhExtraLen=dv.getUint16(localOff+28,true);
+  var dataStart=localOff+30+lhNameLen+lhExtraLen;
+  var comp=u8.slice(dataStart,dataStart+compSize);
+  var raw=null;
+  try{raw=await inflateEntry({method:method,data:comp})}catch(e){raw=null}
+  if(raw)out.push({name:name,data:raw});
+  p+=46+nameLen+extraLen+cmtLen;
+ }
+ return out;
+}
+function guessMime(name){
+ var ext=extOf(name);
+ if(AUDIO_MIMES[ext])return AUDIO_MIMES[ext];
+ if(VIDEO_MIMES[ext])return VIDEO_MIMES[ext];
+ if(ext==="pdf")return "application/pdf";
+ if(["jpg","jpeg"].indexOf(ext)>=0)return "image/jpeg";
+ if(ext==="png")return "image/png";
+ if(ext==="webp")return "image/webp";
+ if(ext==="gif")return "image/gif";
+ return "";
+}
+async function handleZip(f){
+ if(f.size>5000000){note("Zip bahut badi hai (5MB se chhoti bhejo).");return}
+ var entries=null;
+ try{entries=await extractZip(f)}catch(e){entries=null}
+ if(!entries||!entries.length){note("Zip khol nahi paya. Doosri zip try karo.");return}
+ var texts=[],firstFile=null;
+ for(var i=0;i<entries.length;i++){
+  var e=entries[i];
+  if(!e.name||/\/$/.test(e.name)||e.name.indexOf("__MACOSX")===0)continue;
+  var ext=extOf(e.name);
+  if(TEXT_EXTS.indexOf(ext)>=0){
+   if(texts.length<5){try{var txt=new TextDecoder("utf-8").decode(e.data);texts.push("--- "+e.name+" ---\n"+txt.slice(0,20000))}catch(err){}}
+  }else if(!firstFile&&guessMime(e.name)){
+   firstFile=e;
+  }
+ }
+ if(texts.length){
+  fileText={name:f.name+" (zip)",text:texts.join("\n\n").slice(0,50000)};
+  showFilePreview(f.name);return;
+ }
+ if(firstFile){
+  var nf=new File([firstFile.data],firstFile.name,{type:guessMime(firstFile.name)});
+  await handleFile(nf,true);return;
+ }
+ note("Zip mein koi padhne wali file nahi mili (text, photo, PDF, gaana ya video chahiye).");
+}
+async function handleFile(f,fromZip){
+ if(!f)return;
+ clearPhoto();
+ var type=(f.type||"").toLowerCase(),name=f.name||"file",ext=extOf(name);
+ // Photo -> purana photo flow (downscale ke saath)
+ if(/^image\//.test(type)||["jpg","jpeg","png","webp","gif"].indexOf(ext)>=0){
+  try{
+   var dt=new DataTransfer();dt.items.add(f);fp.files=dt.files;fp.onchange();
+  }catch(e){note("Photo khul nahi payi. Doosri photo try karo.")}
+  return;
+ }
+ // Text file -> content padhkar bhejo
+ if(TEXT_MIMES[type]||TEXT_EXTS.indexOf(ext)>=0){
+  try{
+   var txt=await readAsText(f);
+   fileText={name:name,text:String(txt).slice(0,50000)};
+   showFilePreview(name);
+  }catch(e){note("Ye text file padh nahi paya. Doosri file try karo.")}
+  return;
+ }
+ // PDF
+ if(type==="application/pdf"||ext==="pdf"){
+  if(f.size>2500000){note("PDF bahut badi hai (2.5MB se chhoti bhejo).");return}
+  try{var d=await readAsDataURL(f);fileData={mime:"application/pdf",data:String(d).split(",")[1],name:name};showFilePreview(name)}catch(e){note("PDF padh nahi paya. Doosri file try karo.")}
+  return;
+ }
+ // Gaana (chhota clip)
+ if(/^audio\//.test(type)||AUDIO_MIMES[ext]){
+  if(f.size>2000000){note("Gaana bahut bada hai (2MB / ~2 minute tak ka clip bhejo).");return}
+  try{var d2=await readAsDataURL(f);fileData={mime:AUDIO_MIMES[ext]||type,data:String(d2).split(",")[1],name:name};showFilePreview(name)}catch(e){note("Gaana padh nahi paya. Doosri file try karo.")}
+  return;
+ }
+ // Video (chhota clip)
+ if(/^video\//.test(type)||VIDEO_MIMES[ext]){
+  if(f.size>2500000){note("Video bahut bada hai (2.5MB / ~20 second tak ka clip bhejo).");return}
+  try{var d3=await readAsDataURL(f);fileData={mime:VIDEO_MIMES[ext]||type,data:String(d3).split(",")[1],name:name};showFilePreview(name)}catch(e){note("Video padh nahi paya. Doosri file try karo.")}
+  return;
+ }
+ // Zip -> andar ki files nikalo
+ if(type==="application/zip"||type==="application/x-zip-compressed"||ext==="zip"){
+  if(fromZip){note("Zip ke andar zip nahi khol sakta.");return}
+  await handleZip(f);return;
+ }
+ note("Ye file ("+name+") abhi nahi padh sakta. Photo, text, PDF, chhota gaana/video ya zip bhejo.");
+}
+ff.onchange=function(){var f=ff.files&&ff.files[0];ff.value="";if(f)handleFile(f)};
 // ---- + menu (Photo / Tasveer box ke andar; triggers wahi purane hain) ----
 var plusBtn=document.getElementById("plusBtn"),plusMenu=document.getElementById("plusMenu");
 function closePlus(){plusMenu.classList.remove("open")}
 plusBtn.onclick=function(e){e.stopPropagation();plusMenu.classList.toggle("open")};
 document.getElementById("pmPhoto").onclick=function(){closePlus();cam.click()};
 document.getElementById("pmDraw").onclick=function(){closePlus();ib.click()};
+document.getElementById("pmFile").onclick=function(){closePlus();ff.click()};
 document.addEventListener("click",function(e){if(!plusMenu.classList.contains("open"))return;if(e.target===plusBtn||plusMenu.contains(e.target))return;closePlus()});
 // ---- Website banana (demo website: HTML/CSS/JS, Claude v5 jaisa flow) ----
 // "website" jaisa shabd aaye to chat ki jagah website banti hai. Backend
@@ -585,8 +730,8 @@ function detectMode(t){
 async function send(keepMode){
  showChat();
  var t=q.value.trim();
- if(!t&&!photo)return;
- if(!t)t="Is photo ke baare mein batao.";
+ if(!t&&!photo&&!fileData&&!fileText)return;
+ if(!t)t=(fileData||fileText)?"Is file ke baare mein batao.":"Is photo ke baare mein batao.";
  if(!keepMode){
   var autoMode=detectMode(t);
   if(autoMode!==settings.mode){settings.mode=autoMode;saveSettings();applySettings()}
@@ -597,12 +742,15 @@ async function send(keepMode){
  if(/chart|graph/i.test(t)&&/bana|dikha/i.test(t)){q.value="";add("u",t);clearPhoto();showPanel("panel-chart");if(/kharcha|kharch/i.test(t)){chLoadKharcha()}return}
  q.value="";var ub=add("u",t);
  if(photoUrl){var pim=document.createElement("img");pim.alt="photo";pim.style.cssText="width:100%;max-width:220px;border-radius:10px;display:block;margin-top:8px";pim.src=photoUrl;ub.appendChild(pim);log.scrollTop=log.scrollHeight}
+ if(fileName){var fn=document.createElement("div");fn.style.cssText="font-size:.8rem;opacity:.75;margin-top:6px";fn.textContent="📁 "+fileName;ub.appendChild(fn);log.scrollTop=log.scrollHeight}
  hist.push({role:"user",text:t});
- var imgToSend=photo;clearPhoto();
+ var imgToSend=photo;var fileToSend=fileData;var textToSend=fileText;clearPhoto();
  var box=add("a","Soch raha hun...");b.disabled=true;cam.disabled=true;ib.disabled=true;q.disabled=true;
  try{
   var payload={mode:settings.mode,messages:hist.slice(-12)};
-  if(imgToSend)payload.image={mimeType:imgToSend.mime,data:imgToSend.data};
+  if(imgToSend)payload.file={mimeType:imgToSend.mime,data:imgToSend.data};
+  else if(fileToSend)payload.file={mimeType:fileToSend.mime,data:fileToSend.data};
+  if(textToSend)payload.fileText={name:textToSend.name,text:textToSend.text};
   var r=await fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
   var d={};try{d=await r.json()}catch(e){}
   if(!r.ok){box.textContent=d.error||("Kuch gadbad hui (code "+r.status+"). Thodi der baad dobara try karo.");b.disabled=false;cam.disabled=false;ib.disabled=false;q.disabled=false;q.focus();return}
