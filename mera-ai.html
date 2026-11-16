@@ -294,6 +294,59 @@ var HIST_KEY="meraai-history-v1"+suffix();
 var log=document.getElementById("log"),q=document.getElementById("q"),b=document.getElementById("b"),hist=[];
 function saveHist(){try{localStorage.setItem(HIST_KEY,JSON.stringify(hist.slice(-12)))}catch(e){}}
 function loadHist(){try{var h=JSON.parse(localStorage.getItem(HIST_KEY)||"null");if(Array.isArray(h))return h.filter(function(m){return m&&typeof m.text==="string"})}catch(e){}return[]}
+// ---- Permanent chat (server par save; har browser mein wahi chat) ----
+function getAdminCode(){try{return localStorage.getItem("fg-publish-code")||localStorage.getItem("fg-photos-code")||localStorage.getItem("fg-addproduct-code")||""}catch(e){return""}}
+var chatEmail=(function(){try{return prof().email||""}catch(e){return""}})();
+var serverChatTimer=null;
+function serverChatOn(){return !!chatEmail&&!!getAdminCode()}
+async function loadServerHist(){
+ try{
+  var r=await fetch("/api/meraai-chat?email="+encodeURIComponent(chatEmail)+"&code="+encodeURIComponent(getAdminCode()));
+  var d={};try{d=await r.json()}catch(e){}
+  if(!r.ok||!d.ok)return null;
+  if(Array.isArray(d.messages))return d.messages.filter(function(m){return m&&typeof m.text==="string"});
+  return [];
+ }catch(e){return null}
+}
+function saveServerHist(){
+ if(!serverChatOn())return;
+ clearTimeout(serverChatTimer);
+ serverChatTimer=setTimeout(function(){
+  try{fetch("/api/meraai-chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({code:getAdminCode(),email:chatEmail,messages:hist.slice(-100)})})}catch(e){}
+ },800);
+}
+function renderHist(){
+ log.innerHTML="";
+ if(!hist.length){showHint();return}
+ hist.forEach(function(m){
+  if(m.role==="assistant"){var bx=add("a",m.text);attachCopy(bx,(function(t){return function(){return t}})(m.text))}
+  else add("u",m.text);
+ });
+}
+async function syncChatFromServer(){
+ if(!serverChatOn())return;
+ var srv=await loadServerHist();
+ if(srv===null)return;
+ if(srv.length){hist=srv;saveHist();renderHist()}
+ else if(hist.length){saveServerHist()}
+}
+function askChatCode(){
+ if(!chatEmail||getAdminCode())return;
+ if(document.getElementById("chatCodeRow"))return;
+ var row=document.createElement("div");
+ row.id="chatCodeRow";
+ row.style.cssText="background:#fff7e6;border:1px solid #f0c36d;border-radius:10px;padding:10px;margin-bottom:8px;font-size:.9rem";
+ row.textContent="💾 Chat hamesha ke liye save karne ke liye admin code daalo (ek baar):";
+ row.appendChild(document.createElement("br"));
+ var inp=document.createElement("input");
+ inp.type="password";inp.placeholder="Admin code daalo";
+ inp.style.cssText="padding:8px;border:1px solid var(--border);border-radius:8px;background:var(--bg);width:55%;margin-top:6px";
+ var sb=document.createElement("button");
+ sb.type="button";sb.className="sbtn";sb.textContent="Save karo";
+ sb.onclick=function(){var v=inp.value.trim();if(!v)return;try{localStorage.setItem("fg-publish-code",v)}catch(e){}row.remove();syncChatFromServer()};
+ row.appendChild(inp);row.appendChild(sb);
+ log.insertBefore(row,log.firstChild);
+}
 function showHint(){if(!log.querySelector("#hint")){var h=document.createElement("div");h.id="hint";h.textContent="Namaste! Apna sawal neeche likho.";log.appendChild(h)}}
 function add(cls,txt){var d=document.createElement("div");d.className="m "+cls;d.textContent=txt;log.appendChild(d);log.scrollTop=log.scrollHeight;return d}
 // ---- Copy button ----
@@ -529,7 +582,7 @@ async function send(){
   if(!r.ok){box.textContent=d.error||("Kuch gadbad hui (code "+r.status+"). Thodi der baad dobara try karo.");b.disabled=false;cam.disabled=false;ib.disabled=false;q.disabled=false;q.focus();return}
   var ans=(d.reply||"").trim();
   if(!ans){box.textContent="Khali jawab aaya. Dobara try karo.";b.disabled=false;cam.disabled=false;ib.disabled=false;q.disabled=false;q.focus();return}
-  box.textContent=ans;attachCopy(box,function(){return ans});if(Array.isArray(d.sources)&&d.sources.length){attachSources(box,d.sources,d.searchQuery||t)}hist.push({role:"assistant",text:ans});saveHist();
+  box.textContent=ans;attachCopy(box,function(){return ans});if(Array.isArray(d.sources)&&d.sources.length){attachSources(box,d.sources,d.searchQuery||t)}hist.push({role:"assistant",text:ans});saveHist();saveServerHist();
  }catch(e){box.textContent="Internet ya server se jod nahi paya. Dobara try karo."}
  b.disabled=false;cam.disabled=false;ib.disabled=false;q.disabled=false;q.focus();
 }
@@ -597,6 +650,7 @@ Array.prototype.forEach.call(document.querySelectorAll("#tools [data-open]"),fun
 Array.prototype.forEach.call(document.querySelectorAll("[data-back]"),function(btn){btn.onclick=function(){showChat()}});
 document.getElementById("clrBtn").onclick=function(){
  hist=[];try{localStorage.removeItem(HIST_KEY)}catch(e){}
+ if(serverChatOn()){try{fetch("/api/meraai-chat?action=clear",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({code:getAdminCode(),email:chatEmail})})}catch(e){}}
  log.innerHTML="";showHint();
 };
 document.getElementById("f").onsubmit=function(e){e.preventDefault();send()};
@@ -607,13 +661,9 @@ q.onkeydown=function(e){if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();send
  document.getElementById("who").textContent=p.name?("Logged in as "+p.name):"Guest — chat sirf is phone par bachegi";
  applySettings();renderRm();
  hist=loadHist();
- if(hist.length){
-  var h=document.getElementById("hint");if(h)h.remove();
-  hist.forEach(function(m){
-   if(m.role==="assistant"){var bx=add("a",m.text);attachCopy(bx,(function(t){return function(){return t}})(m.text))}
-   else add("u",m.text);
-  });
- }
+ renderHist();
+ askChatCode();
+ syncChatFromServer();
 })();
 // ---- Feature Pack 2 ----
 // JSON jawab ko saaf karke parse karo: ``` fences aur aage-peeche ka text hatao.
