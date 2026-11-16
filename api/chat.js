@@ -39,7 +39,7 @@ function webPart(t, a, b) {
   var r = j < 0 ? t.slice(i) : t.slice(i, j);
   return r.replace(/^\s*```[a-z]*\s*/i, "").replace(/\s*```\s*$/, "").trim();
 }
-var MODEL = "gemini-3.5-flash-lite";
+var MODEL = "gemini-3.5-flash";
 var MAX_TURNS = 12; // aakhri 12 turns (user + assistant) bhejte hain
 var MAX_TEXT = 4000; // har message ki limit, kharcha bandhne ke liye
 var FETCH_TIMEOUT_MS = 9000; // Vercel Hobby 10s limit ke andar rehne ke liye
