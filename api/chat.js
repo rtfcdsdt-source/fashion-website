@@ -358,6 +358,81 @@ module.exports = async function (req, res) {
     generationConfig: { temperature: 0.7, maxOutputTokens: maxTokens }
   };
 
+  // Groq backup: Gemini fail ho (timeout/429/5xx/khali jawab) to Groq se ek baar try karo.
+  // GROQ_API_KEY na ho to ye kuch nahi karta — Gemini wala flow waisa hi chalta hai.
+  // Photo wale sawal par Groq nahi chalta (photo Gemini format mein hai).
+  async function tryGroq() {
+    var gkey = process.env.GROQ_API_KEY;
+    if (!gkey) return null;
+    if ((Date.now() - t0) > 7000) return null;
+    var msgs = [{ role: "system", content: sysText }];
+    for (var i = 0; i < contents.length; i++) {
+      var c = contents[i];
+      var txt = "";
+      if (c && Array.isArray(c.parts)) {
+        for (var j = 0; j < c.parts.length; j++) {
+          if (c.parts[j] && c.parts[j].inlineData) return null;
+          if (c.parts[j] && typeof c.parts[j].text === "string") txt += c.parts[j].text;
+        }
+      }
+      msgs.push({ role: c && c.role === "model" ? "assistant" : "user", content: txt });
+    }
+    var budget = Math.max(1500, Math.min(4000, 9500 - (Date.now() - t0)));
+    try {
+      var gr = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": "Bearer " + String(gkey).trim() },
+        body: JSON.stringify({ model: "llama-3.3-70b-versatile", messages: msgs, temperature: 0.7, max_tokens: maxTokens }),
+        signal: AbortSignal.timeout(budget)
+      });
+      if (!gr.ok) return null;
+      var gd = null;
+      try { gd = await gr.json(); } catch (e) { gd = null; }
+      var gt = gd && gd.choices && gd.choices[0] && gd.choices[0].message && gd.choices[0].message.content;
+      return (typeof gt === "string" && gt.trim()) ? gt.trim() : null;
+    } catch (e) { return null; }
+  }
+
+  // xAI (Grok) backup: Groq bhi fail ho to xAI se ek baar try karo.
+  // XAI_API_KEY na ho to ye kuch nahi karta. Photo wale sawal par nahi chalta.
+  async function tryXai() {
+    var xkey = process.env.XAI_API_KEY;
+    if (!xkey) return null;
+    if ((Date.now() - t0) > 7000) return null;
+    var msgs = [{ role: "system", content: sysText }];
+    for (var i = 0; i < contents.length; i++) {
+      var c = contents[i];
+      var txt = "";
+      if (c && Array.isArray(c.parts)) {
+        for (var j = 0; j < c.parts.length; j++) {
+          if (c.parts[j] && c.parts[j].inlineData) return null;
+          if (c.parts[j] && typeof c.parts[j].text === "string") txt += c.parts[j].text;
+        }
+      }
+      msgs.push({ role: c && c.role === "model" ? "assistant" : "user", content: txt });
+    }
+    var budget = Math.max(1500, Math.min(4000, 9500 - (Date.now() - t0)));
+    try {
+      var xr = await fetch("https://api.x.ai/v1/chat/completions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": "Bearer " + String(xkey).trim() },
+        body: JSON.stringify({ model: "grok-4.7", messages: msgs, temperature: 0.7, max_tokens: maxTokens }),
+        signal: AbortSignal.timeout(budget)
+      });
+      if (!xr.ok) return null;
+      var xd = null;
+      try { xd = await xr.json(); } catch (e) { xd = null; }
+      var xt = xd && xd.choices && xd.choices[0] && xd.choices[0].message && xd.choices[0].message.content;
+      return (typeof xt === "string" && xt.trim()) ? xt.trim() : null;
+    } catch (e) { return null; }
+  }
+  // Backup chain: pehle Groq (free), phir xAI (Grok). Dono key na hon to null.
+  async function tryBackup() {
+    var t = await tryGroq();
+    if (t) return t;
+    return await tryXai();
+  }
+
   var upstream = null;
   var attempt = 0;
   while (attempt < 2) {
@@ -375,42 +450,53 @@ module.exports = async function (req, res) {
     }
     // Server error (500/503 overload) par ek baar dobara try karo — sirf jab
     // pehli koshish jaldi fail hui ho (time bacha ho). 429/400/403 par retry nahi.
-    if (!upstream.ok && upstream.status !== 429 && upstream.status !== 400 && upstream.status !== 403 && attempt === 1 && (Date.now() - t0) < 4000) {
+    // Groq key ho to dobara Gemini try karne ke bajay seedha Groq backup par jao.
+    if (!upstream.ok && upstream.status !== 429 && upstream.status !== 400 && upstream.status !== 403 && attempt === 1 && (Date.now() - t0) < 4000 && !process.env.GROQ_API_KEY) {
       upstream = null;
       continue;
     }
     break;
   }
+  var reply = "";
+  var finishReason = "";
+  var g = null;
   if (!upstream) {
-    return json(res, 504, { error: "Gemini se jod nahi paya. Thodi der baad dobara try karo." });
-  }
-
-  if (upstream.status === 429) {
-    return json(res, 429, { error: "Free limit poori ho gayi hai. Thodi der ruk kar dobara try karo." });
-  }
-  if (!upstream.ok) {
+    g = await tryBackup();
+    if (g) { reply = g; } else {
+      return json(res, 504, { error: "Gemini se jod nahi paya. Thodi der baad dobara try karo." });
+    }
+  } else if (upstream.status === 429) {
+    g = await tryBackup();
+    if (g) { reply = g; } else {
+      return json(res, 429, { error: "Free limit poori ho gayi hai. Thodi der ruk kar dobara try karo." });
+    }
+  } else if (!upstream.ok) {
     // Key ya setting ki gadbad (400/403) ya Gemini ki taraf se error.
     // Gemini ka raw error wapas nahi bhejte — usmein kabhi key ka hissa na aaye, isiliye sirf status dekhte hain.
-    if (upstream.status === 400 || upstream.status === 403) {
-      return json(res, 502, { error: "AI key ya setting mein gadbad hai. Key check karke dobara lagao." });
+    g = await tryBackup();
+    if (g) { reply = g; } else {
+      if (upstream.status === 400 || upstream.status === 403) {
+        return json(res, 502, { error: "AI key ya setting mein gadbad hai. Key check karke dobara lagao." });
+      }
+      return json(res, 502, { error: "Gemini se jawab nahi mila. Thodi der baad dobara try karo." });
     }
-    return json(res, 502, { error: "Gemini se jawab nahi mila. Thodi der baad dobara try karo." });
-  }
-
-  var data = null;
-  try { data = await upstream.json(); } catch (e) { data = null; }
-  var reply = "";
-  try {
-    var parts = data && data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts;
-    if (Array.isArray(parts)) {
-      reply = parts.map(function (p) { return p && typeof p.text === "string" ? p.text : ""; }).join("").trim();
+  } else {
+    var data = null;
+    try { data = await upstream.json(); } catch (e) { data = null; }
+    try {
+      var parts = data && data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts;
+      if (Array.isArray(parts)) {
+        reply = parts.map(function (p) { return p && typeof p.text === "string" ? p.text : ""; }).join("").trim();
+      }
+    } catch (e) { reply = ""; }
+    if (!reply) {
+      g = await tryBackup();
+      if (g) { reply = g; } else {
+        return json(res, 502, { error: "Gemini ne khali jawab diya. Dobara try karo." });
+      }
     }
-  } catch (e) { reply = ""; }
-  if (!reply) {
-    return json(res, 502, { error: "Gemini ne khali jawab diya. Dobara try karo." });
+    try { finishReason = (data && data.candidates && data.candidates[0] && data.candidates[0].finishReason) || ""; } catch (e) { finishReason = ""; }
   }
-  var finishReason = "";
-  try { finishReason = (data && data.candidates && data.candidates[0] && data.candidates[0].finishReason) || ""; } catch (e) { finishReason = ""; }
   // Website: agar code beech mein kat gaya (MAX_TOKENS), ek baar aage continue karwao.
   // Sirf tab jab time bacha ho (Vercel 10s limit) — warna partial reply hi rahega.
   if (app === "website" && finishReason === "MAX_TOKENS" && (Date.now() - t0) < 5000) {
