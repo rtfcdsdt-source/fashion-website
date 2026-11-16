@@ -464,10 +464,49 @@ async function buildSite(t){
   function wbtn(label,fn){var x=document.createElement("button");x.type="button";x.className="sbtn";x.textContent=label;x.onclick=fn;card.appendChild(x)}
   wbtn("▶ Kholo",function(){openSite(site)});
   wbtn("✏️ Badlav karo",function(){webEditing=true;q.placeholder="Kya badlav chahiye?";closeSite();showChat();q.focus()});
+  wbtn("🌐 Live karo",function(){publishSite(site,card)});
   openSite(site);
   log.scrollTop=log.scrollHeight;
  }catch(e){clearInterval(timer);head.textContent="Internet ya server se jod nahi paya. Dobara try karo."}
  b.disabled=false;cam.disabled=false;ib.disabled=false;q.disabled=false;q.focus();
+}
+// ---- Website ko GitHub → Vercel par live karo ----
+async function publishSite(site,card){
+ var status=document.createElement("div");
+ status.style.cssText="margin-top:8px;font-size:.85rem;white-space:pre-wrap";
+ card.appendChild(status);
+ function getCode(){
+  return localStorage.getItem("fg-publish-code")||localStorage.getItem("fg-photos-code")||localStorage.getItem("fg-addproduct-code")||"";
+ }
+ var code=getCode();
+ if(!code){
+  status.textContent="Live karne ke liye admin code chahiye (wahi jo Orders/Photos mein lagta hai):";
+  var row=document.createElement("div");row.style.marginTop="6px";
+  var inp=document.createElement("input");
+  inp.type="password";inp.placeholder="Admin code daalo";
+  inp.style.cssText="padding:8px;border:1px solid var(--border);border-radius:8px;background:var(--bg);width:55%";
+  var sb=document.createElement("button");
+  sb.type="button";sb.className="sbtn";sb.textContent="Save karo";
+  sb.onclick=function(){var v=inp.value.trim();if(!v)return;localStorage.setItem("fg-publish-code",v);row.remove();publishSite(site,card)};
+  row.appendChild(inp);row.appendChild(sb);card.appendChild(row);
+  return;
+ }
+ status.textContent="🌐 Live ho raha hai...";
+ try{
+  var r=await fetch("/api/publish-site",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({code:code,title:site.title,html:site.html,css:site.css,js:site.js})});
+  var d={};try{d=await r.json()}catch(e){}
+  if(!r.ok||!d.ok){
+   if(r.status===401){localStorage.removeItem("fg-publish-code");status.textContent="❌ Code galat hai. Dobara 'Live karo' dabao aur sahi code daalo.";return}
+   if(r.status===503){status.textContent="❌ GitHub token abhi nahi laga hai. Pehle token lagana padega.";return}
+   status.textContent="❌ Live nahi ho paya. Dobara try karo.";return;
+  }
+  status.textContent="✅ Live ho gaya!";
+  var a=document.createElement("a");
+  a.href=d.url;a.target="_blank";a.rel="noopener";a.textContent=d.url;
+  a.style.cssText="display:block;margin-top:6px;word-break:break-all;color:#2563eb";
+  card.appendChild(a);
+  attachCopy(card,function(){return d.url});
+ }catch(e){status.textContent="❌ Internet ya server se jod nahi paya. Dobara try karo."}
 }
 async function send(){
  showChat();
