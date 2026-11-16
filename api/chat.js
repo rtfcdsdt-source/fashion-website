@@ -339,6 +339,11 @@ module.exports = async function (req, res) {
     var matches = matchProducts(lastText, 8);
     sysText = SYS + SYS_SHOP + SYS_CONNECT;
     if (SYS_MODES[chatMode]) sysText += "\n\n" + SYS_MODES[chatMode];
+    // User ke baare mein yaad rakhi baatein (panel se save hoti hain) — har chat mein saath jaati hain
+    if (body && Array.isArray(body.memories)) {
+      var mems = body.memories.filter(function (m) { return typeof m === "string" && m.trim(); }).slice(0, 30).map(function (m) { return m.trim().slice(0, 500); });
+      if (mems.length) sysText += "\n\nUser ke baare mein yaad rakhi baatein (inhe yaad rakho aur jawab mein istemal karo):\n- " + mems.join("\n- ");
+    }
     if (matches.length) {
       sysText += "\n\nDukaan ke products (is sawal se match karte hain):\n" + matches.map(function (m) {
         return "- " + m.name + " — ₹" + m.price + " (" + m.category + ", " + m.brand + ")";

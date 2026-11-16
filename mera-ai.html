@@ -177,6 +177,14 @@ button:disabled{opacity:.6}
 <div class="row"><button type="button" class="chip" id="chGo">Chart banao</button><button type="button" class="chip" id="chKharcha">💰 Kharcha se chart</button><button type="button" class="chip" id="chClear">Saaf karo</button></div>
 <div id="chArea"></div>
 </div>
+<div id="panel-memory" class="panel"><h3>🧠 Yaad rakho</h3>
+<div class="row"><button type="button" class="backBtn" data-back>← Wapas</button></div>
+<div style="font-size:.85rem;color:var(--muted)">Jo baat hamesha yaad rakhni hai, yahan likho — Mera AI har baar use yaad rakhega. (Jaise: mera naam Shiva hai, mujhe laal rang pasand hai.)</div>
+<div id="memNote" style="font-size:.85rem;color:var(--muted);display:none">Yaad rakhne ke liye pehle login karo aur admin code ek baar daalo (wahi jo Orders/Photos mein lagta hai).</div>
+<input id="memInput" class="fld" type="text" placeholder="Kya yaad rakhun? (jaise: mera naam Shiva hai)">
+<div class="row"><button type="button" class="chip" id="memAdd">Yaad rakho</button></div>
+<div id="memList"></div>
+</div>
 <div id="panel-habit" class="panel"><h3>✅ Aadat + To-Do</h3>
 <div class="row"><button type="button" class="backBtn" data-back>← Wapas</button></div>
 <div style="font-size:.85rem;color:var(--muted)">Roz ki aadat aur kaam — sirf is phone par bachta hai.</div>
@@ -268,7 +276,7 @@ button:disabled{opacity:.6}
 <input type="file" id="ff" hidden>
 <div id="pv"><img id="pvi" alt="photo"><span>Photo jod di gayi hai</span><button type="button" id="pvx" title="Photo hatao">✕</button></div>
 <div id="styles"><span class="lbl">Tasveer ka style:</span><button type="button" class="chip on" data-style="simple">🎨 Simple</button><button type="button" class="chip" data-style="cartoon">🎭 Cartoon</button><button type="button" class="chip" data-style="naksha">🗺️ Naksha</button><button type="button" class="chip" data-style="logo">🔰 Logo</button></div>
-<form id="f"><div id="qwrap"><button type="button" id="plusBtn" title="Jodo">+</button><textarea id="q" placeholder="Yahan likho..."></textarea></div><button id="b">Bhejo</button><button type="button" id="cam" title="Photo jodo" hidden>📷</button><button type="button" id="ib" title="Tasveer banao" hidden>🎨</button><div id="plusMenu"><button type="button" id="pmPhoto">📷 Photo se sawal</button><button type="button" id="pmDraw">🎨 Tasveer banao</button><button type="button" id="pmFile">📁 File</button><button type="button" id="pmTools">🧰 Tools</button><button type="button" id="pmRoadmap">📋 Roadmap</button><button type="button" id="pmClear">🗑️ Chat saaf karo</button><button type="button" id="pmSettings">⚙️ Settings</button></div></form>
+<form id="f"><div id="qwrap"><button type="button" id="plusBtn" title="Jodo">+</button><textarea id="q" placeholder="Yahan likho..."></textarea></div><button id="b">Bhejo</button><button type="button" id="cam" title="Photo jodo" hidden>📷</button><button type="button" id="ib" title="Tasveer banao" hidden>🎨</button><div id="plusMenu"><button type="button" id="pmPhoto">📷 Photo se sawal</button><button type="button" id="pmDraw">🎨 Tasveer banao</button><button type="button" id="pmFile">📁 File</button><button type="button" id="pmMemory">🧠 Yaad rakho</button><button type="button" id="pmTools">🧰 Tools</button><button type="button" id="pmRoadmap">📋 Roadmap</button><button type="button" id="pmClear">🗑️ Chat saaf karo</button><button type="button" id="pmSettings">⚙️ Settings</button></div></form>
 <script>
 // ---- Profile (fashion site ki Google login se) ----
 function prof(){try{var p=JSON.parse(localStorage.getItem("fgProfile")||"null");if(p&&p.id)return{name:p.name||"",email:String(p.id)}}catch(e){}return{name:"",email:""}}
@@ -346,6 +354,38 @@ function askChatCode(){
  sb.onclick=function(){var v=inp.value.trim();if(!v)return;try{localStorage.setItem("fg-publish-code",v)}catch(e){}row.remove();syncChatFromServer()};
  row.appendChild(inp);row.appendChild(sb);
  log.insertBefore(row,log.firstChild);
+}
+// ---- Yaad (memory: server par save; har chat mein saath jaati hai) ----
+var savedMemories=[];
+async function loadMemories(){
+ if(!serverChatOn()){renderMemories();return}
+ try{
+  var r=await fetch("/api/meraai-memory?email="+encodeURIComponent(chatEmail)+"&code="+encodeURIComponent(getAdminCode()));
+  var d={};try{d=await r.json()}catch(e){}
+  if(r.ok&&d.ok&&Array.isArray(d.memories))savedMemories=d.memories.filter(function(m){return typeof m==="string"});
+ }catch(e){}
+ renderMemories();
+}
+function saveMemories(){
+ if(!serverChatOn())return;
+ try{fetch("/api/meraai-memory",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({code:getAdminCode(),email:chatEmail,memories:savedMemories})})}catch(e){}
+}
+function renderMemories(){
+ var list=document.getElementById("memList");if(!list)return;
+ var note=document.getElementById("memNote");
+ if(!serverChatOn()){if(note)note.style.display="block";list.innerHTML="";return}
+ if(note)note.style.display="none";
+ list.innerHTML="";
+ if(!savedMemories.length){list.innerHTML="<div style='font-size:.85rem;color:var(--muted)'>Abhi koi yaad nahi hai. Upar likh kar 'Yaad rakho' dabao.</div>";return}
+ savedMemories.forEach(function(m,i){
+  var row=document.createElement("div");
+  row.style.cssText="display:flex;gap:6px;align-items:center;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:6px 8px;margin:6px 0;font-size:.9rem";
+  var sp=document.createElement("span");sp.style.cssText="flex:1";sp.textContent=m;
+  var x=document.createElement("button");x.type="button";x.textContent="✕";
+  x.style.cssText="border:1px solid var(--border);background:var(--card);border-radius:8px;padding:2px 8px;cursor:pointer";
+  x.onclick=function(){savedMemories.splice(i,1);saveMemories();renderMemories()};
+  row.appendChild(sp);row.appendChild(x);list.appendChild(row);
+ });
 }
 function showHint(){if(!log.querySelector("#hint")){var h=document.createElement("div");h.id="hint";h.textContent="Namaste! Apna sawal neeche likho.";log.appendChild(h)}}
 function add(cls,txt){var d=document.createElement("div");d.className="m "+cls;d.textContent=txt;log.appendChild(d);log.scrollTop=log.scrollHeight;return d}
@@ -652,6 +692,16 @@ plusBtn.onclick=function(e){e.stopPropagation();plusMenu.classList.toggle("open"
 document.getElementById("pmPhoto").onclick=function(){closePlus();cam.click()};
 document.getElementById("pmDraw").onclick=function(){closePlus();ib.click()};
 document.getElementById("pmFile").onclick=function(){closePlus();ff.click()};
+document.getElementById("pmMemory").onclick=function(){closePlus();renderMemories();showPanel("panel-memory")};
+document.getElementById("memAdd").onclick=function(){
+ var v=document.getElementById("memInput").value.trim();if(!v)return;
+ if(!serverChatOn()){note("Yaad rakhne ke liye pehle login karo aur admin code ek baar daalo.");return}
+ v=v.slice(0,500);
+ if(savedMemories.indexOf(v)>=0){document.getElementById("memInput").value="";return}
+ if(savedMemories.length>=30){note("30 yaadein ho gayi hain — pehle koi purani yaad hatao.");return}
+ savedMemories.push(v);saveMemories();renderMemories();
+ document.getElementById("memInput").value="";
+};
 document.addEventListener("click",function(e){if(!plusMenu.classList.contains("open"))return;if(e.target===plusBtn||plusMenu.contains(e.target))return;closePlus()});
 // ---- Website banana (demo website: HTML/CSS/JS, Claude v5 jaisa flow) ----
 // "website" jaisa shabd aaye to chat ki jagah website banti hai. Backend
@@ -783,6 +833,7 @@ async function send(keepMode){
   if(imgToSend)payload.file={mimeType:imgToSend.mime,data:imgToSend.data};
   else if(fileToSend)payload.file={mimeType:fileToSend.mime,data:fileToSend.data};
   if(textToSend)payload.fileText={name:textToSend.name,text:textToSend.text};
+  if(savedMemories.length)payload.memories=savedMemories.slice();
   var r=await fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
   var d={};try{d=await r.json()}catch(e){}
   if(!r.ok){box.textContent=d.error||("Kuch gadbad hui (code "+r.status+"). Thodi der baad dobara try karo.");b.disabled=false;cam.disabled=false;ib.disabled=false;q.disabled=false;q.focus();return}
@@ -871,6 +922,7 @@ q.onkeydown=function(e){if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();send
  renderHist();
  askChatCode();
  syncChatFromServer();
+ loadMemories();
 })();
 // ---- Feature Pack 2 ----
 // JSON jawab ko saaf karke parse karo: ``` fences aur aage-peeche ka text hatao.
