@@ -2,7 +2,7 @@
 // Key sirf server-side env var GEMINI_API_KEY se aati hai. Page mein key kabhi nahi hoti,
 // aur yahan se key kabhi log ya response mein wapas nahi bheji jati.
 
-var SYS = "Tum 'Mera AI' ho, ek dostana aur madadgaar assistant. User jis language mein likhe (Hindi, Hinglish, English) usi mein jawab do. Jawab saaf, seedha aur chhota rakho. Agar kuch pata nahi to imaandaari se bolo. Pichli baatcheet yaad rakho. Website ya app banane mein madad karo to code step-by-step samjha kar do.";
+var SYS = "Tum 'Mera AI' ho, ek dostana aur madadgaar assistant. User jis language mein likhe (Hindi, Hinglish, English) usi mein jawab do. Jawab saaf, seedha aur chhota rakho. Agar kuch pata nahi to imaandaari se bolo. Pichli baatcheet yaad rakho. Website ya app banane mein madad karo to code step-by-step samjha kar do. LIVE SEARCH: Tumhare paas live internet search hai — jab user aaj ki khabar, bhav, mausam ya koi taza sawal poochhe, to tumhe web se mili taza jaankari di jati hai, usi se jawab do. Kabhi ye mat bolo ki tumhe live internet access nahi hai, tum search nahi kar sakte, ya iske liye developer ko API lagani padegi — live search pehle se laga hua hai.";
 var SYS_IMG = "Tum ek SVG illustration artist ho. Sirf ek complete SVG code likho (<svg viewBox=\"0 0 512 512\" xmlns=\"http://www.w3.org/2000/svg\"> se </svg> tak). Koi explanation, markdown ya backticks nahi. Rangeen, saaf aur sundar illustration banao. Koi script ya external link nahi.";
 // ---- Modes (chat mode only; image mode inhe ignore karta hai) ----
 // Page body.mode mein ye bhejta hai. Naam na mile ya galat ho to default "aam".
