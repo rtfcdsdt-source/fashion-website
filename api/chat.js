@@ -360,7 +360,7 @@ module.exports = async function (req, res) {
 
   // Backup diagnosis: har backup koshish ka natija yahan likha jata hai,
   // taaki error response mein dikhe ki backup kyun nahi chala (client ise ignore karta hai).
-  var backupInfo = { groq: "skip", xai: "skip" };
+  var backupInfo = { groq: "skip", openrouter: "skip", xai: "skip" };
   // Groq backup: Gemini fail ho (timeout/429/5xx/khali jawab) to Groq se ek baar try karo.
   // GROQ_API_KEY na ho to ye kuch nahi karta — Gemini wala flow waisa hi chalta hai.
   // Photo wale sawal par Groq nahi chalta (photo Gemini format mein hai).
@@ -431,9 +431,46 @@ module.exports = async function (req, res) {
       backupInfo.xai = "empty"; return null;
     } catch (e) { backupInfo.xai = "timeout"; return null; }
   }
-  // Backup chain: pehle Groq (free), phir xAI (Grok). Dono key na hon to null.
+  // OpenRouter backup (FREE models, no card): Gemini fail ho to OpenRouter se ek baar try karo.
+  // Model google/gemma-4-31b-it:free (OpenRouter free list se verified 2026-11-16 — purane
+  // llama/deepseek free models ab free list mein nahi hain). Photo wale sawal par nahi chalta.
+  async function tryOpenRouter() {
+    var okey = process.env.OPENROUTER_API_KEY;
+    if (!okey) { backupInfo.openrouter = "no-key"; return null; }
+    if ((Date.now() - t0) > 7000) { backupInfo.openrouter = "no-time"; return null; }
+    var msgs = [{ role: "system", content: sysText }];
+    for (var i = 0; i < contents.length; i++) {
+      var c = contents[i];
+      var txt = "";
+      if (c && Array.isArray(c.parts)) {
+        for (var j = 0; j < c.parts.length; j++) {
+          if (c.parts[j] && c.parts[j].inlineData) { backupInfo.openrouter = "photo-skip"; return null; }
+          if (c.parts[j] && typeof c.parts[j].text === "string") txt += c.parts[j].text;
+        }
+      }
+      msgs.push({ role: c && c.role === "model" ? "assistant" : "user", content: txt });
+    }
+    var budget = Math.max(1500, Math.min(4000, 9500 - (Date.now() - t0)));
+    try {
+      var or = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": "Bearer " + String(okey).trim(), "HTTP-Referer": "https://fashion-website-theta-taupe.vercel.app/mera-ai", "X-Title": "Mera AI" },
+        body: JSON.stringify({ model: "google/gemma-4-31b-it:free", messages: msgs, temperature: 0.7, max_tokens: maxTokens }),
+        signal: AbortSignal.timeout(budget)
+      });
+      if (!or.ok) { backupInfo.openrouter = "http-" + or.status; return null; }
+      var od = null;
+      try { od = await or.json(); } catch (e) { od = null; }
+      var ot = od && od.choices && od.choices[0] && od.choices[0].message && od.choices[0].message.content;
+      if (typeof ot === "string" && ot.trim()) { backupInfo.openrouter = "ok"; return ot.trim(); }
+      backupInfo.openrouter = "empty"; return null;
+    } catch (e) { backupInfo.openrouter = "timeout"; return null; }
+  }
+  // Backup chain: pehle Groq (free), phir OpenRouter (free), phir xAI (Grok). Koi key na ho to null.
   async function tryBackup() {
     var t = await tryGroq();
+    if (t) return t;
+    t = await tryOpenRouter();
     if (t) return t;
     return await tryXai();
   }
