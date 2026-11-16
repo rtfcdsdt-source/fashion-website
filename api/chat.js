@@ -358,20 +358,23 @@ module.exports = async function (req, res) {
     generationConfig: { temperature: 0.7, maxOutputTokens: maxTokens }
   };
 
+  // Backup diagnosis: har backup koshish ka natija yahan likha jata hai,
+  // taaki error response mein dikhe ki backup kyun nahi chala (client ise ignore karta hai).
+  var backupInfo = { groq: "skip", xai: "skip" };
   // Groq backup: Gemini fail ho (timeout/429/5xx/khali jawab) to Groq se ek baar try karo.
   // GROQ_API_KEY na ho to ye kuch nahi karta — Gemini wala flow waisa hi chalta hai.
   // Photo wale sawal par Groq nahi chalta (photo Gemini format mein hai).
   async function tryGroq() {
     var gkey = process.env.GROQ_API_KEY;
-    if (!gkey) return null;
-    if ((Date.now() - t0) > 7000) return null;
+    if (!gkey) { backupInfo.groq = "no-key"; return null; }
+    if ((Date.now() - t0) > 7000) { backupInfo.groq = "no-time"; return null; }
     var msgs = [{ role: "system", content: sysText }];
     for (var i = 0; i < contents.length; i++) {
       var c = contents[i];
       var txt = "";
       if (c && Array.isArray(c.parts)) {
         for (var j = 0; j < c.parts.length; j++) {
-          if (c.parts[j] && c.parts[j].inlineData) return null;
+          if (c.parts[j] && c.parts[j].inlineData) { backupInfo.groq = "photo-skip"; return null; }
           if (c.parts[j] && typeof c.parts[j].text === "string") txt += c.parts[j].text;
         }
       }
@@ -385,27 +388,28 @@ module.exports = async function (req, res) {
         body: JSON.stringify({ model: "llama-3.3-70b-versatile", messages: msgs, temperature: 0.7, max_tokens: maxTokens }),
         signal: AbortSignal.timeout(budget)
       });
-      if (!gr.ok) return null;
+      if (!gr.ok) { backupInfo.groq = "http-" + gr.status; return null; }
       var gd = null;
       try { gd = await gr.json(); } catch (e) { gd = null; }
       var gt = gd && gd.choices && gd.choices[0] && gd.choices[0].message && gd.choices[0].message.content;
-      return (typeof gt === "string" && gt.trim()) ? gt.trim() : null;
-    } catch (e) { return null; }
+      if (typeof gt === "string" && gt.trim()) { backupInfo.groq = "ok"; return gt.trim(); }
+      backupInfo.groq = "empty"; return null;
+    } catch (e) { backupInfo.groq = "timeout"; return null; }
   }
 
   // xAI (Grok) backup: Groq bhi fail ho to xAI se ek baar try karo.
   // XAI_API_KEY na ho to ye kuch nahi karta. Photo wale sawal par nahi chalta.
   async function tryXai() {
     var xkey = process.env.XAI_API_KEY;
-    if (!xkey) return null;
-    if ((Date.now() - t0) > 7000) return null;
+    if (!xkey) { backupInfo.xai = "no-key"; return null; }
+    if ((Date.now() - t0) > 7000) { backupInfo.xai = "no-time"; return null; }
     var msgs = [{ role: "system", content: sysText }];
     for (var i = 0; i < contents.length; i++) {
       var c = contents[i];
       var txt = "";
       if (c && Array.isArray(c.parts)) {
         for (var j = 0; j < c.parts.length; j++) {
-          if (c.parts[j] && c.parts[j].inlineData) return null;
+          if (c.parts[j] && c.parts[j].inlineData) { backupInfo.xai = "photo-skip"; return null; }
           if (c.parts[j] && typeof c.parts[j].text === "string") txt += c.parts[j].text;
         }
       }
@@ -419,12 +423,13 @@ module.exports = async function (req, res) {
         body: JSON.stringify({ model: "grok-4.7", messages: msgs, temperature: 0.7, max_tokens: maxTokens }),
         signal: AbortSignal.timeout(budget)
       });
-      if (!xr.ok) return null;
+      if (!xr.ok) { backupInfo.xai = "http-" + xr.status; return null; }
       var xd = null;
       try { xd = await xr.json(); } catch (e) { xd = null; }
       var xt = xd && xd.choices && xd.choices[0] && xd.choices[0].message && xd.choices[0].message.content;
-      return (typeof xt === "string" && xt.trim()) ? xt.trim() : null;
-    } catch (e) { return null; }
+      if (typeof xt === "string" && xt.trim()) { backupInfo.xai = "ok"; return xt.trim(); }
+      backupInfo.xai = "empty"; return null;
+    } catch (e) { backupInfo.xai = "timeout"; return null; }
   }
   // Backup chain: pehle Groq (free), phir xAI (Grok). Dono key na hon to null.
   async function tryBackup() {
@@ -463,12 +468,12 @@ module.exports = async function (req, res) {
   if (!upstream) {
     g = await tryBackup();
     if (g) { reply = g; } else {
-      return json(res, 504, { error: "Gemini se jod nahi paya. Thodi der baad dobara try karo." });
+      return json(res, 504, { error: "Gemini se jod nahi paya. Thodi der baad dobara try karo.", backup: backupInfo });
     }
   } else if (upstream.status === 429) {
     g = await tryBackup();
     if (g) { reply = g; } else {
-      return json(res, 429, { error: "Free limit poori ho gayi hai. Thodi der ruk kar dobara try karo." });
+      return json(res, 429, { error: "Free limit poori ho gayi hai. Thodi der ruk kar dobara try karo.", backup: backupInfo });
     }
   } else if (!upstream.ok) {
     // Key ya setting ki gadbad (400/403) ya Gemini ki taraf se error.
@@ -476,9 +481,9 @@ module.exports = async function (req, res) {
     g = await tryBackup();
     if (g) { reply = g; } else {
       if (upstream.status === 400 || upstream.status === 403) {
-        return json(res, 502, { error: "AI key ya setting mein gadbad hai. Key check karke dobara lagao." });
+        return json(res, 502, { error: "AI key ya setting mein gadbad hai. Key check karke dobara lagao.", backup: backupInfo });
       }
-      return json(res, 502, { error: "Gemini se jawab nahi mila. Thodi der baad dobara try karo." });
+      return json(res, 502, { error: "Gemini se jawab nahi mila. Thodi der baad dobara try karo.", backup: backupInfo });
     }
   } else {
     var data = null;
@@ -492,7 +497,7 @@ module.exports = async function (req, res) {
     if (!reply) {
       g = await tryBackup();
       if (g) { reply = g; } else {
-        return json(res, 502, { error: "Gemini ne khali jawab diya. Dobara try karo." });
+        return json(res, 502, { error: "Gemini ne khali jawab diya. Dobara try karo.", backup: backupInfo });
       }
     }
     try { finishReason = (data && data.candidates && data.candidates[0] && data.candidates[0].finishReason) || ""; } catch (e) { finishReason = ""; }
