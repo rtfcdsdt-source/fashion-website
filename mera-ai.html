@@ -16,10 +16,7 @@ html[data-hindi="1"] body{font-family:"Noto Sans Devanagari",system-ui,-apple-sy
 html,body{height:100%}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;line-height:1.55;display:flex;flex-direction:column}
-header{padding:8px 8px;border-bottom:1px solid var(--border);font-weight:700;font-size:.95rem;background:var(--card);display:flex;align-items:center;gap:6px}
-header .t{flex:1}
 .hbtn{background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:10px;padding:5px 8px;font-size:.85rem;font-weight:600;cursor:pointer}
-#who{font-size:.8rem;color:var(--muted);text-align:center;padding:5px 8px 0;background:var(--card)}
 #modes{display:flex;gap:6px;overflow-x:auto;padding:8px 8px;background:var(--card);border-bottom:1px solid var(--border);scrollbar-width:none}
 #modes::-webkit-scrollbar{display:none}
 .chip{flex:0 0 auto;border:1px solid var(--border);background:var(--bg);color:var(--text);border-radius:999px;padding:5px 12px;font-size:.85rem;font-weight:600;cursor:pointer;white-space:nowrap}
@@ -47,7 +44,8 @@ header .t{flex:1}
 form{display:flex;gap:6px;padding:10px 8px;border-top:1px solid var(--border);background:var(--card);max-width:720px;width:100%;margin:0 auto;position:relative}
 form button{padding:0 14px}
 #qwrap{flex:1;display:flex;align-items:center;gap:6px;border:1px solid var(--ai);border-radius:999px;background:var(--ai);padding:0 6px}
-#qwrap textarea{flex:1;min-width:0;border:0;background:transparent;padding:12px 6px;height:56px;border-radius:0}
+#qwrap textarea{flex:1;min-width:0;border:0;background:transparent;padding:12px 6px;height:56px;border-radius:0;outline:none}
+textarea:focus,input:focus{outline:none}
 #plusBtn{flex:0 0 auto;width:34px;height:34px;border-radius:50%;border:1px solid transparent;background:transparent;color:var(--muted);font-size:20px;font-weight:700;line-height:1;padding:0;cursor:pointer}
 #b{flex:0 0 auto;width:42px;height:42px;border-radius:50%;background:var(--accent);color:#fff;font-size:18px;padding:0;display:flex;align-items:center;justify-content:center;align-self:center}
 #plusMenu{position:absolute;left:8px;bottom:calc(100% + 6px);display:none;z-index:30;background:var(--card);border:1px solid var(--border);border-radius:12px;box-shadow:0 4px 16px rgba(0,0,0,.18);overflow:hidden;min-width:200px}
@@ -104,8 +102,6 @@ button:disabled{opacity:.6}
 </style>
 </head>
 <body>
-<header><span class="t">✨ Mera AI</span></header>
-<div id="who"></div>
 <div id="settings" class="panel"><h3>⚙️ Settings</h3>
 <div class="row"><button type="button" class="backBtn" data-back>← Wapas</button></div>
 <div class="row"><span class="lbl">Rang</span><button type="button" class="chip" data-t="auto">🌞 Auto</button><button type="button" class="chip" data-t="light">Halka</button><button type="button" class="chip" data-t="dark">Andhera</button><button type="button" class="chip" data-t="blue">Neela</button></div>
@@ -277,7 +273,7 @@ button:disabled{opacity:.6}
 <input type="file" id="ff" hidden>
 <div id="pv"><img id="pvi" alt="photo"><span>Photo jod di gayi hai</span><button type="button" id="pvx" title="Photo hatao">✕</button></div>
 <div id="styles"><span class="lbl">Tasveer ka style:</span><button type="button" class="chip on" data-style="simple">🎨 Simple</button><button type="button" class="chip" data-style="cartoon">🎭 Cartoon</button><button type="button" class="chip" data-style="naksha">🗺️ Naksha</button><button type="button" class="chip" data-style="logo">🔰 Logo</button></div>
-<form id="f"><div id="qwrap"><button type="button" id="plusBtn" title="Jodo">+</button><textarea id="q" placeholder="Yahan likho..."></textarea></div><button id="b" title="Bhejo">➤</button><button type="button" id="cam" title="Photo jodo" hidden>📷</button><button type="button" id="ib" title="Tasveer banao" hidden>🎨</button><div id="plusMenu"><button type="button" id="pmPhoto">📷 Photo se sawal</button><button type="button" id="pmDraw">🎨 Tasveer banao</button><button type="button" id="pmFile">📁 File</button><button type="button" id="pmMemory">🧠 Yaad rakho</button><button type="button" id="pmTools">🧰 Tools</button><button type="button" id="pmRoadmap">📋 Roadmap</button><button type="button" id="pmClear">🗑️ Chat saaf karo</button><button type="button" id="pmSettings">⚙️ Settings</button></div></form>
+<form id="f"><div id="qwrap"><button type="button" id="plusBtn" title="Jodo">+</button><textarea id="q" placeholder="Yahan likho..."></textarea></div><button id="b" title="Bhejo">➤</button><button type="button" id="cam" title="Photo jodo" hidden>📷</button><button type="button" id="ib" title="Tasveer banao" hidden>🎨</button><div id="plusMenu"><button type="button" id="pmPhoto">📷 Photo se sawal</button><button type="button" id="pmDraw">🎨 Tasveer banao</button><button type="button" id="pmFile">📁 File</button><button type="button" id="pmMemory">🧠 Yaad rakho</button><button type="button" id="pmCode">💾 Chat hamesha save karo</button><button type="button" id="pmTools">🧰 Tools</button><button type="button" id="pmRoadmap">📋 Roadmap</button><button type="button" id="pmClear">🗑️ Chat saaf karo</button><button type="button" id="pmSettings">⚙️ Settings</button></div></form>
 <script>
 // ---- Profile (fashion site ki Google login se) ----
 function prof(){try{var p=JSON.parse(localStorage.getItem("fgProfile")||"null");if(p&&p.id)return{name:p.name||"",email:String(p.id)}}catch(e){}return{name:"",email:""}}
@@ -419,7 +415,7 @@ function attachSources(box,sources,query){
  box.appendChild(wrap);
 }
 // ---- Views: chat ya koi panel (Tools se khulta hai) ----
-var CHAT_IDS=["who","modes","log","pv","styles","f"];
+var CHAT_IDS=["modes","log","pv","styles","f"];
 var currentView="chat";
 var savedDisp={};
 function setChatVisible(v){
@@ -912,16 +908,20 @@ document.getElementById("pmClear").onclick=function(){
  if(serverChatOn()){try{fetch("/api/meraai-chat?action=clear",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({code:getAdminCode(),email:chatEmail})})}catch(e){}}
  log.innerHTML="";showHint();
 };
+document.getElementById("pmCode").onclick=function(){
+ closePlus();
+ if(!chatEmail){note("Pehle login karo, phir admin code daal sakte ho.");return}
+ if(getAdminCode()){note("Admin code pehle se daala hua hai — chat hamesha ke liye save ho rahi hai.");return}
+ showChat();askChatCode();
+};
 document.getElementById("f").onsubmit=function(e){e.preventDefault();send()};
 q.onkeydown=function(e){if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();send()}};
 // ---- Load: who line + settings + purani baat-cheet + roadmap ----
 (function(){
  var p=prof();
- document.getElementById("who").textContent=p.name?("Logged in as "+p.name):"Guest — chat sirf is phone par bachegi";
  applySettings();renderRm();
  hist=loadHist();
  renderHist();
- askChatCode();
  syncChatFromServer();
  loadMemories();
 })();
