@@ -1,0 +1,248 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Kya tum pinterest jaisa website banaa sakte ho</title><style>* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+body {
+  background-color: #f9f9f9;
+  color: #333;
+}
+
+.app {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 12px;
+}
+
+header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+  position: sticky;
+  top: 0;
+  background: #f9f9f9;
+  z-index: 100;
+}
+
+.logo {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #e60023;
+  cursor: pointer;
+}
+
+.search-bar {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  background: #efefef;
+  border-radius: 24px;
+  padding: 10px 16px;
+  gap: 8px;
+}
+
+.search-bar input {
+  border: none;
+  background: transparent;
+  outline: none;
+  width: 100%;
+  font-size: 1rem;
+}
+
+.profile {
+  font-size: 1.2rem;
+  background: #efefef;
+  padding: 10px;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.categories {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 12px 0;
+  scrollbar-width: none;
+}
+
+.categories::-webkit-scrollbar {
+  display: none;
+}
+
+.cat-btn {
+  background: #efefef;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: 0.2s;
+}
+
+.cat-btn.active, .cat-btn:hover {
+  background: #333;
+  color: #fff;
+}
+
+.masonry-grid {
+  columns: 2;
+  column-gap: 12px;
+  padding-top: 8px;
+}
+
+@media (min-width: 600px) {
+  .masonry-grid { columns: 3; }
+}
+
+@media (min-width: 900px) {
+  .masonry-grid { columns: 4; }
+}
+
+.pin-card {
+  break-inside: avoid;
+  background: #fff;
+  border-radius: 16px;
+  overflow: hidden;
+  margin-bottom: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  transition: transform 0.2s;
+  cursor: pointer;
+  position: relative;
+}
+
+.pin-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.1);
+}
+
+.pin-media {
+  background: #eee;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 4rem;
+  padding: 30px 0;
+}
+
+.pin-info {
+  padding: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.pin-title {
+  font-size: 0.9rem;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.save-btn {
+  background: #e60023;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-weight: bold;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.save-btn.saved {
+  background: #333;
+}</style></head><body><div class="app">
+  <header>
+    <div class="logo">📌 PinIt</div>
+    <div class="search-bar">
+      <span>🔍</span>
+      <input type="text" placeholder="Search ideas (e.g., Art, Food)..." id="searchInput">
+    </div>
+    <div class="profile">👤</div>
+  </header>
+
+  <nav class="categories">
+    <button class="cat-btn active" onclick="filterPins('all')">All</button>
+    <button class="cat-btn" onclick="filterPins('food')">🍕 Food</button>
+    <button class="cat-btn" onclick="filterPins('nature')">🌲 Nature</button>
+    <button class="cat-btn" onclick="filterPins('art')">🎨 Art</button>
+    <button class="cat-btn" onclick="filterPins('tech')">💻 Tech</button>
+  </nav>
+
+  <main class="masonry-grid" id="pinGrid">
+    <!-- Pins will be injected by JS -->
+  </main>
+</div><script>try{const pins = [
+  { id: 1, title: 'Delicious Burger', category: 'food', emoji: '🍔' },
+  { id: 2, title: 'Sunset Mountains', category: 'nature', emoji: '🏔️' },
+  { id: 3, title: 'Abstract Colors', category: 'art', emoji: '🎨' },
+  { id: 4, title: 'Clean Workspace', category: 'tech', emoji: '💻' },
+  { id: 5, title: 'Fresh Ramen', category: 'food', emoji: '🍜' },
+  { id: 6, title: 'Deep Forest', category: 'nature', emoji: '🌲' },
+  { id: 7, title: 'Neon Cyberpunk', category: 'art', emoji: '🌆' },
+  { id: 8, title: 'Coding Setup', category: 'tech', emoji: '⌨️' },
+  { id: 9, title: 'Sweet Donut', category: 'food', emoji: '🍩' },
+  { id: 10, title: 'Ocean Waves', category: 'nature', emoji: '🌊' }
+];
+
+const pinGrid = document.getElementById('pinGrid');
+const searchInput = document.getElementById('searchInput');
+
+function renderPins(items) {
+  pinGrid.innerHTML = '';
+  if(items.length === 0) {
+    pinGrid.innerHTML = '<p style="grid-column: 1/-1; text-align:center; padding: 40px; color:#777;">Koi pin nahi mila! 🔍</p>';
+    return;
+  }
+  
+  items.forEach(pin => {
+    const card = document.createElement('div');
+    card.className = 'pin-card';
+    card.innerHTML = `
+      <div class="pin-media">${pin.emoji}</div>
+      <div class="pin-info">
+        <span class="pin-title">${pin.title}</span>
+        <button class="save-btn" onclick="toggleSave(this, event)">Save</button>
+      </div>
+    `;
+    pinGrid.appendChild(card);
+  });
+}
+
+function filterPins(category) {
+  // Update active button style
+  document.querySelectorAll('.cat-btn').forEach(btn => btn.classList.remove('active'));
+  event.target.classList.add('active');
+
+  if (category === 'all') {
+    renderPins(pins);
+  } else {
+    const filtered = pins.filter(p => p.category === category);
+    renderPins(filtered);
+  }
+}
+
+function toggleSave(btn, event) {
+  event.stopPropagation();
+  if (btn.classList.contains('saved')) {
+    btn.classList.remove('saved');
+    btn.innerText = 'Save';
+  } else {
+    btn.classList.add('saved');
+    btn.innerText = 'Saved ✔';
+  }
+}
+
+searchInput.addEventListener('input', (e) => {
+  const query = e.target.value.toLowerCase();
+  const filtered = pins.filter(p => p.title.toLowerCase().includes(query));
+  renderPins(filtered);
+});
+
+// Initial load
+renderPins(pins);}catch(e){}</script></body></html>
