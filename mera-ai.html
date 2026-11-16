@@ -103,7 +103,7 @@ button:disabled{opacity:.6}
 </style>
 </head>
 <body>
-<header><span class="t">✨ Mera AI</span><button type="button" class="hbtn" id="rmBtn" title="Coding roadmap">📋 Roadmap</button><button type="button" class="hbtn" id="toolsBtn" title="Tools">🧰 Tools</button><button type="button" class="hbtn" id="clrBtn" title="Nayi baat-cheet">🗑️</button><button type="button" class="hbtn" id="setBtn" title="Settings">⚙️</button></header>
+<header><span class="t">✨ Mera AI</span></header>
 <div id="who"></div>
 <div id="modes"><button type="button" class="chip on" data-mode="aam">💬 Aam</button><button type="button" class="chip" data-mode="padhai">📚 Padhai</button><button type="button" class="chip" data-mode="coding">💻 Coding</button><button type="button" class="chip" data-mode="translator">🌐 Translator</button><button type="button" class="chip" data-mode="kahani">📖 Kahani</button><button type="button" class="chip" data-mode="quiz">❓ Quiz</button><button type="button" class="chip" data-mode="summary">📝 Summary</button><button type="button" class="chip" data-mode="homework">✏️ Homework</button><button type="button" class="chip" data-mode="english">🗣️ English</button><button type="button" class="chip" data-mode="likho">✉️ Likho</button><button type="button" class="chip" data-mode="kirdar">🎭 Kirdar</button><button type="button" class="chip" data-mode="script">🎬 Script</button><button type="button" class="chip" data-mode="business">💡 Business</button><button type="button" class="chip" data-mode="resume">📄 Resume</button><button type="button" class="chip" data-mode="interview">🎤 Interview</button><button type="button" class="chip" data-mode="recipe">🍳 Recipe</button></div>
 <div id="settings" class="panel"><h3>⚙️ Settings</h3>
@@ -268,7 +268,7 @@ button:disabled{opacity:.6}
 <input type="file" id="fp" accept="image/*" hidden>
 <div id="pv"><img id="pvi" alt="photo"><span>Photo jod di gayi hai</span><button type="button" id="pvx" title="Photo hatao">✕</button></div>
 <div id="styles"><span class="lbl">Tasveer ka style:</span><button type="button" class="chip on" data-style="simple">🎨 Simple</button><button type="button" class="chip" data-style="cartoon">🎭 Cartoon</button><button type="button" class="chip" data-style="naksha">🗺️ Naksha</button><button type="button" class="chip" data-style="logo">🔰 Logo</button></div>
-<form id="f"><div id="qwrap"><button type="button" id="plusBtn" title="Jodo">+</button><textarea id="q" placeholder="Yahan likho..."></textarea></div><button id="b">Bhejo</button><button type="button" id="cam" title="Photo jodo" hidden>📷</button><button type="button" id="ib" title="Tasveer banao" hidden>🎨</button><div id="plusMenu"><button type="button" id="pmPhoto">📷 Photo se sawal</button><button type="button" id="pmDraw">🎨 Tasveer banao</button></div></form>
+<form id="f"><div id="qwrap"><button type="button" id="plusBtn" title="Jodo">+</button><textarea id="q" placeholder="Yahan likho..."></textarea></div><button id="b">Bhejo</button><button type="button" id="cam" title="Photo jodo" hidden>📷</button><button type="button" id="ib" title="Tasveer banao" hidden>🎨</button><div id="plusMenu"><button type="button" id="pmPhoto">📷 Photo se sawal</button><button type="button" id="pmDraw">🎨 Tasveer banao</button><button type="button" id="pmTools">🧰 Tools</button><button type="button" id="pmRoadmap">📋 Roadmap</button><button type="button" id="pmClear">🗑️ Chat saaf karo</button><button type="button" id="pmSettings">⚙️ Settings</button></div></form>
 <script>
 // ---- Profile (fashion site ki Google login se) ----
 function prof(){try{var p=JSON.parse(localStorage.getItem("fgProfile")||"null");if(p&&p.id)return{name:p.name||"",email:String(p.id)}}catch(e){}return{name:"",email:""}}
@@ -643,12 +643,13 @@ document.getElementById("hindiBtn").onclick=function(){settings.hindi=settings.h
 Array.prototype.forEach.call(document.querySelectorAll("#styles .chip"),function(c){
  c.onclick=function(){settings.style=c.getAttribute("data-style");saveSettings();applySettings()};
 });
-document.getElementById("setBtn").onclick=function(){if(currentView==="settings")showChat();else showPanel("settings")};
-document.getElementById("rmBtn").onclick=function(){if(currentView==="roadmap")showChat();else showPanel("roadmap")};
-document.getElementById("toolsBtn").onclick=function(){if(currentView==="tools")showChat();else showPanel("tools")};
+document.getElementById("pmSettings").onclick=function(){closePlus();if(currentView==="settings")showChat();else showPanel("settings")};
+document.getElementById("pmRoadmap").onclick=function(){closePlus();if(currentView==="roadmap")showChat();else showPanel("roadmap")};
+document.getElementById("pmTools").onclick=function(){closePlus();if(currentView==="tools")showChat();else showPanel("tools")};
 Array.prototype.forEach.call(document.querySelectorAll("#tools [data-open]"),function(btn){btn.onclick=function(){showPanel(btn.getAttribute("data-open"))}});
 Array.prototype.forEach.call(document.querySelectorAll("[data-back]"),function(btn){btn.onclick=function(){showChat()}});
-document.getElementById("clrBtn").onclick=function(){
+document.getElementById("pmClear").onclick=function(){
+ closePlus();
  hist=[];try{localStorage.removeItem(HIST_KEY)}catch(e){}
  if(serverChatOn()){try{fetch("/api/meraai-chat?action=clear",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({code:getAdminCode(),email:chatEmail})})}catch(e){}}
  log.innerHTML="";showHint();
