@@ -273,7 +273,7 @@ button:disabled{opacity:.6}
 <input type="file" id="ff" hidden>
 <div id="pv"><img id="pvi" alt="photo"><span>Photo jod di gayi hai</span><button type="button" id="pvx" title="Photo hatao">✕</button></div>
 <div id="styles"><span class="lbl">Tasveer ka style:</span><button type="button" class="chip on" data-style="simple">🎨 Simple</button><button type="button" class="chip" data-style="cartoon">🎭 Cartoon</button><button type="button" class="chip" data-style="naksha">🗺️ Naksha</button><button type="button" class="chip" data-style="logo">🔰 Logo</button></div>
-<form id="f"><div id="qwrap"><button type="button" id="plusBtn" title="Jodo">+</button><textarea id="q" placeholder="Yahan likho..."></textarea></div><button id="b" title="Bhejo">➤</button><button type="button" id="cam" title="Photo jodo" hidden>📷</button><button type="button" id="ib" title="Tasveer banao" hidden>🎨</button><div id="plusMenu"><button type="button" id="pmPhoto">📷 Photo se sawal</button><button type="button" id="pmDraw">🎨 Tasveer banao</button><button type="button" id="pmFile">📁 File</button><button type="button" id="pmMemory">🧠 Yaad rakho</button><button type="button" id="pmCode">💾 Chat hamesha save karo</button><button type="button" id="pmTools">🧰 Tools</button><button type="button" id="pmRoadmap">📋 Roadmap</button><button type="button" id="pmClear">🗑️ Chat saaf karo</button><button type="button" id="pmSettings">⚙️ Settings</button></div></form>
+<form id="f"><div id="qwrap"><button type="button" id="plusBtn" title="Jodo">+</button><textarea id="q" placeholder="Yahan likho..."></textarea></div><button id="b" title="Bhejo">➤</button><button type="button" id="cam" title="Photo jodo" hidden>📷</button><button type="button" id="ib" title="Tasveer banao" hidden>🎨</button><div id="plusMenu"><button type="button" id="pmPhoto">📷 Photo se sawal</button><button type="button" id="pmDraw">🎨 Tasveer banao</button><button type="button" id="pmFile">📁 File</button><button type="button" id="pmMemory">🧠 Yaad rakho</button><button type="button" id="pmCode">💾 Chat hamesha save karo</button><button type="button" id="pmAgent">🌐 Browser Agent</button><button type="button" id="pmTools">🧰 Tools</button><button type="button" id="pmRoadmap">📋 Roadmap</button><button type="button" id="pmClear">🗑️ Chat saaf karo</button><button type="button" id="pmSettings">⚙️ Settings</button></div></form>
 <script>
 // ---- Profile (fashion site ki Google login se) ----
 function prof(){try{var p=JSON.parse(localStorage.getItem("fgProfile")||"null");if(p&&p.id)return{name:p.name||"",email:String(p.id)}}catch(e){}return{name:"",email:""}}
@@ -914,6 +914,8 @@ document.getElementById("pmCode").onclick=function(){
  if(getAdminCode()){note("Admin code pehle se daala hua hai — chat hamesha ke liye save ho rahi hai.");return}
  showChat();askChatCode();
 };
+var AGENT_URL="https://a485987be49a1698-87-81-224-109.serveousercontent.com/";
+document.getElementById("pmAgent").onclick=function(){closePlus();window.open(AGENT_URL,"_blank")};
 document.getElementById("f").onsubmit=function(e){e.preventDefault();send()};
 q.onkeydown=function(e){if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();send()}};
 // ---- Load: who line + settings + purani baat-cheet + roadmap ----
