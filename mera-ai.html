@@ -491,6 +491,30 @@ function readAsDataURL(f){return new Promise(function(res,rej){var r=new FileRea
 function readAsText(f){return new Promise(function(res,rej){var r=new FileReader();r.onload=function(){res(r.result)};r.onerror=function(){rej(new Error("read"))};r.readAsText(f)})}
 function readAsBuf(f){return new Promise(function(res,rej){var r=new FileReader();r.onload=function(){res(r.result)};r.onerror=function(){rej(new Error("read"))};r.readAsArrayBuffer(f)})}
 function b64Of(u8){var s="";var CH=8192;for(var i=0;i<u8.length;i+=CH){s+=String.fromCharCode.apply(null,u8.subarray(i,i+CH))}return btoa(s)}
+async function audioToWav(f){
+ var AC=window.AudioContext||window.webkitAudioContext;
+ if(!AC)return null;
+ var buf=await readAsBuf(f);
+ var ac=new AC();
+ var ab=await ac.decodeAudioData(buf.slice(0));
+ var dur=Math.min(ab.duration,60),sr=16000,len=Math.floor(dur*sr);
+ var out=new Float32Array(len);
+ var ch0=ab.getChannelData(0),ch1=ab.numberOfChannels>1?ab.getChannelData(1):null;
+ for(var i=0;i<len;i++){
+  var src=Math.floor(i*ab.sampleRate/sr);
+  var v=ch0[src]||0;if(ch1)v=(v+ch1[src])/2;
+  out[i]=v;
+ }
+ var bytes=44+len*2,b=new ArrayBuffer(bytes),dv=new DataView(b);
+ function ws(o,s){for(var j=0;j<s.length;j++)dv.setUint8(j+o,s.charCodeAt(j))}
+ ws(0,"RIFF");dv.setUint32(4,bytes-8,true);ws(8,"WAVE");ws(12,"fmt ");
+ dv.setUint32(16,16,true);dv.setUint16(20,1,true);dv.setUint16(22,1,true);
+ dv.setUint32(24,sr,true);dv.setUint32(28,sr*2,true);dv.setUint16(32,2,true);dv.setUint16(34,16,true);
+ ws(36,"data");dv.setUint32(40,len*2,true);
+ for(var k=0;k<len;k++){var s2=Math.max(-1,Math.min(1,out[k]));dv.setInt16(44+k*2,s2<0?s2*0x8000:s2*0x7FFF,true)}
+ if(ac.close)ac.close();
+ return {mime:"audio/wav",data:b64Of(new Uint8Array(b))};
+}
 async function inflateEntry(e){
  if(e.method===0)return e.data;
  if(e.method===8){
@@ -593,10 +617,18 @@ async function handleFile(f,fromZip){
   try{var d=await readAsDataURL(f);fileData={mime:"application/pdf",data:String(d).split(",")[1],name:name};showFilePreview(name)}catch(e){note("PDF padh nahi paya. Doosri file try karo.")}
   return;
  }
- // Gaana (chhota clip)
+ // Gaana (chhota clip) — MP3 seedha nahi sun pata, isliye browser mein hi WAV (16kHz mono, pehle 60 second) mein badal kar bhejo
  if(/^audio\//.test(type)||AUDIO_MIMES[ext]){
-  if(f.size>2000000){note("Gaana bahut bada hai (2MB / ~2 minute tak ka clip bhejo).");return}
-  try{var d2=await readAsDataURL(f);fileData={mime:AUDIO_MIMES[ext]||type,data:String(d2).split(",")[1],name:name};showFilePreview(name)}catch(e){note("Gaana padh nahi paya. Doosri file try karo.")}
+  if(f.size>2000000){note("Gaana bahut bada hai (2MB tak ka clip bhejo — pehle 60 second sunega).");return}
+  try{
+   if(type==="audio/wav"||ext==="wav"){
+    var d2=await readAsDataURL(f);fileData={mime:"audio/wav",data:String(d2).split(",")[1],name:name};showFilePreview(name);
+   }else{
+    var wav=await audioToWav(f);
+    if(wav){fileData={mime:"audio/wav",data:wav.data,name:name};showFilePreview(name)}
+    else note("Ye gaana WAV mein convert nahi ho paya. WAV file bhejo ya doosra gaana try karo.");
+   }
+  }catch(e){note("Gaana padh nahi paya. Doosri file try karo.")}
   return;
  }
  // Video (chhota clip)
