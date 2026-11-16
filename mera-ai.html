@@ -5,11 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Mera AI</title>
 <style>
-:root{--bg:#faf8f5;--card:#fff;--text:#1f1d1a;--muted:#6b665e;--accent:#d9622b;--border:#e6e0d6;--me:#f3e6dc;--on-accent:#fff;
+:root{--bg:#ffffff;--card:#fff;--text:#1f1d1a;--muted:#6b6b6b;--accent:#2563eb;--border:#e5e5e5;--me:#b7dbff;--ai:#f2f2f2;--on-accent:#fff;
 box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-@media (prefers-color-scheme:dark){:root:not([data-theme]){--bg:#171513;--card:#211e1b;--text:#f1ede6;--muted:#a39d92;--accent:#f0804a;--border:#38332d;--me:#3a2d25;--on-accent:#1a120c}}
-:root[data-theme="dark"]{--bg:#171513;--card:#211e1b;--text:#f1ede6;--muted:#a39d92;--accent:#f0804a;--border:#38332d;--me:#3a2d25;--on-accent:#1a120c}
-:root[data-theme="blue"]{--bg:#e9f0fa;--card:#fff;--text:#16233a;--muted:#5b6c86;--accent:#2563eb;--border:#d3deee;--me:#d7e5f8;--on-accent:#fff}
+@media (prefers-color-scheme:dark){:root:not([data-theme]){--bg:#171513;--card:#211e1b;--text:#f1ede6;--muted:#a39d92;--accent:#f0804a;--border:#38332d;--me:#3a2d25;--ai:#211e1b;--on-accent:#1a120c}}
+:root[data-theme="dark"]{--bg:#171513;--card:#211e1b;--text:#f1ede6;--muted:#a39d92;--accent:#f0804a;--border:#38332d;--me:#3a2d25;--ai:#211e1b;--on-accent:#1a120c}
+:root[data-theme="blue"]{--bg:#e9f0fa;--card:#fff;--text:#16233a;--muted:#5b6c86;--accent:#2563eb;--border:#d3deee;--me:#d7e5f8;--ai:#e8eef7;--on-accent:#fff}
 html[data-font="small"]{font-size:14px}
 html[data-font="large"]{font-size:18px}
 html[data-hindi="1"] body{font-family:"Noto Sans Devanagari",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
@@ -37,18 +37,19 @@ header .t{flex:1}
 .rmstep input{margin-top:3px;flex:0 0 auto}
 .rmstep.done span{text-decoration:line-through;color:var(--muted)}
 #log{flex:1;overflow-y:auto;padding:12px 8px;max-width:720px;width:100%;margin:0 auto}
-.m{padding:10px 14px;border-radius:14px;margin:8px 0;white-space:pre-wrap;word-wrap:break-word;max-width:94%}
+.m{padding:10px 14px;border-radius:18px;margin:8px 0;white-space:pre-wrap;word-wrap:break-word;max-width:94%}
 .u{background:var(--me);margin-left:auto}
-.a{background:var(--card);border:1px solid var(--border)}
+.a{background:var(--ai);border:1px solid var(--ai)}
 .copy{display:block;margin-top:8px;border:1px solid var(--border);background:var(--bg);color:var(--muted);border-radius:8px;padding:3px 10px;font-size:.78rem;font-weight:600;cursor:pointer}
 .editrow{display:flex;gap:6px;margin-top:8px}
 .editrow input{flex:1;font:inherit;padding:7px 10px;border:1px solid var(--border);border-radius:10px;background:var(--bg);color:var(--text)}
 .editrow button{font:inherit;border:0;border-radius:10px;padding:0 14px;background:var(--accent);color:var(--on-accent);font-weight:600;cursor:pointer}
 form{display:flex;gap:6px;padding:10px 8px;border-top:1px solid var(--border);background:var(--card);max-width:720px;width:100%;margin:0 auto;position:relative}
 form button{padding:0 14px}
-#qwrap{flex:1;display:flex;align-items:center;gap:6px;border:1px solid var(--border);border-radius:16px;background:var(--bg);padding:0 6px}
+#qwrap{flex:1;display:flex;align-items:center;gap:6px;border:1px solid var(--ai);border-radius:999px;background:var(--ai);padding:0 6px}
 #qwrap textarea{flex:1;min-width:0;border:0;background:transparent;padding:12px 6px;height:56px;border-radius:0}
-#plusBtn{flex:0 0 auto;width:34px;height:34px;border-radius:50%;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:20px;font-weight:700;line-height:1;padding:0;cursor:pointer}
+#plusBtn{flex:0 0 auto;width:34px;height:34px;border-radius:50%;border:1px solid transparent;background:transparent;color:var(--muted);font-size:20px;font-weight:700;line-height:1;padding:0;cursor:pointer}
+#b{flex:0 0 auto;width:42px;height:42px;border-radius:50%;background:var(--accent);color:#fff;font-size:18px;padding:0;display:flex;align-items:center;justify-content:center;align-self:center}
 #plusMenu{position:absolute;left:8px;bottom:calc(100% + 6px);display:none;z-index:30;background:var(--card);border:1px solid var(--border);border-radius:12px;box-shadow:0 4px 16px rgba(0,0,0,.18);overflow:hidden;min-width:200px}
 #plusMenu.open{display:block}
 #plusMenu button{display:block;width:100%;text-align:left;border:0;background:transparent;color:var(--text);padding:12px 14px;font-size:.95rem;font-weight:600;cursor:pointer}
@@ -276,7 +277,7 @@ button:disabled{opacity:.6}
 <input type="file" id="ff" hidden>
 <div id="pv"><img id="pvi" alt="photo"><span>Photo jod di gayi hai</span><button type="button" id="pvx" title="Photo hatao">✕</button></div>
 <div id="styles"><span class="lbl">Tasveer ka style:</span><button type="button" class="chip on" data-style="simple">🎨 Simple</button><button type="button" class="chip" data-style="cartoon">🎭 Cartoon</button><button type="button" class="chip" data-style="naksha">🗺️ Naksha</button><button type="button" class="chip" data-style="logo">🔰 Logo</button></div>
-<form id="f"><div id="qwrap"><button type="button" id="plusBtn" title="Jodo">+</button><textarea id="q" placeholder="Yahan likho..."></textarea></div><button id="b">Bhejo</button><button type="button" id="cam" title="Photo jodo" hidden>📷</button><button type="button" id="ib" title="Tasveer banao" hidden>🎨</button><div id="plusMenu"><button type="button" id="pmPhoto">📷 Photo se sawal</button><button type="button" id="pmDraw">🎨 Tasveer banao</button><button type="button" id="pmFile">📁 File</button><button type="button" id="pmMemory">🧠 Yaad rakho</button><button type="button" id="pmTools">🧰 Tools</button><button type="button" id="pmRoadmap">📋 Roadmap</button><button type="button" id="pmClear">🗑️ Chat saaf karo</button><button type="button" id="pmSettings">⚙️ Settings</button></div></form>
+<form id="f"><div id="qwrap"><button type="button" id="plusBtn" title="Jodo">+</button><textarea id="q" placeholder="Yahan likho..."></textarea></div><button id="b" title="Bhejo">➤</button><button type="button" id="cam" title="Photo jodo" hidden>📷</button><button type="button" id="ib" title="Tasveer banao" hidden>🎨</button><div id="plusMenu"><button type="button" id="pmPhoto">📷 Photo se sawal</button><button type="button" id="pmDraw">🎨 Tasveer banao</button><button type="button" id="pmFile">📁 File</button><button type="button" id="pmMemory">🧠 Yaad rakho</button><button type="button" id="pmTools">🧰 Tools</button><button type="button" id="pmRoadmap">📋 Roadmap</button><button type="button" id="pmClear">🗑️ Chat saaf karo</button><button type="button" id="pmSettings">⚙️ Settings</button></div></form>
 <script>
 // ---- Profile (fashion site ki Google login se) ----
 function prof(){try{var p=JSON.parse(localStorage.getItem("fgProfile")||"null");if(p&&p.id)return{name:p.name||"",email:String(p.id)}}catch(e){}return{name:"",email:""}}
