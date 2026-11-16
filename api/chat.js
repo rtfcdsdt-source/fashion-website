@@ -455,7 +455,7 @@ module.exports = async function (req, res) {
     var lastStatus = "skip";
     for (var mi = 0; mi < orModels.length; mi++) {
       if ((Date.now() - t0) > 7000) { backupInfo.openrouter = "no-time"; return null; }
-      var budget = Math.max(1000, Math.min(3000, 9500 - (Date.now() - t0)));
+      var budget = Math.max(1500, Math.min(5000, 9500 - (Date.now() - t0)));
       try {
         var or = await fetch("https://openrouter.ai/api/v1/chat/completions", {
           method: "POST",
@@ -503,8 +503,10 @@ module.exports = async function (req, res) {
     }
     // Server error (500/503 overload) par ek baar dobara try karo — sirf jab
     // pehli koshish jaldi fail hui ho (time bacha ho). 429/400/403 par retry nahi.
-    // Groq key ho to dobara Gemini try karne ke bajay seedha Groq backup par jao.
-    if (!upstream.ok && upstream.status !== 429 && upstream.status !== 400 && upstream.status !== 403 && attempt === 1 && (Date.now() - t0) < 4000 && !process.env.GROQ_API_KEY) {
+    // Koi backup key (Groq/OpenRouter/xAI) ho to dobara Gemini try karne ke bajay
+    // seedha backup par jao — warna retry poora time kha jata hai aur backup ko
+    // time hi nahi milta (live test mein 2/2 failures 'no-time' aayi thi).
+    if (!upstream.ok && upstream.status !== 429 && upstream.status !== 400 && upstream.status !== 403 && attempt === 1 && (Date.now() - t0) < 4000 && !process.env.GROQ_API_KEY && !process.env.OPENROUTER_API_KEY && !process.env.XAI_API_KEY) {
       upstream = null;
       continue;
     }
