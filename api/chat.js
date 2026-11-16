@@ -187,6 +187,48 @@ function cleanMessages(input) {
   return out;
 }
 
+// ---- Live web search (DuckDuckGo Lite, free, koi key nahi) ----
+// Sawal aaj ki jaankari maange (bhav, news, mausam...) to web se taza results
+// nikaal kar Gemini ko dete hain, taaki jawab aaj ka ho. Search fail ho to
+// khaali list — chat kabhi nahi rukta.
+var LIVE_WORDS = ["aaj", "आज", "today", "abhi", "अभी", "current", "latest", "live", "taza", "ताज़ा", "fresh", "price", "bhav", "भाव", "rate", "daam", "दाम", "kimat", "कीमत", "sona", "gold", "chandi", "silver", "bitcoin", "crypto", "petrol", "diesel", "stock", "share", "sensex", "nifty", "dollar", "rupee", "news", "khabar", "खबर", "mausam", "मौसम", "weather", "barish", "बारिश", "temperature", "match", "cricket", "score"];
+function needsLiveInfo(text) {
+  if (!text) return false;
+  var low = String(text).toLowerCase();
+  for (var i = 0; i < LIVE_WORDS.length; i++) {
+    if (low.indexOf(LIVE_WORDS[i].toLowerCase()) >= 0) return true;
+  }
+  return false;
+}
+function stripTags(s) {
+  return String(s || "").replace(/<[^>]+>/g, "").replace(/&amp;/g, "&").replace(/&quot;/g, '"').replace(/&#039;/g, "'").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&nbsp;/g, " ").trim();
+}
+async function webSearch(query) {
+  var out = [];
+  try {
+    var u = "https://lite.duckduckgo.com/lite/?q=" + encodeURIComponent(String(query).slice(0, 200));
+    var r = await fetch(u, {
+      headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36", "Accept-Language": "en-US,en;q=0.9,hi;q=0.8" },
+      signal: AbortSignal.timeout(2500)
+    });
+    if (!r || !r.ok) return out;
+    var t = await r.text();
+    if (!t || t.length < 500) return out;
+    var titles = [];
+    var reT = /class='result-link'[^>]*>([\s\S]*?)<\/a>/g;
+    var m;
+    while ((m = reT.exec(t)) && titles.length < 5) titles.push(stripTags(m[1]));
+    var snips = [];
+    var reS = /class='result-snippet'[^>]*>([\s\S]*?)<\/td>/g;
+    while ((m = reS.exec(t)) && snips.length < 5) snips.push(stripTags(m[1]));
+    for (var i = 0; i < titles.length; i++) {
+      if (!titles[i]) continue;
+      out.push({ title: titles[i].slice(0, 120), snippet: (snips[i] || "").slice(0, 220) });
+    }
+  } catch (e) { return []; }
+  return out;
+}
+
 module.exports = async function (req, res) {
   var t0 = Date.now(); // continuation ke liye time budget napne ke liye
   if (req.method !== "POST") {
@@ -289,7 +331,19 @@ module.exports = async function (req, res) {
         return "- " + m.name + " — ₹" + m.price + " (" + m.category + ", " + m.brand + ")";
       }).join("\n");
     }
-    maxTokens = 1024;
+    // Live info: sawal aaj ki jaankari (bhav, news, mausam...) maange to web se
+    // taza results Gemini ko do — taaki jawab aaj ka ho, purana nahi.
+    var liveCount = 0;
+    if (needsLiveInfo(lastText)) {
+      var live = await webSearch(lastText);
+      if (live.length) {
+        liveCount = live.length;
+        sysText += "\n\nWeb se mili taza jaankari (aaj ki khabar/bhav — inhi ko use karke jawab do; agar inmein jawab na mile to imaandaari se bolo ki taza jaankari nahi mili):\n" + live.map(function (w, i) {
+          return (i + 1) + ". " + w.title + (w.snippet ? " — " + w.snippet : "");
+        }).join("\n");
+      }
+    }
+    maxTokens = liveCount ? 1536 : 1024;
   }
 
   var url = "https://generativelanguage.googleapis.com/v1beta/models/" + MODEL + ":generateContent?key=" + encodeURIComponent(String(key).trim());
