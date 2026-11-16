@@ -105,7 +105,6 @@ button:disabled{opacity:.6}
 <body>
 <header><span class="t">✨ Mera AI</span></header>
 <div id="who"></div>
-<div id="modes"><button type="button" class="chip on" data-mode="aam">💬 Aam</button><button type="button" class="chip" data-mode="padhai">📚 Padhai</button><button type="button" class="chip" data-mode="coding">💻 Coding</button><button type="button" class="chip" data-mode="translator">🌐 Translator</button><button type="button" class="chip" data-mode="kahani">📖 Kahani</button><button type="button" class="chip" data-mode="quiz">❓ Quiz</button><button type="button" class="chip" data-mode="summary">📝 Summary</button><button type="button" class="chip" data-mode="homework">✏️ Homework</button><button type="button" class="chip" data-mode="english">🗣️ English</button><button type="button" class="chip" data-mode="likho">✉️ Likho</button><button type="button" class="chip" data-mode="kirdar">🎭 Kirdar</button><button type="button" class="chip" data-mode="script">🎬 Script</button><button type="button" class="chip" data-mode="business">💡 Business</button><button type="button" class="chip" data-mode="resume">📄 Resume</button><button type="button" class="chip" data-mode="interview">🎤 Interview</button><button type="button" class="chip" data-mode="recipe">🍳 Recipe</button></div>
 <div id="settings" class="panel"><h3>⚙️ Settings</h3>
 <div class="row"><button type="button" class="backBtn" data-back>← Wapas</button></div>
 <div class="row"><span class="lbl">Rang</span><button type="button" class="chip" data-t="auto">🌞 Auto</button><button type="button" class="chip" data-t="light">Halka</button><button type="button" class="chip" data-t="dark">Andhera</button><button type="button" class="chip" data-t="blue">Neela</button></div>
@@ -407,7 +406,7 @@ function showChat(){
  setChatVisible(true);
  currentView="chat";
 }
-function askInChat(mode,text){settings.mode=mode;saveSettings();applySettings();showChat();q.value=text;send();}
+function askInChat(mode,text){settings.mode=mode;saveSettings();applySettings();showChat();q.value=text;send(true);}
 // ---- Roadmap (aapke saved YouTube-jaisa app MVP plan se) ----
 var RM_STEPS=[
  {ph:"Plan — Features (MVP)",steps:["User sign up / login","Video upload karna","Videos ki list aur video play karna","Search","Like, comment, subscribe"]},
@@ -421,7 +420,7 @@ function saveRm(){try{localStorage.setItem(RM_KEY,JSON.stringify(rmDone))}catch(
 function rmTotal(){var n=0;RM_STEPS.forEach(function(g){n+=g.steps.length});return n}
 function practiceStep(stepName){
  settings.mode="coding";saveSettings();applySettings();showChat();
- q.value="Mujhe is topic par ek chhota practice sawal do: "+stepName;send();
+ q.value="Mujhe is topic par ek chhota practice sawal do: "+stepName;send(true);
 }
 function renderRm(){
  var list=document.getElementById("rmlist");list.innerHTML="";var idx=0,done=0,total=rmTotal();
@@ -561,11 +560,38 @@ async function publishSite(site,card){
   attachCopy(card,function(){return d.url});
  }catch(e){status.textContent="❌ Internet ya server se jod nahi paya. Dobara try karo."}
 }
-async function send(){
+// ---- Auto mode: likhe hue sawal se mode khud pehchano ----
+var MODE_LABELS={aam:"Aam",padhai:"Padhai",coding:"Coding",translator:"Translator",kahani:"Kahani",quiz:"Quiz",summary:"Summary",homework:"Homework",english:"English",likho:"Likho",kirdar:"Kirdar",script:"Script",business:"Business",resume:"Resume",interview:"Interview",recipe:"Recipe"};
+function detectMode(t){
+ var s=" "+String(t||"").toLowerCase()+" ";
+ function has(words){for(var i=0;i<words.length;i++){if(s.indexOf(words[i])>=0)return true}return false}
+ if(has(["website","web site","html","css","javascript","python","code","coding","program","app banao","error","bug"," api "," sql ","react","node js","nodejs"]))return "coding";
+ if(has(["translate","anuvad","anuvaad","english mein","hindi mein","tarjuma"]))return "translator";
+ if(has(["kahani","story","katha"]))return "kahani";
+ if(has(["quiz","mcq","prashn"]))return "quiz";
+ if(has(["summary","saar","saransh","short mein"]))return "summary";
+ if(has(["homework","grih karya","grihkarya","assignment"]))return "homework";
+ if(has(["english seekh","english sikha","english bolna"]))return "english";
+ if(has(["script","screenplay","dialogue","samvaad"]))return "script";
+ if(has(["roleplay","kirdar","natak"]))return "kirdar";
+ if(has(["letter likh","patra likh","email likh","application likh","likh do"]))return "likho";
+ if(has(["business","dukaan","dhandha","startup","paise kamane"]))return "business";
+ if(has(["resume","biodata","naukri"," cv "]))return "resume";
+ if(has(["interview"]))return "interview";
+ if(has(["recipe","khana banane","pakane","dish"]))return "recipe";
+ if(has(["padhai","padhao","sikhao","syllabus","exam","pariksha","chapter","ganit","vigyan","itihas","bhugol"]))return "padhai";
+ return "aam";
+}
+async function send(keepMode){
  showChat();
  var t=q.value.trim();
  if(!t&&!photo)return;
  if(!t)t="Is photo ke baare mein batao.";
+ if(!keepMode){
+  var autoMode=detectMode(t);
+  if(autoMode!==settings.mode){settings.mode=autoMode;saveSettings();applySettings()}
+  if(!webEditing)q.placeholder="Mode: "+(MODE_LABELS[settings.mode]||"Aam")+" — Yahan likho...";
+ }
  var h=document.getElementById("hint");if(h)h.remove();
  if(WEB.test(t)||webEditing){q.value="";add("u",t);clearPhoto();return buildSite(t)}
  if(/chart|graph/i.test(t)&&/bana|dikha/i.test(t)){q.value="";add("u",t);clearPhoto();showPanel("panel-chart");if(/kharcha|kharch/i.test(t)){chLoadKharcha()}return}
