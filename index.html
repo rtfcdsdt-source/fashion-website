@@ -2161,9 +2161,12 @@ const SHOP_PRODUCTS=[["76v4n1","Urban Style Men's Black Fleece Hoodie",600,"http
       function boardName(id){ for (var i=0;i<BOARDS.length;i++) if (BOARDS[i].id===id) return BOARDS[i].name; return ""; }
       function visibleItems(){ return ITEMS.filter(function(it){ return !it.hidden; }); }
 
-      /* ----- shop categories: shirts and jeans only ----- */
+      /* ----- shop categories: All / Hoodies / Shirts / Jeans -----
+         Hoodies are the catalogue products below (SHOP_PRODUCTS);
+         Shirts and Jeans are the featured photos (ITEMS). */
       var CATS = [
         { id:"all", name:"All" },
+        { id:"hoodies", name:"Hoodies" },
         { id:"shirts", name:"Shirts" },
         { id:"jeans", name:"Jeans" }
       ];
@@ -2172,7 +2175,10 @@ const SHOP_PRODUCTS=[["76v4n1","Urban Style Men's Black Fleece Hoodie",600,"http
       /* ----- filter chips ----- */
       var chipsWrap = document.getElementById("chips");
       var chipDefs = CATS.filter(function(c){
-        return c.id === "all" || visibleItems().some(function(it){ return it.cat===c.id; });
+        /* Hoodies live in the catalogue (SHOP_PRODUCTS), not in the
+           featured ITEMS, so that chip always stands — the catalogue
+           holds the 215 hoodies. */
+        return c.id === "all" || c.id === "hoodies" || visibleItems().some(function(it){ return it.cat===c.id; });
       });
       chipDefs.forEach(function(c){
         var b = document.createElement("button");
@@ -2284,8 +2290,12 @@ const SHOP_PRODUCTS=[["76v4n1","Urban Style Men's Black Fleece Hoodie",600,"http
           '</article>';
         }).join("");
 
-        emptyState.style.display = list.length ? "none" : "block";
-        if (!list.length){
+        /* On the Hoodies filter the featured grid is empty by
+           design — the hoodies in the catalogue below ARE the
+           content — so the empty note stays hidden there. */
+        var showEmpty = !list.length && !(state.board === "hoodies" && prodList().length);
+        emptyState.style.display = showEmpty ? "block" : "none";
+        if (showEmpty){
           document.getElementById("emptyText").textContent = "Try a different search, or clear the category filter to see every photo again.";
         }
 
@@ -2303,8 +2313,11 @@ const SHOP_PRODUCTS=[["76v4n1","Urban Style Men's Black Fleece Hoodie",600,"http
          listings' own photos, loaded from their URLs as-is. The
          hoodies replaced the old 1,000-product Amazon catalogue on
          the owner's order (2026-11-15); the category chips filter
-         the featured photos only — the hoodie list below them is
-         one collection and always stands in full. Cards render 60
+         the featured photos — no featured photo is a hoodie, so
+         the Hoodies chip leaves the featured grid empty and only
+         the hoodies below stand — while the hoodie list itself is
+         one collection and always stands in full, exactly as it
+         did under All / Shirts / Jeans before. Cards render 60
          at a time; "Load more" appends the next 60. */
       var PROD_CHUNK = 60;
       var prodGrid = document.getElementById("prodGrid");
