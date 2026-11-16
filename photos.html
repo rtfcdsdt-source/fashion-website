@@ -72,6 +72,9 @@
           <input type="text" id="linkOut" readonly>
           <button class="small" id="copyNewBtn">Copy karo</button>
         </div>
+        <div class="row" style="margin-top:10px">
+          <button id="toAddBtn">Price aur Naam daalo →</button>
+        </div>
       </div>
     </div>
 
@@ -89,7 +92,7 @@
 (function () {
   var API = "/api/photos";
   var code = "";
-  try { code = localStorage.getItem("fg-photos-code") || ""; } catch (e) { code = ""; }
+  try { code = localStorage.getItem("fg-photos-code") || localStorage.getItem("fg-addproduct-code") || ""; } catch (e) { code = ""; }
 
   var loginCard = document.getElementById("loginCard");
   var main = document.getElementById("main");
@@ -219,6 +222,11 @@
     copyText(linkOut.value, this);
   });
 
+  document.getElementById("toAddBtn").addEventListener("click", function () {
+    var u = linkOut.value.trim();
+    if (u) location.href = "/add-product?photo=" + encodeURIComponent(u);
+  });
+
   async function loadPhotos() {
     listEl.innerHTML = '<div class="empty">Load ho raha hai…</div>';
     var r;
@@ -251,7 +259,7 @@
         '<img src="' + esc(url) + '" alt="photo ' + p.id + '" loading="lazy">' +
         '<div class="meta">Photo #' + p.id + ' · ' + fmtDate(p.created_at) + '</div>' +
         '<div class="linkbox"><input type="text" value="' + esc(url) + '" readonly><button class="small copyBtn">Copy karo</button></div>' +
-        '<div class="actions"><button class="small ghost delBtn">Delete</button></div>' +
+        '<div class="actions"><button class="small addBtn">Price aur Naam daalo →</button><button class="small ghost delBtn">Delete</button></div>' +
         '</div>';
     }).join("");
     listEl.querySelectorAll(".photo").forEach(function (card) {
@@ -259,6 +267,9 @@
       var input = card.querySelector("input");
       card.querySelector(".copyBtn").addEventListener("click", function () {
         copyText(input.value, this);
+      });
+      card.querySelector(".addBtn").addEventListener("click", function () {
+        location.href = "/add-product?photo=" + encodeURIComponent(input.value.trim());
       });
       card.querySelector(".delBtn").addEventListener("click", function () {
         if (!confirm("Ye photo delete kar dun? Iska link bhi kaam nahi karega.")) return;
@@ -294,14 +305,14 @@
     var v = codeInput.value.trim();
     if (!v) { loginErr.style.display = "block"; loginErr.textContent = "Pehle code daalo."; return; }
     code = v;
-    try { localStorage.setItem("fg-photos-code", code); } catch (e) {}
+    try { localStorage.setItem("fg-photos-code", code); localStorage.setItem("fg-addproduct-code", code); } catch (e) {}
     loginErr.style.display = "none";
     showMain();
   });
   codeInput.addEventListener("keydown", function (e) { if (e.key === "Enter") loginBtn.click(); });
   document.getElementById("refreshBtn").addEventListener("click", loadPhotos);
   document.getElementById("logoutBtn").addEventListener("click", function () {
-    try { localStorage.removeItem("fg-photos-code"); } catch (e) {}
+    try { localStorage.removeItem("fg-photos-code"); localStorage.removeItem("fg-addproduct-code"); } catch (e) {}
     code = "";
     codeInput.value = "";
     showLogin();

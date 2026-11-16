@@ -88,7 +88,7 @@
 (function () {
   var API = "/api/products";
   var code = "";
-  try { code = localStorage.getItem("fg-addproduct-code") || ""; } catch (e) { code = ""; }
+  try { code = localStorage.getItem("fg-addproduct-code") || localStorage.getItem("fg-photos-code") || ""; } catch (e) { code = ""; }
 
   var loginCard = document.getElementById("loginCard");
   var main = document.getElementById("main");
@@ -245,21 +245,36 @@
   function showMain() {
     loginCard.style.display = "none";
     main.style.display = "block";
+    prefillFromUrl();
     loadProducts();
+  }
+
+  // Pre-fill the photo link when arriving from My Photos (?photo=<url>).
+  function prefillFromUrl() {
+    try {
+      var u = new URLSearchParams(location.search).get("photo") || "";
+      u = u.trim();
+      if (u && !photoInput.value.trim() && (u.indexOf("http://") === 0 || u.indexOf("https://") === 0)) {
+        photoInput.value = u;
+        photoPreview.src = u;
+        photoPreview.style.display = "block";
+        photoPreview.onerror = function () { photoPreview.style.display = "none"; };
+      }
+    } catch (e) {}
   }
 
   loginBtn.addEventListener("click", function () {
     var v = codeInput.value.trim();
     if (!v) { loginErr.style.display = "block"; loginErr.textContent = "Pehle code daalo."; return; }
     code = v;
-    try { localStorage.setItem("fg-addproduct-code", code); } catch (e) {}
+    try { localStorage.setItem("fg-addproduct-code", code); localStorage.setItem("fg-photos-code", code); } catch (e) {}
     loginErr.style.display = "none";
     showMain();
   });
   codeInput.addEventListener("keydown", function (e) { if (e.key === "Enter") loginBtn.click(); });
   document.getElementById("refreshBtn").addEventListener("click", loadProducts);
   document.getElementById("logoutBtn").addEventListener("click", function () {
-    try { localStorage.removeItem("fg-addproduct-code"); } catch (e) {}
+    try { localStorage.removeItem("fg-addproduct-code"); localStorage.removeItem("fg-photos-code"); } catch (e) {}
     code = "";
     codeInput.value = "";
     showLogin();

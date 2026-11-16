@@ -106,6 +106,15 @@
         display:grid;place-items:center;
       }
       .search input::placeholder{color:var(--ink-soft)}
+      /* upload button (top-left in header): opens My Photos (/photos)
+         where the admin-code box and photo upload live */
+      .upload-btn{
+        flex:none;width:42px;height:42px;border-radius:999px;
+        border:1px solid var(--line);background:var(--surface);color:var(--ink);
+        display:grid;place-items:center;text-decoration:none;
+        -webkit-tap-highlight-color:transparent;
+      }
+      .upload-btn:active{background:var(--surface-2)}
       /* hamburger menu button + dropdown panel (boards & links) */
       .menu-btn{
         flex:none;width:42px;height:42px;border-radius:999px;
@@ -137,6 +146,7 @@
         .topbar{gap:9px;padding:10px 12px}
         .search .go{width:50px}
         .menu-btn{width:38px;height:38px}
+        .upload-btn{width:38px;height:38px}
         .login-btn{width:38px;height:38px}
       }
 
@@ -1588,6 +1598,9 @@
   </head>
   <body>
     <header class="topbar">
+      <a class="upload-btn" href="/photos" aria-label="Upload photo — My Photos" title="Upload photo">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4"/><path d="m6 10 6-6 6 6"/><path d="M4 20h16"/></svg>
+      </a>
       <button class="menu-btn" id="menuBtn" type="button" aria-label="Open menu" aria-expanded="false" aria-haspopup="true">
         <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
       </button>
