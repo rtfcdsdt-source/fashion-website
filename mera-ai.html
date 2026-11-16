@@ -125,6 +125,7 @@ button:disabled{opacity:.6}
 <button type="button" class="toolBtn" data-open="panel-quiz">❓ Quiz App <span>MCQ + score</span></button>
 <button type="button" class="toolBtn" data-open="panel-flash">🃏 Flashcards <span>palatne wale card</span></button>
 <button type="button" class="toolBtn" data-open="panel-kharcha">💰 Kharcha Tracker <span>roz ka hisaab</span></button>
+<button type="button" class="toolBtn" data-open="panel-chart">📊 Chart Banao <span>number se graph</span></button>
 <button type="button" class="toolBtn" data-open="panel-habit">✅ Aadat + To-Do <span>streak dekho</span></button>
 <button type="button" class="toolBtn" data-open="panel-calc">🧮 Calculator <span>EMI, %, unit</span></button>
 <button type="button" class="toolBtn" data-open="panel-bill">🧾 Bill Banane Wala <span>quotation</span></button>
@@ -167,6 +168,15 @@ button:disabled{opacity:.6}
 <div id="khTotals" style="font-weight:700;margin:8px 0"></div>
 <div id="khBars"></div>
 <div id="khList"></div>
+</div>
+<div id="panel-chart" class="panel"><h3>📊 Chart Banao</h3>
+<div class="row"><button type="button" class="backBtn" data-back>← Wapas</button></div>
+<div style="font-size:.85rem;color:var(--muted)">Number likho — bar, pie ya line chart ban jayega. Har line mein naam aur number likho.</div>
+<input id="chTitle" class="fld" type="text" placeholder="Chart ka naam (jaise: Mere kharche)">
+<select id="chType" class="fld"><option value="bar">📊 Bar chart</option><option value="pie">🥧 Pie chart</option><option value="line">📈 Line chart</option></select>
+<textarea id="chData" class="fld" rows="5" placeholder="Har line mein: naam aur number&#10;Khana 5000&#10;Kapde 3000&#10;Bill 2000"></textarea>
+<div class="row"><button type="button" class="chip" id="chGo">Chart banao</button><button type="button" class="chip" id="chKharcha">💰 Kharcha se chart</button><button type="button" class="chip" id="chClear">Saaf karo</button></div>
+<div id="chArea"></div>
 </div>
 <div id="panel-habit" class="panel"><h3>✅ Aadat + To-Do</h3>
 <div class="row"><button type="button" class="backBtn" data-back>← Wapas</button></div>
@@ -449,6 +459,7 @@ async function send(){
  if(!t)t="Is photo ke baare mein batao.";
  var h=document.getElementById("hint");if(h)h.remove();
  if(WEB.test(t)||webEditing){q.value="";add("u",t);clearPhoto();return buildSite(t)}
+ if(/chart|graph/i.test(t)&&/bana|dikha/i.test(t)){q.value="";add("u",t);clearPhoto();showPanel("panel-chart");if(/kharcha|kharch/i.test(t)){chLoadKharcha()}return}
  q.value="";var ub=add("u",t);
  if(photoUrl){var pim=document.createElement("img");pim.alt="photo";pim.style.cssText="width:100%;max-width:220px;border-radius:10px;display:block;margin-top:8px";pim.src=photoUrl;ub.appendChild(pim);log.scrollTop=log.scrollHeight}
  hist.push({role:"user",text:t});
@@ -1106,6 +1117,117 @@ document.getElementById("mmGo").onclick=async function(){
   if(!j||typeof j.topic!=="string"||!Array.isArray(j.branches)||!j.branches.length||!j.branches.every(function(b){return b&&typeof b.label==="string"&&Array.isArray(b.children)})){mmFail(area,topic);return}
   renderMindMap(j);
  }catch(e){mmFail(area,topic)}
+};
+// ---- Chart Banao (number se bar / pie / line chart, sirf is phone par) ----
+var CH_COLORS=["#E7000C","#2563EB","#059669","#D97706","#7C3AED","#DB2777","#0891B2","#65A30D"];
+function chEsc(s){return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}
+function chFmt(n){try{return Number(n).toLocaleString("en-IN")}catch(e){return String(n)}}
+function chParse(text){
+ var rows=[];
+ String(text||"").split(/\n/).forEach(function(line){
+  line=line.trim();if(!line)return;
+  var m=line.match(/^(.*?)[\s,]+(-?[\d,]+(?:\.\d+)?)\s*$/);
+  if(!m)return;
+  var v=parseFloat(m[2].replace(/,/g,""));
+  if(!isFinite(v)||v<=0)return;
+  var label=m[1].trim()||("Item "+(rows.length+1));
+  rows.push({label:label,value:v});
+ });
+ return rows.slice(0,8);
+}
+function chRender(){
+ var title=document.getElementById("chTitle").value.trim();
+ var type=document.getElementById("chType").value;
+ var rows=chParse(document.getElementById("chData").value);
+ var area=document.getElementById("chArea");
+ if(!rows.length){area.innerHTML="Pehle data likho — har line mein naam aur number (jaise: Khana 5000).";return}
+ var max=0,total=0;
+ rows.forEach(function(r){if(r.value>max)max=r.value;total+=r.value});
+ var html="";
+ if(title)html+='<div style="font-weight:700;margin:6px 0">'+chEsc(title)+'</div>';
+ if(type==="bar"){
+  var W=720,rowH=34,labelW=150,valW=80,barX=labelW,barW=W-labelW-valW-10;
+  var H=rows.length*rowH+10;
+  html+='<svg viewBox="0 0 '+W+' '+H+'" width="100%" style="display:block" xmlns="http://www.w3.org/2000/svg">';
+  rows.forEach(function(r,i){
+   var y=10+i*rowH;
+   var bw=Math.max(2,Math.round(r.value/max*barW));
+   var c=CH_COLORS[i%CH_COLORS.length];
+   var lb=r.label.length>18?r.label.slice(0,18)+"…":r.label;
+   html+='<text x="0" y="'+(y+17)+'" style="fill:var(--text);font-size:13px">'+chEsc(lb)+'</text>';
+   html+='<rect x="'+barX+'" y="'+y+'" width="'+bw+'" height="20" rx="4" style="fill:'+c+'"/>';
+   html+='<text x="'+(barX+bw+6)+'" y="'+(y+16)+'" style="fill:var(--text);font-size:13px;font-weight:700">'+chFmt(r.value)+'</text>';
+  });
+  html+='</svg>';
+ }else if(type==="pie"){
+  var cx=150,cy=150,pr=120,ang=-Math.PI/2;
+  html+='<svg viewBox="0 0 300 300" width="100%" style="display:block;max-width:300px;margin:0 auto" xmlns="http://www.w3.org/2000/svg">';
+  if(rows.length===1){
+   html+='<circle cx="'+cx+'" cy="'+cy+'" r="'+pr+'" style="fill:'+CH_COLORS[0]+'"/>';
+  }else{
+   rows.forEach(function(row,i){
+    var frac=row.value/total;
+    var a0=ang,a1=ang+frac*Math.PI*2;
+    var x0=cx+pr*Math.cos(a0),y0=cy+pr*Math.sin(a0);
+    var x1=cx+pr*Math.cos(a1),y1=cy+pr*Math.sin(a1);
+    var large=frac>0.5?1:0;
+    var c=CH_COLORS[i%CH_COLORS.length];
+    html+='<path d="M '+cx+' '+cy+' L '+x0.toFixed(1)+' '+y0.toFixed(1)+' A '+pr+' '+pr+' 0 '+large+' 1 '+x1.toFixed(1)+' '+y1.toFixed(1)+' Z" style="fill:'+c+';stroke:var(--bg);stroke-width:2"/>';
+    ang=a1;
+   });
+  }
+  html+='</svg>';
+  html+='<div style="margin-top:8px">';
+  rows.forEach(function(row,i){
+   var c=CH_COLORS[i%CH_COLORS.length];
+   var pct=Math.round(row.value/total*100);
+   html+='<div style="display:flex;align-items:center;gap:6px;font-size:.9rem;margin:4px 0"><span style="width:12px;height:12px;border-radius:3px;background:'+c+';display:inline-block"></span><span style="flex:1">'+chEsc(row.label)+'</span><b>₹'+chFmt(row.value)+' ('+pct+'%)</b></div>';
+  });
+  html+='</div>';
+ }else{
+  var W2=720,H2=280,pl=46,pr2=16,pt=18,pb=34;
+  var pw=W2-pl-pr2,ph=H2-pt-pb;
+  html+='<svg viewBox="0 0 '+W2+' '+H2+'" width="100%" style="display:block" xmlns="http://www.w3.org/2000/svg">';
+  [0,0.5,1].forEach(function(f){
+   var y=pt+ph*(1-f);
+   html+='<line x1="'+pl+'" y1="'+y+'" x2="'+(W2-pr2)+'" y2="'+y+'" style="stroke:var(--border);stroke-width:1"/>';
+   html+='<text x="'+(pl-6)+'" y="'+(y+4)+'" text-anchor="end" style="fill:var(--muted);font-size:11px">'+chFmt(Math.round(max*f))+'</text>';
+  });
+  var n=rows.length;
+  function px(i){return n===1?pl+pw/2:pl+pw*i/(n-1)}
+  function py(v){return pt+ph*(1-v/max)}
+  var pts=rows.map(function(r,i){return px(i).toFixed(1)+","+py(r.value).toFixed(1)}).join(" ");
+  html+='<polyline points="'+pts+'" fill="none" style="stroke:#E7000C;stroke-width:2.5"/>';
+  rows.forEach(function(r,i){
+   html+='<circle cx="'+px(i).toFixed(1)+'" cy="'+py(r.value).toFixed(1)+'" r="5" style="fill:#E7000C;stroke:var(--bg);stroke-width:2"/>';
+   html+='<text x="'+px(i).toFixed(1)+'" y="'+(py(r.value)-10).toFixed(1)+'" text-anchor="middle" style="fill:var(--text);font-size:12px;font-weight:700">'+chFmt(r.value)+'</text>';
+   var lb=r.label.length>10?r.label.slice(0,10)+"…":r.label;
+   html+='<text x="'+px(i).toFixed(1)+'" y="'+(H2-10)+'" text-anchor="middle" style="fill:var(--text);font-size:12px">'+chEsc(lb)+'</text>';
+  });
+  html+='</svg>';
+ }
+ html+='<div style="font-size:.85rem;color:var(--muted);margin-top:6px">Total: ₹'+chFmt(total)+'</div>';
+ area.innerHTML=html;
+}
+function chLoadKharcha(){
+ var obj=loadKhObj();
+ var byCat={};
+ obj.expenses.forEach(function(e){byCat[e.cat]=(byCat[e.cat]||0)+e.amt});
+ var cats=Object.keys(byCat);
+ if(!cats.length){document.getElementById("chArea").textContent="Kharcha Tracker mein abhi koi kharcha nahi hai. Pehle wahan kharcha jodo.";return false}
+ var lines=cats.map(function(c){return c+" "+byCat[c]});
+ document.getElementById("chData").value=lines.join("\n");
+ document.getElementById("chType").value="pie";
+ document.getElementById("chTitle").value="Mere kharche — category ke hisaab se";
+ chRender();
+ return true;
+}
+document.getElementById("chGo").onclick=function(){chRender()};
+document.getElementById("chKharcha").onclick=function(){chLoadKharcha()};
+document.getElementById("chClear").onclick=function(){
+ document.getElementById("chTitle").value="";
+ document.getElementById("chData").value="";
+ document.getElementById("chArea").innerHTML="";
 };
 // ---- Ideas Diary ----
 var DG_KEY="meraai-diary-v1"+suffix();
