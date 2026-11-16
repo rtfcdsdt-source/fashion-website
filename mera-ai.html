@@ -307,6 +307,23 @@ function attachCopy(box,getText){
  c.onclick=function(e){if(e)e.stopPropagation();var t="";try{t=getText()||""}catch(err){t=""}copyText(t).then(function(ok){c.textContent=ok?"✓ Copy ho gaya":"Copy nahi hua";setTimeout(function(){c.textContent="📋 Copy"},1500)})};
  box.appendChild(c);
 }
+// ---- Google results: live search ke sources + Google par kholo button ----
+function attachSources(box,sources,query){
+ var wrap=document.createElement("div");wrap.style.cssText="margin-top:10px;border-top:1px solid #eee;padding-top:8px";
+ var h=document.createElement("div");h.style.cssText="font-weight:700;margin-bottom:6px";h.textContent="🔍 Google par mile results:";wrap.appendChild(h);
+ sources.slice(0,5).forEach(function(s){
+  if(!s||!s.link||!/^https?:\/\//.test(s.link))return;
+  var a=document.createElement("a");a.href=s.link;a.target="_blank";a.rel="noopener";
+  a.style.cssText="display:block;text-decoration:none;color:inherit;background:#f6f6f6;border:1px solid #e5e5e5;border-radius:10px;padding:8px 10px;margin-bottom:6px";
+  var ti=document.createElement("div");ti.style.cssText="font-weight:700;color:#1a0dab";ti.textContent=s.title||s.link;a.appendChild(ti);
+  if(s.snippet){var sn=document.createElement("div");sn.style.cssText="font-size:13px;color:#444;margin-top:2px";sn.textContent=s.snippet;a.appendChild(sn)}
+  wrap.appendChild(a);
+ });
+ var g=document.createElement("a");g.href="https://www.google.com/search?q="+encodeURIComponent(query||"");g.target="_blank";g.rel="noopener";
+ g.style.cssText="display:inline-block;background:#E7000C;color:#fff;font-weight:700;border-radius:20px;padding:8px 14px;text-decoration:none;margin-top:2px";
+ g.textContent="🔍 Google par kholo";wrap.appendChild(g);
+ box.appendChild(wrap);
+}
 // ---- Views: chat ya koi panel (Tools se khulta hai) ----
 var CHAT_IDS=["who","modes","log","pv","styles","f"];
 var currentView="chat";
@@ -473,7 +490,7 @@ async function send(){
   if(!r.ok){box.textContent=d.error||("Kuch gadbad hui (code "+r.status+"). Thodi der baad dobara try karo.");b.disabled=false;cam.disabled=false;ib.disabled=false;q.disabled=false;q.focus();return}
   var ans=(d.reply||"").trim();
   if(!ans){box.textContent="Khali jawab aaya. Dobara try karo.";b.disabled=false;cam.disabled=false;ib.disabled=false;q.disabled=false;q.focus();return}
-  box.textContent=ans;attachCopy(box,function(){return ans});hist.push({role:"assistant",text:ans});saveHist();
+  box.textContent=ans;attachCopy(box,function(){return ans});if(Array.isArray(d.sources)&&d.sources.length){attachSources(box,d.sources,d.searchQuery||t)}hist.push({role:"assistant",text:ans});saveHist();
  }catch(e){box.textContent="Internet ya server se jod nahi paya. Dobara try karo."}
  b.disabled=false;cam.disabled=false;ib.disabled=false;q.disabled=false;q.focus();
 }

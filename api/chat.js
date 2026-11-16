@@ -226,7 +226,7 @@ async function webSearch(query) {
     for (var i = 0; i < org.length && out.length < 5; i++) {
       var o = org[i] || {};
       if (!o.title) continue;
-      out.push({ title: String(o.title).slice(0, 120), snippet: String(o.snippet || "").slice(0, 220) });
+      out.push({ title: String(o.title).slice(0, 120), snippet: String(o.snippet || "").slice(0, 220), link: String(o.link || "") });
     }
   } catch (e) { return []; }
   return out;
@@ -447,5 +447,13 @@ module.exports = async function (req, res) {
     }
     return json(res, 200, { ok: true, reply: reply, website: { html: wHtml, css: wCss || "", js: wJs || "" } });
   }
-  return json(res, 200, { reply: reply });
+  var resp = { reply: reply };
+  if (typeof live !== "undefined" && live && live.length) {
+    var srcs = live.filter(function (w) { return w && w.link && /^https?:\/\//.test(w.link); }).slice(0, 5);
+    if (srcs.length) {
+      resp.sources = srcs.map(function (w) { return { title: w.title, link: w.link, snippet: w.snippet || "" }; });
+      resp.searchQuery = lastText;
+    }
+  }
+  return json(res, 200, resp);
 };
