@@ -587,6 +587,7 @@
         <button class="chip" type="button" id="traySettings">🎨 Naam / Rang</button>
         <button class="chip" type="button" id="trayBrain">🧠 Dimaag</button>
         <button class="chip" type="button" id="trayDownload">⬇️ Chat download</button>
+        <button class="chip" type="button" id="traySave">💾 Chat hamesha save karo</button>
         <button class="chip" type="button" id="trayClear">🧹 Chat saaf karo</button>
       </div>
 
@@ -647,11 +648,76 @@
           "(7) If the user asks a follow-up change to code you already gave, return the FULL updated code again, not only the diff. " +
           "(8) If the request is unclear, make the most sensible complete version instead of asking many questions. " +
           "For non-coding questions, answer normally and helpfully — study, business, videos and daily questions included. Use simple markdown (bold, lists, code blocks) when it helps." +
-          " APP FEATURES: this chat app itself can generate a photo when the user asks for one (e.g. 'photo banao: ...'), show a live Preview of HTML code (Preview button above the code), publish an HTML website live with the 'Live karo' button above the code (asks for the admin code once, then gives a live link), read any answer aloud (Sunao button under each answer), remember facts for this chat when the user says 'yaad rakho', read a PDF or text file the user attaches from the + tray (the app extracts the file's text and sends it to you — then summarize it and answer questions about it), accept voice dictation through the mic button, let the user rename you and change your theme colour in the + tray settings, download the whole chat as a file, and it has To-do, Kharcha Tracker and Quiz tools in the + tray. The app handles those requests itself, so never claim you cannot make photos or remember things in this chat." +
+          " APP FEATURES: this chat app itself can generate a photo when the user asks for one (e.g. 'photo banao: ...'), show a live Preview of HTML code (Preview button above the code), publish an HTML website live with the 'Live karo' button above the code (asks for the admin code once, then gives a live link), answer live/current questions (price, news, weather, gold rate...) using the fresh Google search results the app attaches to your prompt, save the chat and remembered facts on the server forever when the admin code is set (the user enables it from 'Chat hamesha save karo' in the + tray), read any answer aloud (Sunao button under each answer), remember facts for this chat when the user says 'yaad rakho', read a PDF or text file the user attaches from the + tray (the app extracts the file's text and sends it to you — then summarize it and answer questions about it), accept voice dictation through the mic button, let the user rename you and change your theme colour in the + tray settings, download the whole chat as a file, and it has To-do, Kharcha Tracker and Quiz tools in the + tray. The app handles those requests itself, so never claim you cannot make photos or remember things in this chat." +
           " THINKING RULES: before answering, think step by step silently. For maths, logic and code, double-check your result before replying. Never invent facts, names, numbers or links - if you are not sure, say so honestly and give your best guess clearly marked as a guess. Answer exactly what was asked, with no filler.";
 
-        var history = []; // {role: 'user'|'assistant', content: string} — in-memory only
+        var history = []; // {role: 'user'|'assistant', content: string}
         var busy = false;
+        // ---- Server save (admin code ho to chat + yaadein hamesha ke liye server par save) ----
+        var serverChatTimer = null;
+        function getAdminCode() {
+          try { return localStorage.getItem("fg-publish-code") || localStorage.getItem("fg-photos-code") || localStorage.getItem("fg-addproduct-code") || ""; } catch (e) { return ""; }
+        }
+        function serverChatOn() { return !!getAdminCode(); }
+        function pushHist(role, content) {
+          if (role && typeof role === "object") {
+            history.push({ role: role.role, content: role.content });
+          } else {
+            history.push({ role: role, content: content });
+          }
+          saveServerHist();
+        }
+        function saveServerHist() {
+          if (!serverChatOn()) return;
+          clearTimeout(serverChatTimer);
+          serverChatTimer = setTimeout(function () {
+            try {
+              var msgs = history.slice(-100).map(function (h) { return { role: h.role, text: h.content }; });
+              fetch("/api/freeai-chat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code: getAdminCode(), messages: msgs }) }).catch(function () {});
+            } catch (e) {}
+          }, 800);
+        }
+        function loadServerHist() {
+          return fetch("/api/freeai-chat?code=" + encodeURIComponent(getAdminCode()))
+            .then(function (r) { return r.json().catch(function () { return {}; }); })
+            .then(function (d) {
+              if (!d || !d.ok || !Array.isArray(d.messages)) return null;
+              return d.messages.filter(function (m) { return m && typeof m.text === "string"; }).map(function (m) { return { role: m.role === "assistant" ? "assistant" : "user", content: m.text }; });
+            })
+            .catch(function () { return null; });
+        }
+        function renderHist() {
+          messagesEl.innerHTML = "";
+          history.forEach(function (m) { addMessage(m.role, m.content); });
+          scrollToBottom();
+        }
+        function syncChatFromServer() {
+          if (!serverChatOn()) return;
+          loadServerHist().then(function (srv) {
+            if (srv === null) return;
+            if (srv.length) { history = srv; renderHist(); }
+            else if (history.length) { saveServerHist(); }
+          });
+        }
+        function loadMemories() {
+          if (!serverChatOn()) return;
+          fetch("/api/freeai-memory?code=" + encodeURIComponent(getAdminCode()))
+            .then(function (r) { return r.json().catch(function () { return {}; }); })
+            .then(function (d) {
+              if (d && d.ok && Array.isArray(d.memories)) {
+                if (d.memories.length) {
+                  memories = d.memories.filter(function (m) { return typeof m === "string"; });
+                } else if (memories.length) {
+                  saveMemories();
+                }
+              }
+            })
+            .catch(function () {});
+        }
+        function saveMemories() {
+          if (!serverChatOn()) return;
+          try { fetch("/api/freeai-memory", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code: getAdminCode(), memories: memories }) }).catch(function () {}); } catch (e) {}
+        }
         var memories = []; // 'yaad rakho' wali baatein — sirf is chat ke liye (page band = khatm)
         var todos = [];    // To-Do tool ka data — in-memory
         var kharchas = []; // Kharcha tool ka data — {amount, note}, in-memory
@@ -989,7 +1055,7 @@
             return "Main **" + aiName + "** hoon — Mera AI jaisa hi chat assistant, par ye bina kisi API key ke chalta hai. Sawal poochho, hisab karwao, code likhwao — koshish poori karunga! 💪";
           }
           if (/(kya kya kar sakte|kya kar sakte|tum kya kar|help|madad|features|kaam karte ho)/.test(low)) {
-            return "Main ye sab kar sakta hoon:\n\n- **Coding (strong)** — poora chalta-hua code: website, app, game, script — ek hi file mein, Download button ke saath\n- **Code Preview** — HTML code ke upar Preview button dabao, result turant chal kar dikhega\n- **Live karo** — HTML website ke upar Live karo button se site seedha live karo\n- **Bug fix** — apna code ya error paste karo, main galti bata kar poora sahi code dunga\n- **Photo banana** — likho `photo banao: pahadon par sunset`, photo ban jayegi\n- **File padhna** — + wale menu mein **📄 File padho** se PDF ya text file bhejo, main padh kar summary dunga aur sawalon ke jawab bhi\n- **Bol kar likhna** — type karne ki jagah input ke paas 🎤 mic dabao aur bol do\n- **Bol kar sunana** — har jawab ke neeche 🔊 Sunao button hai\n- **Yaad rakhna** — `yaad rakho: ...` likho, is chat mein yaad rakhunga\n- **Naam / Rang badalna** — + wale menu mein **🎨 Naam / Rang** se mera naam aur rang apni pasand ka karo\n- **Chat download** — + wale menu mein **⬇️ Chat download** se poori chat file mein save karo\n- **Tools** — + wale menu mein To-Do list, Kharcha Tracker (chart ke saath) aur Quiz\n- **Sawal-jawab** — koi bhi topic, Hindi / Hinglish / English\n- **Hisab** — jaise `125 ka 15%` ya `45 * 8 + 20`; kharcha note karne ke liye `kharcha 200 khana`\n- **Time / date** — turant bata deta hoon\n\nBas likh kar bhejo!";
+            return "Main ye sab kar sakta hoon:\n\n- **Coding (strong)** — poora chalta-hua code: website, app, game, script — ek hi file mein, Download button ke saath\n- **Code Preview** — HTML code ke upar Preview button dabao, result turant chal kar dikhega\n- **Live karo** — HTML website ke upar Live karo button se site seedha live karo\n- **Live search** — aaj ka bhav, news, mausam poochho, taza jawab milega\n- **Permanent save** — + menu mein 'Chat hamesha save karo' se chat aur yaadein hamesha ke liye save hongi\n- **Bug fix** — apna code ya error paste karo, main galti bata kar poora sahi code dunga\n- **Photo banana** — likho `photo banao: pahadon par sunset`, photo ban jayegi\n- **File padhna** — + wale menu mein **📄 File padho** se PDF ya text file bhejo, main padh kar summary dunga aur sawalon ke jawab bhi\n- **Bol kar likhna** — type karne ki jagah input ke paas 🎤 mic dabao aur bol do\n- **Bol kar sunana** — har jawab ke neeche 🔊 Sunao button hai\n- **Yaad rakhna** — `yaad rakho: ...` likho, is chat mein yaad rakhunga\n- **Naam / Rang badalna** — + wale menu mein **🎨 Naam / Rang** se mera naam aur rang apni pasand ka karo\n- **Chat download** — + wale menu mein **⬇️ Chat download** se poori chat file mein save karo\n- **Tools** — + wale menu mein To-Do list, Kharcha Tracker (chart ke saath) aur Quiz\n- **Sawal-jawab** — koi bhi topic, Hindi / Hinglish / English\n- **Hisab** — jaise `125 ka 15%` ya `45 * 8 + 20`; kharcha note karne ke liye `kharcha 200 khana`\n- **Time / date** — turant bata deta hoon\n\nBas likh kar bhejo!";
           }
           if (/(thank|dhanyavad|shukriya|thanks)/.test(low)) {
             return "Koi baat nahi! 😊 Aur kuch chahiye to bas likh do.";
@@ -1084,32 +1150,59 @@
             });
         }
 
-        function askFreeAI(userText) {
-          var msgs = [{ role: "system", content: buildSystemPrompt() }];
-          history.slice(-20).forEach(function (h) { msgs.push(h); });
-          msgs.push({ role: "user", content: userText });
-
-          var chain = modelChain(userText);
-          var used = chain[0];
-          var i = 0;
-          function next() {
-            if (i >= chain.length) {
-              // sab plain mode fail — aakhri koshish JSON mode se
-              return callModel(msgs, "openai", true, 60000);
-            }
-            var m = chain[i++];
-            var isLast = i >= chain.length;
-            used = m;
-            return callModel(msgs, m, false, isLast ? 60000 : 30000).catch(next);
+        // ---- Live search (taza Google results, server endpoint se) ----
+        var lastLiveSources = [];
+        var LIVE_WORDS = ["aaj", "आज", "today", "abhi", "अभी", "current", "latest", "live", "taza", "ताज़ा", "fresh", "price", "bhav", "भाव", "rate", "daam", "दाम", "kimat", "कीमत", "sona", "gold", "chandi", "silver", "bitcoin", "crypto", "petrol", "diesel", "stock", "share", "sensex", "nifty", "dollar", "rupee", "news", "khabar", "खबर", "mausam", "मौसम", "weather", "barish", "बारिश", "temperature", "match", "cricket", "score"];
+        function needsLiveInfo(text) {
+          if (!text) return false;
+          var low = String(text).toLowerCase();
+          for (var i = 0; i < LIVE_WORDS.length; i++) {
+            if (low.indexOf(LIVE_WORDS[i].toLowerCase()) >= 0) return true;
           }
+          return false;
+        }
+        function searchLive(query) {
+          var controller = new AbortController();
+          var timer = setTimeout(function () { controller.abort(); }, 4000);
+          return fetch("/api/freeai-search", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ q: query }), signal: controller.signal })
+            .then(function (r) { clearTimeout(timer); return r.json().catch(function () { return {}; }); })
+            .then(function (d) { return (d && d.ok && Array.isArray(d.results)) ? d.results : []; })
+            .catch(function () { clearTimeout(timer); return []; });
+        }
 
-          return next().then(function (draft) {
-            if (!deepMode || draft.length < 40) return draft;
-            var review = msgs.concat([
-              { role: "assistant", content: draft },
-              { role: "user", content: "Is jawab ko dhyan se check karo: kya koi galti, adhura hissa, galat hisab ya adhura code hai? Agar hai to use theek karke POORA final jawab do. Agar sab sahi hai to wahi jawab dobara do. Check ke baare mein kuch mat likho, sirf final jawab do. Same language aur style rakho." }
-            ]);
-            return callModel(review, used, false, 45000).catch(function () { return draft; });
+        function askFreeAI(userText) {
+          var searchP = needsLiveInfo(userText) ? searchLive(userText) : Promise.resolve([]);
+          return searchP.then(function (sources) {
+            lastLiveSources = sources || [];
+            var msgs = [{ role: "system", content: buildSystemPrompt() }];
+            history.slice(-20).forEach(function (h) { msgs.push(h); });
+            msgs.push({ role: "user", content: userText });
+            if (lastLiveSources.length) {
+              msgs.push({ role: "user", content: "Taza Google search results (aaj ki jaankari) — inke hisab se sawal ka jawab do:\n" + lastLiveSources.map(function (s, i) { return (i + 1) + ". " + (s.title || "") + " — " + (s.snippet || "") + (s.link ? " (" + s.link + ")" : ""); }).join("\n") + "\nAgar results mein jawab na ho to imaandari se bata do ki taza jaankari nahi mili." });
+            }
+
+            var chain = modelChain(userText);
+            var used = chain[0];
+            var i = 0;
+            function next() {
+              if (i >= chain.length) {
+                // sab plain mode fail — aakhri koshish JSON mode se
+                return callModel(msgs, "openai", true, 60000);
+              }
+              var m = chain[i++];
+              var isLast = i >= chain.length;
+              used = m;
+              return callModel(msgs, m, false, isLast ? 60000 : 30000).catch(next);
+            }
+
+            return next().then(function (draft) {
+              if (!deepMode || draft.length < 40) return draft;
+              var review = msgs.concat([
+                { role: "assistant", content: draft },
+                { role: "user", content: "Is jawab ko dhyan se check karo: kya koi galti, adhura hissa, galat hisab ya adhura code hai? Agar hai to use theek karke POORA final jawab do. Agar sab sahi hai to wahi jawab dobara do. Check ke baare mein kuch mat likho, sirf final jawab do. Same language aur style rakho." }
+              ]);
+              return callModel(review, used, false, 45000).catch(function () { return draft; });
+            });
           });
         }
 
@@ -1261,6 +1354,41 @@
             .catch(function () { if (btn) btn.disabled = false; status.textContent = "❌ Internet ya server se jod nahi paya. Dobara try karo."; });
         }
 
+        // Live search ke sources — jawab ke neeche Google results dikhao
+        function attachLiveSources(bubble, sources, query) {
+          if (!sources || !sources.length || !bubble) return;
+          var wrap = document.createElement("div");
+          wrap.style.cssText = "margin-top:10px;border-top:1px solid #eee;padding-top:8px";
+          var h = document.createElement("div");
+          h.style.cssText = "font-weight:700;margin-bottom:6px";
+          h.textContent = "🔍 Google par mile results:";
+          wrap.appendChild(h);
+          sources.slice(0, 5).forEach(function (s) {
+            if (!s || !s.link || !/^https?:\/\//.test(s.link)) return;
+            var a = document.createElement("a");
+            a.href = s.link; a.target = "_blank"; a.rel = "noopener";
+            a.style.cssText = "display:block;text-decoration:none;color:inherit;background:#f6f6f6;border:1px solid #e5e5e5;border-radius:10px;padding:8px 10px;margin-bottom:6px";
+            var ti = document.createElement("div");
+            ti.style.cssText = "font-weight:700;color:#1a0dab";
+            ti.textContent = s.title || s.link;
+            a.appendChild(ti);
+            if (s.snippet) {
+              var sn = document.createElement("div");
+              sn.style.cssText = "font-size:13px;color:#444;margin-top:2px";
+              sn.textContent = s.snippet;
+              a.appendChild(sn);
+            }
+            wrap.appendChild(a);
+          });
+          var g = document.createElement("a");
+          g.href = "https://www.google.com/search?q=" + encodeURIComponent(query || "");
+          g.target = "_blank"; g.rel = "noopener";
+          g.style.cssText = "display:inline-block;background:#E7000C;color:#fff;font-weight:700;border-radius:20px;padding:8px 14px;text-decoration:none;margin-top:2px";
+          g.textContent = "🔍 Google par kholo";
+          wrap.appendChild(g);
+          bubble.appendChild(wrap);
+        }
+
         function openPreview(code) {
           var body = openOverlay("👁️ Preview", true);
           var frame = document.createElement("iframe");
@@ -1312,7 +1440,7 @@
         function replyLocal(text) {
           setTimeout(function () {
             var row = addMessage("ai", text);
-            history.push({ role: "assistant", content: text });
+            pushHist({ role: "assistant", content: text });
             scrollToMessageTop(row);
             busy = false;
           }, 250);
@@ -1328,7 +1456,8 @@
           if (/bhool jao|bhool ja\b|sab bhool|yaad saaf|yaad clear/.test(low)) {
             if (!memories.length) return "Abhi maine kuch yaad hi nahi rakha hai — bhoolne ko kuch hai hi nahi! 😄";
             memories = [];
-            return "Theek hai, sab bhool gaya! 🧹 Ab is chat mein kuch bhi yaad nahi hai.";
+            saveMemories();
+            return serverChatOn() ? "Theek hai, sab bhool gaya! 🧹 Ab hamesha ke liye kuch bhi yaad nahi hai." : "Theek hai, sab bhool gaya! 🧹 Ab is chat mein kuch bhi yaad nahi hai.";
           }
 
           // yaad rakho: ...
@@ -1336,7 +1465,8 @@
           if (save && save[1].trim().length > 1) {
             var fact = save[1].trim().replace(/[。.]+$/, "");
             memories.push(fact);
-            return "Yaad kar liya! 🧠\n\n**" + fact + "**\n\nYe baat main is poori chat mein yaad rakhunga. Aur kuch yaad karwana ho to bas 'yaad rakho:' likh kar bhej do.";
+            saveMemories();
+            return "Yaad kar liya! 🧠\n\n**" + fact + "**\n\n" + (serverChatOn() ? "Ye baat maine hamesha ke liye yaad rakh li hai (server par save ho gayi)." : "Ye baat main is poori chat mein yaad rakhunga.") + " Aur kuch yaad karwana ho to bas 'yaad rakho:' likh kar bhej do.";
           }
 
           // kya yaad hai
@@ -1446,7 +1576,7 @@
             cap.className = "photo-cap";
             cap.textContent = "📸 " + desc + " — save karne ke liye photo par der tak dabao (long-press). Aur photo chahiye to bas likh do!";
             bubble.appendChild(cap);
-            history.push({ role: "assistant", content: "Maine ek photo banaya: " + desc });
+            pushHist({ role: "assistant", content: "Maine ek photo banaya: " + desc });
             scrollToMessageTop(row);
           };
           img.onerror = function () {
@@ -1454,7 +1584,7 @@
             var p = document.createElement("p");
             p.textContent = "Photo nahi ban paya 😕 — free photo service abhi busy lag rahi hai. Thodi der mein dobara 'photo banao' likh kar try karo.";
             bubble.appendChild(p);
-            history.push({ role: "assistant", content: "Photo nahi ban paya — free photo service busy thi." });
+            pushHist({ role: "assistant", content: "Photo nahi ban paya — free photo service busy thi." });
           };
           img.src = "https://image.pollinations.ai/prompt/" + encodeURIComponent(enPrompt) +
             "?width=768&height=1024&seed=" + Math.floor(Math.random() * 100000) + "&nologo=true";
@@ -1799,14 +1929,14 @@
           plusBtn.classList.remove("open");
           addMessage("user", "📄 File bheji: " + file.name);
           scrollToBottom();
-          history.push({ role: "user", content: "Maine ek file bheji hai: " + file.name + " — iska summary chahiye." });
+          pushHist({ role: "user", content: "Maine ek file bheji hai: " + file.name + " — iska summary chahiye." });
           addTyping();
           extractFileText(file, isPdf).then(function (text) {
             removeTyping();
             text = (text || "").replace(/\s+\n/g, "\n").trim();
             if (text.length < 10) {
               var r0 = addMessage("ai", "File khul to gayi, par usmein padhne layak text nahi mila 😕 — agar ye scanned photo wali PDF hai to uska text nahi nikalta. Koi text wali file try karo.");
-              history.push({ role: "assistant", content: "File mein text nahi mila." });
+              pushHist({ role: "assistant", content: "File mein text nahi mila." });
               scrollToMessageTop(r0);
               busy = false;
               return;
@@ -1820,13 +1950,13 @@
               "\n\n--- FILE TEXT ---\n" + clipped;
             askFreeAI(prompt).then(function (reply) {
               var row = addMessage("ai", reply);
-              history.push({ role: "assistant", content: reply });
+              pushHist({ role: "assistant", content: reply });
               setStatus(true, aiName + " online — bina API key");
               scrollToMessageTop(row);
               busy = false;
             }).catch(function () {
               var row2 = addMessage("ai", "File padh to li, par abhi free AI se summary nahi aa paya 😕 — thodi der mein file dobara bhej kar try karo.");
-              history.push({ role: "assistant", content: "File ki summary nahi ban payi — free AI busy tha." });
+              pushHist({ role: "assistant", content: "File ki summary nahi ban payi — free AI busy tha." });
               setStatus(false, aiName + " busy — basic mode");
               scrollToMessageTop(row2);
               busy = false;
@@ -1834,7 +1964,7 @@
           }).catch(function () {
             removeTyping();
             var row3 = addMessage("ai", "File padhne mein dikkat aayi 😕 — net slow ho sakta hai (PDF library net se aati hai). Dobara try karo, ya koi text file bhej kar dekho.");
-            history.push({ role: "assistant", content: "File padhne mein dikkat aayi." });
+            pushHist({ role: "assistant", content: "File padhne mein dikkat aayi." });
             scrollToMessageTop(row3);
             busy = false;
           });
@@ -2022,6 +2152,42 @@
         }
         document.getElementById("trayBrain").addEventListener("click", openBrain);
 
+        /* ---------------- permanent save: admin code ---------------- */
+
+        function askServerCode() {
+          trayEl.classList.remove("open");
+          plusBtn.classList.remove("open");
+          if (serverChatOn()) {
+            if (!busy) { busy = true; replyLocal("Admin code pehle se daala hua hai — chat aur yaadein hamesha ke liye save ho rahi hain. 💾"); }
+            return;
+          }
+          if (document.getElementById("serverCodeRow")) return;
+          var row = document.createElement("div");
+          row.id = "serverCodeRow";
+          row.style.cssText = "background:#fff7e6;border:1px solid #f0c36d;border-radius:10px;padding:10px;margin:8px 0;font-size:.9rem";
+          row.textContent = "💾 Chat aur yaadein hamesha ke liye save karne ke liye admin code daalo (ek baar — wahi jo Orders/Photos mein lagta hai):";
+          row.appendChild(document.createElement("br"));
+          var inp = document.createElement("input");
+          inp.type = "password"; inp.placeholder = "Admin code daalo";
+          inp.style.cssText = "padding:8px;border:1px solid #ccc;border-radius:8px;width:55%;margin-top:6px";
+          var sb = document.createElement("button");
+          sb.type = "button"; sb.className = "cb-dl"; sb.textContent = "Save karo";
+          sb.onclick = function () {
+            var v = inp.value.trim();
+            if (!v) return;
+            try { localStorage.setItem("fg-publish-code", v); } catch (e) {}
+            row.remove();
+            syncChatFromServer();
+            loadMemories();
+            if (!busy) { busy = true; replyLocal("Ho gaya! 💾 Ab se chat aur yaadein hamesha ke liye save hongi — page band karke dobara kholo to bhi sab milega."); }
+          };
+          row.appendChild(inp);
+          row.appendChild(sb);
+          messagesEl.insertBefore(row, messagesEl.firstChild);
+        }
+
+        document.getElementById("traySave").addEventListener("click", askServerCode);
+
         /* ---------------- chat download ---------------- */
 
         document.getElementById("trayDownload").addEventListener("click", function () {
@@ -2066,7 +2232,7 @@
 
           addMessage("user", userText);
           scrollToBottom();
-          history.push({ role: "user", content: userText });
+          pushHist({ role: "user", content: userText });
 
           // App commands pehle — yaad rakhna + kharcha note (bina net ke bhi chalte hain)
           var cmdReply = matchAppCommand(userText);
@@ -2091,7 +2257,7 @@
           if (local !== null) {
             setTimeout(function () {
               var row = addMessage("ai", local);
-              history.push({ role: "assistant", content: local });
+              pushHist({ role: "assistant", content: local });
               scrollToMessageTop(row);
               busy = false;
             }, 250);
@@ -2103,7 +2269,8 @@
             .then(function (reply) {
               removeTyping();
               var row = addMessage("ai", reply);
-              history.push({ role: "assistant", content: reply });
+              attachLiveSources(row.querySelector(".bubble"), lastLiveSources, userText);
+              pushHist({ role: "assistant", content: reply });
               setStatus(true, aiName + " online — bina API key");
               scrollToMessageTop(row);
               busy = false;
@@ -2113,7 +2280,7 @@
               var localFallback = tryLocalAnswer(userText);
               var reply = localFallback !== null ? localFallback : offlineAnswer();
               var row = addMessage("ai", reply);
-              history.push({ role: "assistant", content: reply });
+              pushHist({ role: "assistant", content: reply });
               setStatus(false, aiName + " busy — basic mode");
               scrollToMessageTop(row);
               busy = false;
@@ -2150,12 +2317,15 @@
           });
         });
 
-        function startFresh() {
+        function startFresh(clearServer) {
+          if (clearServer && serverChatOn()) {
+            try { fetch("/api/freeai-chat?action=clear", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code: getAdminCode() }) }).catch(function () {}); } catch (e) {}
+          }
+          if (!serverChatOn()) memories = [];
           history = [];
-          memories = [];
           messagesEl.innerHTML = "";
           var welcome =
-            "Namaste Shiva! 😊 Main **" + aiName + "** hoon — bilkul Mera AI jaisa chat, par ye **bina API key** ke chalta hai, to Gemini wali daily limit khatm hone ki dikkat nahi.\n\nAb meri **coding aur strong** hai: poora chalta-hua code milega — aadha-adhura nahi. Website ya app ka code ek hi HTML file mein dunga, aur har code ke upar **Copy** aur **Download** button hoga — Download se seedha file save karke khol sakte ho. Apna purana code ya error paste karoge to galti bata kar poora sahi code dunga.\n\nEk saaf baat: free service kabhi-kabhi slow ho sakti hai — coding wale jawab mein 1 minute tak lag sakta hai. Basic jawab (hisab, time, date, joke) main bina net ke bhi turant de deta hoon.\n\nAb main aur bhi seekh gaya hoon:\n\n- 🖼️ **Photo banana** — likho: photo banao: pahadon par sunset\n- 👁️ **Code Preview** — HTML code ke upar Preview button se result turant dikhega\n- 🌐 **Live karo** — HTML website ke upar Live karo button se site seedha live karo (admin code ek baar daalo)\n- 🔊 **Bol kar sunana** — har jawab ke neeche Sunao button\n- 🧠 **Yaad rakhna** — 'yaad rakho: ...' likho, is chat mein yaad rakhunga\n- 🧰 **Tools** — + wale menu mein To-Do, Kharcha Tracker aur Quiz\n- 📄 **File padhna** — + wale menu se PDF ya text file bhejo, summary dunga\n- 🎤 **Bol kar likhna** — input ke paas mic dabao aur bol do\n- 🎨 **Naam / Rang** — + wale menu se mera naam aur rang badlo\n- ⬇️ **Chat download** — poori chat ek file mein save karo\n\nJo poochna hai likho — code, sawal, hisab, kuch bhi. Ya neeche ke button dabao:";
+            "Namaste Shiva! 😊 Main **" + aiName + "** hoon — bilkul Mera AI jaisa chat, par ye **bina API key** ke chalta hai, to Gemini wali daily limit khatm hone ki dikkat nahi.\n\nAb meri **coding aur strong** hai: poora chalta-hua code milega — aadha-adhura nahi. Website ya app ka code ek hi HTML file mein dunga, aur har code ke upar **Copy** aur **Download** button hoga — Download se seedha file save karke khol sakte ho. Apna purana code ya error paste karoge to galti bata kar poora sahi code dunga.\n\nEk saaf baat: free service kabhi-kabhi slow ho sakti hai — coding wale jawab mein 1 minute tak lag sakta hai. Basic jawab (hisab, time, date, joke) main bina net ke bhi turant de deta hoon.\n\nAb main aur bhi seekh gaya hoon:\n\n- 🖼️ **Photo banana** — likho: photo banao: pahadon par sunset\n- 👁️ **Code Preview** — HTML code ke upar Preview button se result turant dikhega\n- 🌐 **Live karo** — HTML website ke upar Live karo button se site seedha live karo (admin code ek baar daalo)\n- 🔍 **Live search** — aaj ka bhav, news, mausam poochho, taza jawab milega\n- 💾 **Permanent save** — + menu mein 'Chat hamesha save karo' se chat aur yaadein hamesha ke liye save hongi (admin code ek baar daalo)\n- 🔊 **Bol kar sunana** — har jawab ke neeche Sunao button\n- 🧠 **Yaad rakhna** — 'yaad rakho: ...' likho, is chat mein yaad rakhunga\n- 🧰 **Tools** — + wale menu mein To-Do, Kharcha Tracker aur Quiz\n- 📄 **File padhna** — + wale menu se PDF ya text file bhejo, summary dunga\n- 🎤 **Bol kar likhna** — input ke paas mic dabao aur bol do\n- 🎨 **Naam / Rang** — + wale menu se mera naam aur rang badlo\n- ⬇️ **Chat download** — poori chat ek file mein save karo\n\nJo poochna hai likho — code, sawal, hisab, kuch bhi. Ya neeche ke button dabao:";
           var row = addMessage("ai", welcome);
           var chips = document.createElement("div");
           chips.className = "chips";
@@ -2187,6 +2357,8 @@
 
         loadModels();
         startFresh();
+        syncChatFromServer();
+        loadMemories();
       })();
     </script>
   </body>
