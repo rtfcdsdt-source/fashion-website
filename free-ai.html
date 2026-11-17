@@ -654,7 +654,7 @@
           "(7) If the user asks a follow-up change to code you already gave, return the FULL updated code again, not only the diff. " +
           "(8) If the request is unclear, make the most sensible complete version instead of asking many questions. " +
           "For non-coding questions, answer normally and helpfully — study, business, videos and daily questions included. Use simple markdown (bold, lists, code blocks) when it helps." +
-          " APP FEATURES: this chat app itself can generate a photo when the user asks for one (e.g. 'photo banao: ...'), check any link the user sends for safety (it shows name-based warnings instantly, reads the page text through the free r.jina.ai reader when it can, then you give a short Hinglish verdict — what the link looks like, what the danger is, what to do; NEVER say 'pakka safe' or '100% safe', it is only an estimate; if the page cannot be read, judge by the name only and say so clearly; never ask the user to send private or login links for checking), describe a YouTube video from its title and description (it reads the video page text through the free r.jina.ai reader, then you summarise what the video is about from the title and description ONLY — you cannot see the scenes or hear the audio, so never invent scene details; if the page cannot be read, say so honestly and do not guess), understand a video FILE the user uploads from the + tray 'Video samjhao' button (the file goes to the server, which shows it to Gemini and returns a description of the scenes and the audio — max 2.5 MB, MP4/WebM/MOV), understand a PHOTO the user uploads from the + tray 'Photo samjhao' button (the file goes to the server, which shows it to Gemini and describes what is in it, or answers the user's question about it — max 2.5 MB, JPEG/PNG/WebP/GIF; if the user typed a question before choosing the photo, answer that question about the photo), show a live Preview of HTML code (Preview button above the code), publish an HTML website live with the 'Live karo' button above the code (asks for the admin code once, then gives a live link), answer live/current questions (price, news, weather, gold rate...) using the fresh Google search results the app attaches to your prompt, save the chat and remembered facts on the server forever when the admin code is set (the user enables it from 'Chat hamesha save karo' in the + tray), read any answer aloud (Sunao button under each answer), remember facts for this chat when the user says 'yaad rakho', read a PDF or text file the user attaches from the + tray (the app extracts the file's text and sends it to you — then summarize it and answer questions about it), accept voice dictation through the mic button, let the user rename you and change your theme colour in the + tray settings, download the whole chat as a file, and it has To-do, Kharcha Tracker and Quiz tools in the + tray. It can also read the user's own Gmail inbox when asked (each user connects their own Gmail with Google login from the + tray 'Gmail jodo' button — read-only, only the latest emails, sender + subject + a short snippet, and read one email fully when asked ('pehli email padho' or '2 number wali email padho' after the list); the mail stays in the user's own account and nothing is saved on the server; if Gmail is not connected yet, say so plainly instead of guessing). The app handles those requests itself, so never claim you cannot make photos or remember things in this chat." +
+          " APP FEATURES: this chat app itself can generate a photo when the user asks for one (e.g. 'photo banao: ...'), check any link the user sends for safety (it shows name-based warnings instantly, reads the page text through the free r.jina.ai reader when it can, then you give a short Hinglish verdict — what the link looks like, what the danger is, what to do; NEVER say 'pakka safe' or '100% safe', it is only an estimate; if the page cannot be read, judge by the name only and say so clearly; never ask the user to send private or login links for checking), describe a YouTube video from its title and description (it reads the video page text through the free r.jina.ai reader, then you summarise what the video is about from the title and description ONLY — you cannot see the scenes or hear the audio, so never invent scene details; if the page cannot be read, say so honestly and do not guess), understand a video FILE the user uploads from the + tray 'Video samjhao' button (the file goes to the server, which shows it to Gemini and returns a description of the scenes and the audio — max 2.5 MB, MP4/WebM/MOV), understand a PHOTO the user uploads from the + tray 'Photo samjhao' button (the file goes to the server, which shows it to Gemini and describes what is in it, or answers the user's question about it — max 2.5 MB, JPEG/PNG/WebP/GIF; if the user typed a question before choosing the photo, answer that question about the photo), show a live Preview of HTML code (Preview button above the code), publish an HTML website live with the 'Live karo' button above the code (asks for the admin code once, then gives a live link), answer live/current questions (price, news, weather, gold rate...) using the fresh Google search results the app attaches to your prompt, save the chat and remembered facts on the server forever when the admin code is set (the user enables it from 'Chat hamesha save karo' in the + tray), read any answer aloud (Sunao button under each answer), remember facts for this chat when the user says 'yaad rakho', read a PDF or text file the user attaches from the + tray (the app extracts the file's text and sends it to you — then summarize it and answer questions about it), accept voice dictation through the mic button, let the user rename you and change your theme colour in the + tray settings, download the whole chat as a file, and it has To-do, Kharcha Tracker and Quiz tools in the + tray. It can also read the user's own Gmail inbox when asked (each user connects their own Gmail with Google login from the + tray 'Gmail jodo' button — read-only, only the latest emails, sender + subject + a short snippet, and read one email fully when asked ('pehli email padho' or '2 number wali email padho' after the list), and send an email when asked (step by step: who, subject, what to write — it shows the draft first and sends only after the user says 'bhej do'), and write a complete formal email for the user when asked ('mere liye email likho: ...' — subject + body, but it does NOT send it; sending needs a separate 'email bhejo'); the mail stays in the user's own account and nothing is saved on the server; if Gmail is not connected yet, say so plainly instead of guessing). The app handles those requests itself, so never claim you cannot make photos or remember things in this chat." +
           " THINKING RULES: before answering, think step by step silently. For maths, logic and code, double-check your result before replying. Never invent facts, names, numbers or links - if you are not sure, say so honestly and give your best guess clearly marked as a guess. Answer exactly what was asked, with no filler.";
 
         var history = []; // {role: 'user'|'assistant', content: string}
@@ -1072,7 +1072,7 @@
             return "Main **" + aiName + "** hoon — Mera AI jaisa hi chat assistant, par ye bina kisi API key ke chalta hai. Sawal poochho, hisab karwao, code likhwao — koshish poori karunga! 💪";
           }
           if (/(kya kya kar sakte|kya kar sakte|tum kya kar|help|madad|features|kaam karte ho)/.test(low)) {
-            return "Main ye sab kar sakta hoon:\n\n- **Coding (strong)** — poora chalta-hua code: website, app, game, script — ek hi file mein, Download button ke saath\n- **Code Preview** — HTML code ke upar Preview button dabao, result turant chal kar dikhega\n- **Live karo** — HTML website ke upar Live karo button se site seedha live karo\n- **Live search** — aaj ka bhav, news, mausam poochho, taza jawab milega\n- **Link check** — koi link bhejo ('yeh link safe hai kya?'), naam + page padh kar bata doon — kabhi 'pakka safe' nahi kehta\n- **Video link** — YouTube link bhejo ('ye video kya hai?'), title/description se bata doon (scenes nahi dikhte)\n- **Video samjhao** — + menu mein **🎬 Video samjhao** se video file bhejo (2.5 MB tak), dekh kar + sun kar bata doon\n- **Photo samjhao** — + menu mein **📷 Photo samjhao** se photo bhejo (2.5 MB tak), kya dikh raha hai bata doon\n- **Gmail** — apna Gmail + menu mein 📧 Gmail jodo se jodo, phir 'meri email dikhao' likho — haal ki emails dikha doon; poori padhne ke liye 'pehli email padho' likho\n- **Permanent save** — + menu mein 'Chat hamesha save karo' se chat aur yaadein hamesha ke liye save hongi\n- **Bug fix** — apna code ya error paste karo, main galti bata kar poora sahi code dunga\n- **Photo banana** — likho `photo banao: pahadon par sunset`, photo ban jayegi\n- **File padhna** — + wale menu mein **📄 File padho** se PDF ya text file bhejo, main padh kar summary dunga aur sawalon ke jawab bhi\n- **Bol kar likhna** — type karne ki jagah input ke paas 🎤 mic dabao aur bol do\n- **Bol kar sunana** — har jawab ke neeche 🔊 Sunao button hai\n- **Yaad rakhna** — `yaad rakho: ...` likho, is chat mein yaad rakhunga\n- **Naam / Rang badalna** — + wale menu mein **🎨 Naam / Rang** se mera naam aur rang apni pasand ka karo\n- **Chat download** — + wale menu mein **⬇️ Chat download** se poori chat file mein save karo\n- **Tools** — + wale menu mein To-Do list, Kharcha Tracker (chart ke saath) aur Quiz\n- **Sawal-jawab** — koi bhi topic, Hindi / Hinglish / English\n- **Hisab** — jaise `125 ka 15%` ya `45 * 8 + 20`; kharcha note karne ke liye `kharcha 200 khana`\n- **Time / date** — turant bata deta hoon\n\nBas likh kar bhejo!";
+            return "Main ye sab kar sakta hoon:\n\n- **Coding (strong)** — poora chalta-hua code: website, app, game, script — ek hi file mein, Download button ke saath\n- **Code Preview** — HTML code ke upar Preview button dabao, result turant chal kar dikhega\n- **Live karo** — HTML website ke upar Live karo button se site seedha live karo\n- **Live search** — aaj ka bhav, news, mausam poochho, taza jawab milega\n- **Link check** — koi link bhejo ('yeh link safe hai kya?'), naam + page padh kar bata doon — kabhi 'pakka safe' nahi kehta\n- **Video link** — YouTube link bhejo ('ye video kya hai?'), title/description se bata doon (scenes nahi dikhte)\n- **Video samjhao** — + menu mein **🎬 Video samjhao** se video file bhejo (2.5 MB tak), dekh kar + sun kar bata doon\n- **Photo samjhao** — + menu mein **📷 Photo samjhao** se photo bhejo (2.5 MB tak), kya dikh raha hai bata doon\n- **Gmail** — apna Gmail + menu mein 📧 Gmail jodo se jodo, phir 'meri email dikhao' likho — haal ki emails dikha doon; poori padhne ke liye 'pehli email padho' likho; bhejne ke liye 'email bhejo' likho\n- **Email likhwana** — likho `mere liye email likho: boss ko chhutti ke liye`, poora formal email likh dunga (ye sirf likhta hai, bhejta nahi — bhejne ke liye 'email bhejo' likho)\n- **Permanent save** — + menu mein 'Chat hamesha save karo' se chat aur yaadein hamesha ke liye save hongi\n- **Bug fix** — apna code ya error paste karo, main galti bata kar poora sahi code dunga\n- **Photo banana** — likho `photo banao: pahadon par sunset`, photo ban jayegi\n- **File padhna** — + wale menu mein **📄 File padho** se PDF ya text file bhejo, main padh kar summary dunga aur sawalon ke jawab bhi\n- **Bol kar likhna** — type karne ki jagah input ke paas 🎤 mic dabao aur bol do\n- **Bol kar sunana** — har jawab ke neeche 🔊 Sunao button hai\n- **Yaad rakhna** — `yaad rakho: ...` likho, is chat mein yaad rakhunga\n- **Naam / Rang badalna** — + wale menu mein **🎨 Naam / Rang** se mera naam aur rang apni pasand ka karo\n- **Chat download** — + wale menu mein **⬇️ Chat download** se poori chat file mein save karo\n- **Tools** — + wale menu mein To-Do list, Kharcha Tracker (chart ke saath) aur Quiz\n- **Sawal-jawab** — koi bhi topic, Hindi / Hinglish / English\n- **Hisab** — jaise `125 ka 15%` ya `45 * 8 + 20`; kharcha note karne ke liye `kharcha 200 khana`\n- **Time / date** — turant bata deta hoon\n\nBas likh kar bhejo!";
           }
           if (/(thank|dhanyavad|shukriya|thanks)/.test(low)) {
             return "Koi baat nahi! 😊 Aur kuch chahiye to bas likh do.";
@@ -2624,9 +2624,10 @@
           if (/unread/i.test(t)) return "is:unread";
           return "";
         }
-        // ---- Gmail (har user apna Gmail jode — Google login, read-only) ----
+        // ---- Gmail (har user apna Gmail jode — Google login, read + send) ----
         // Token sirf browser ki memory mein rehta hai (localStorage mein nahi),
         // mail seedha Google se aati hai — server par kuch save nahi hota.
+        // BHEJNA: sirf draft dikhakar + user ke "bhej do" ke baad hota hai.
         var GMAIL_CLIENT_ID = "463015858598-mhp99at2ecutc0b81r24afica9c06p04.apps.googleusercontent.com";
         var gmailToken = "";
         var gmailTokenClient = null;
@@ -2642,7 +2643,7 @@
             if (!gmailTokenClient) {
               gmailTokenClient = window.google.accounts.oauth2.initTokenClient({
                 client_id: GMAIL_CLIENT_ID,
-                scope: "https://www.googleapis.com/auth/gmail.readonly",
+                scope: "https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/gmail.send",
                 callback: function (resp) {
                   var f = gmailTokenCb; gmailTokenCb = null;
                   if (resp && resp.access_token) { gmailToken = resp.access_token; updateGmailButton(); if (f) f(resp.access_token); }
@@ -2901,6 +2902,175 @@
           });
         }
 
+        // ---- Gmail email bhejo (step by step: kisko → subject → body → draft → "bhej do") ----
+        // Kuch bhi bina "bhej do" ke nahi jata. Draft sirf browser ki memory mein rehta hai.
+        var emailDraft = null;
+        function emailComposeWanted(text) {
+          if (!text) return false;
+          var low = String(text).toLowerCase();
+          return /(email|mail)\s*(bhej|send)/.test(low);
+        }
+        function emailDraftText(d) {
+          return "📧 **Email taiyaar hai:**\n\n**Kisko:** " + d.to + "\n**Subject:** " + (d.subject || "(khali)") + "\n**Likha hai:**\n" + (d.body || "(khali)") + "\n\nBhejne ke liye likho: **bhej do** — badalna ho to **badlo** likho, radd karne ke liye **rehne do**.";
+        }
+        function emailComposeStart(userText) {
+          // Ek line mein teeno ho to seedha draft: "email bhejo: to | subject | body"
+          var m = String(userText).match(/(?:email|mail)\s*(?:bhej|bhejo|send)\s*:?\s*(.+)$/i);
+          if (m) {
+            var parts = m[1].split("|").map(function (s) { return s.trim(); });
+            var em = (parts[0] || "").match(/[^\s@]+@[^\s@]+\.[^\s@]+/);
+            if (parts.length >= 3 && em) {
+              emailDraft = { to: em[0], subject: parts[1].slice(0, 200), body: parts.slice(2).join(" | ").slice(0, 4000), step: "confirm" };
+              replyLocal(emailDraftText(emailDraft));
+              return;
+            }
+          }
+          emailDraft = { step: "to" };
+          replyLocal("📧 Kisko email bhejna hai? Unka email likho (jaise rahul@gmail.com).");
+        }
+        function emailComposeStep(userText) {
+          var low = String(userText).toLowerCase().trim();
+          if (/^(rehne do|rehne|chhodo|cancel|ruk jao|rukjo|band karo)$/.test(low) || low.indexOf("rehne do") === 0) {
+            emailDraft = null;
+            replyLocal("Theek hai, email nahi bheja.");
+            return;
+          }
+          if (emailDraft.step === "to") {
+            var em = String(userText).match(/[^\s@]+@[^\s@]+\.[^\s@]+/);
+            if (!em) { replyLocal("Ye email address nahi lagta 😕 — sahi email likho (jaise rahul@gmail.com)."); return; }
+            emailDraft.to = em[0];
+            emailDraft.step = "subject";
+            replyLocal("Subject kya likhun?");
+            return;
+          }
+          if (emailDraft.step === "subject") {
+            emailDraft.subject = String(userText).trim().slice(0, 200);
+            emailDraft.step = "body";
+            replyLocal("Email mein kya likhna hai?");
+            return;
+          }
+          if (emailDraft.step === "body") {
+            emailDraft.body = String(userText).trim().slice(0, 4000);
+            emailDraft.step = "confirm";
+            replyLocal(emailDraftText(emailDraft));
+            return;
+          }
+          if (emailDraft.step === "confirm") {
+            if (/(bhej do|bhejdo|send karo|haan bhej|bhej de)/.test(low)) {
+              var d = emailDraft;
+              emailDraft = null;
+              doSendEmail(d);
+              return;
+            }
+            if (/badlo|badal/.test(low)) {
+              emailDraft = { step: "to" };
+              replyLocal("Theek hai, dobara — kisko email bhejna hai?");
+              return;
+            }
+            replyLocal(emailDraftText(emailDraft));
+            return;
+          }
+        }
+        function emailRawB64(to, subject, body) {
+          var mime = "To: " + to + "\r\nSubject: " + subject + "\r\nContent-Type: text/plain; charset=utf-8\r\n\r\n" + body;
+          var bytes;
+          if (typeof TextEncoder !== "undefined") bytes = new TextEncoder().encode(mime);
+          else bytes = new Uint8Array(mime.split("").map(function (c) { return c.charCodeAt(0) & 255; }));
+          var bin = "";
+          var CH = 8192;
+          for (var i = 0; i < bytes.length; i += CH) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + CH));
+          return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+        }
+        function doSendEmail(d) {
+          addTyping();
+          if (!window.google || !window.google.accounts || !window.google.accounts.oauth2) {
+            removeTyping();
+            var msgG = "📧 Google login abhi load nahi hua — net check karke page dobara kholo, phir dobara try karo.";
+            var rowG = addMessage("ai", msgG);
+            pushHist({ role: "assistant", content: msgG });
+            scrollToMessageTop(rowG);
+            busy = false;
+            return;
+          }
+          var retried = false;
+          function fetchSend() {
+            var ctrl = (typeof AbortController !== "undefined") ? new AbortController() : null;
+            var timer = setTimeout(function () { if (ctrl) ctrl.abort(); }, 12000);
+            var fetchOpts = { method: "POST", headers: { Authorization: "Bearer " + gmailToken, "Content-Type": "application/json" }, body: JSON.stringify({ raw: emailRawB64(d.to, d.subject, d.body) }) };
+            if (ctrl) fetchOpts.signal = ctrl.signal;
+            fetch("https://gmail.googleapis.com/gmail/v1/users/me/messages/send", fetchOpts)
+              .then(function (res) {
+                if ((res.status === 401 || res.status === 403) && !retried) {
+                  retried = true;
+                  gmailToken = "";
+                  updateGmailButton();
+                  throw { retryToken: true };
+                }
+                if (!res.ok) throw new Error("http " + res.status);
+                return res.json();
+              })
+              .then(function () {
+                clearTimeout(timer);
+                removeTyping();
+                var msg = "✅ Email bhej diya — **" + d.to + "** ko.";
+                var row = addMessage("ai", msg);
+                pushHist({ role: "assistant", content: msg });
+                scrollToMessageTop(row);
+                busy = false;
+              })
+              .catch(function (err) {
+                clearTimeout(timer);
+                if (err && err.retryToken) {
+                  requestGmailToken(function (tok) {
+                    if (!tok) {
+                      removeTyping();
+                      var msg = "📧 Gmail jud nahi paya — Google popup mein Allow karna tha (bhejne ke liye nayi permission chahiye). Dobara 'email bhejo' likh kar try karo.";
+                      var row = addMessage("ai", msg);
+                      pushHist({ role: "assistant", content: msg });
+                      scrollToMessageTop(row);
+                      busy = false;
+                      return;
+                    }
+                    fetchSend();
+                  });
+                  return;
+                }
+                removeTyping();
+                var msg = "📧 Email abhi bhej nahi paya — thodi der baad dobara try karo.";
+                var row = addMessage("ai", msg);
+                pushHist({ role: "assistant", content: msg });
+                scrollToMessageTop(row);
+                busy = false;
+              });
+          }
+          if (gmailHasToken()) { fetchSend(); return; }
+          requestGmailToken(function (tok) {
+            if (!tok) {
+              removeTyping();
+              var msg = "📧 Gmail jud nahi paya — Google popup mein apna Gmail chun kar Allow karna tha. + menu mein **📧 Gmail jodo** dabakar dobara try karo.";
+              var row = addMessage("ai", msg);
+              pushHist({ role: "assistant", content: msg });
+              scrollToMessageTop(row);
+              busy = false;
+              return;
+            }
+            fetchSend();
+          });
+        }
+
+        // ---- "Mere liye email likho" — AI se email LIKHWAO (bhejna nahi, sirf likhna) ----
+        // "email bhejo" (send) se alag hai — ye sirf poora formal email likh kar deta hai.
+        function emailWriteWanted(text) {
+          if (!text) return false;
+          var low = String(text).toLowerCase();
+          return /(email|mail)\s*(likh do|likhna|likho|likh|bana do|banao|bana)/.test(low);
+        }
+        function emailWriteTopic(text) {
+          var t = String(text).replace(/(mere liye|mera|meri)?\s*(email|mail)\s*(likh do|likhna|likho|likh|bana do|banao|bana)\s*:?\s*/i, "").trim();
+          if (/^(hai|do|na|ke|mein|par)$/.test(t)) t = "";
+          return t;
+        }
+
         function handleSend(text) {
           var userText = (text != null ? text : inputEl.value).trim();
           if (!userText || busy) return;
@@ -2916,10 +3086,55 @@
           scrollToBottom();
           pushHist({ role: "user", content: userText });
 
+          // Gmail email bhejo — draft chal raha ho to har jawab yahin aata hai
+          if (emailDraft) {
+            emailComposeStep(userText);
+            return;
+          }
+          if (emailComposeWanted(userText)) {
+            emailComposeStart(userText);
+            return;
+          }
+
           // App commands pehle — yaad rakhna + kharcha note (bina net ke bhi chalte hain)
           var cmdReply = matchAppCommand(userText);
           if (cmdReply !== null) {
             replyLocal(cmdReply);
+            return;
+          }
+
+          // "Mere liye email likho" — AI se email likhwayo (bhejna nahi, sirf likhna)
+          // (Gmail list se pehle aata hai, warna "email" sun kar list khul jati;
+          //  AI ko seedha call karta hai — neeche wapas nahi jata, warna likha hua
+          //  prompt bhi "email" sun kar list khol deta.)
+          if (emailWriteWanted(userText)) {
+            var topic = emailWriteTopic(userText);
+            if (!topic) {
+              replyLocal("Kis baare mein email likhna hai? Aise likho: `mere liye email likho: boss ko chhutti ke liye`");
+              return;
+            }
+            var aiPrompt = "Mere liye is baare mein ek poora formal email likho (subject line + greeting + body + closing, sahi format mein): " + topic;
+            addTyping();
+            askFreeAI(aiPrompt)
+              .then(function (reply) {
+                removeTyping();
+                var row = addMessage("ai", reply);
+                attachLiveSources(row.querySelector(".bubble"), lastLiveSources, aiPrompt);
+                pushHist({ role: "assistant", content: reply });
+                setStatus(true, aiName + " online — bina API key");
+                scrollToMessageTop(row);
+                busy = false;
+              })
+              .catch(function () {
+                removeTyping();
+                var localFallback = tryLocalAnswer(aiPrompt);
+                var reply = localFallback !== null ? localFallback : offlineAnswer();
+                var row = addMessage("ai", reply);
+                pushHist({ role: "assistant", content: reply });
+                setStatus(false, aiName + " busy — basic mode");
+                scrollToMessageTop(row);
+                busy = false;
+              });
             return;
           }
 
@@ -3033,7 +3248,7 @@
           history = [];
           messagesEl.innerHTML = "";
           var welcome =
-            "Namaste Shiva! 😊 Main **" + aiName + "** hoon — bilkul Mera AI jaisa chat, par ye **bina API key** ke chalta hai, to Gemini wali daily limit khatm hone ki dikkat nahi.\n\nAb meri **coding aur strong** hai: poora chalta-hua code milega — aadha-adhura nahi. Website ya app ka code ek hi HTML file mein dunga, aur har code ke upar **Copy** aur **Download** button hoga — Download se seedha file save karke khol sakte ho. Apna purana code ya error paste karoge to galti bata kar poora sahi code dunga.\n\nEk saaf baat: free service kabhi-kabhi slow ho sakti hai — coding wale jawab mein 1 minute tak lag sakta hai. Basic jawab (hisab, time, date, joke) main bina net ke bhi turant de deta hoon.\n\nAb main aur bhi seekh gaya hoon:\n\n- 🖼️ **Photo banana** — likho: photo banao: pahadon par sunset\n- 👁️ **Code Preview** — HTML code ke upar Preview button se result turant dikhega\n- 🌐 **Live karo** — HTML website ke upar Live karo button se site seedha live karo (admin code ek baar daalo)\n- 🔍 **Live search** — aaj ka bhav, news, mausam poochho, taza jawab milega\n- 🔗 **Link check** — koi link bhejo, safe hai ya nahi bata doon\n- 🎬 **Video samjhao** — YouTube link bhejo ya + menu se video file bhejo, kya ho raha hai bata doon\n- 📷 **Photo samjhao** — + menu se photo bhejo, kya dikh raha hai bata doon\n- 📧 **Gmail** — apna Gmail jodo (+ menu mein 📧 Gmail jodo), phir 'meri email dikhao' likho — poori padhne ke liye 'pehli email padho' likho\n- 💾 **Permanent save** — + menu mein 'Chat hamesha save karo' se chat aur yaadein hamesha ke liye save hongi (admin code ek baar daalo)\n- 🔊 **Bol kar sunana** — har jawab ke neeche Sunao button\n- 🧠 **Yaad rakhna** — 'yaad rakho: ...' likho, is chat mein yaad rakhunga\n- 🧰 **Tools** — + wale menu mein To-Do, Kharcha Tracker aur Quiz\n- 📄 **File padhna** — + wale menu se PDF ya text file bhejo, summary dunga\n- 🎤 **Bol kar likhna** — input ke paas mic dabao aur bol do\n- 🎨 **Naam / Rang** — + wale menu se mera naam aur rang badlo\n- ⬇️ **Chat download** — poori chat ek file mein save karo\n\nJo poochna hai likho — code, sawal, hisab, kuch bhi. Ya neeche ke button dabao:";
+            "Namaste Shiva! 😊 Main **" + aiName + "** hoon — bilkul Mera AI jaisa chat, par ye **bina API key** ke chalta hai, to Gemini wali daily limit khatm hone ki dikkat nahi.\n\nAb meri **coding aur strong** hai: poora chalta-hua code milega — aadha-adhura nahi. Website ya app ka code ek hi HTML file mein dunga, aur har code ke upar **Copy** aur **Download** button hoga — Download se seedha file save karke khol sakte ho. Apna purana code ya error paste karoge to galti bata kar poora sahi code dunga.\n\nEk saaf baat: free service kabhi-kabhi slow ho sakti hai — coding wale jawab mein 1 minute tak lag sakta hai. Basic jawab (hisab, time, date, joke) main bina net ke bhi turant de deta hoon.\n\nAb main aur bhi seekh gaya hoon:\n\n- 🖼️ **Photo banana** — likho: photo banao: pahadon par sunset\n- 👁️ **Code Preview** — HTML code ke upar Preview button se result turant dikhega\n- 🌐 **Live karo** — HTML website ke upar Live karo button se site seedha live karo (admin code ek baar daalo)\n- 🔍 **Live search** — aaj ka bhav, news, mausam poochho, taza jawab milega\n- 🔗 **Link check** — koi link bhejo, safe hai ya nahi bata doon\n- 🎬 **Video samjhao** — YouTube link bhejo ya + menu se video file bhejo, kya ho raha hai bata doon\n- 📷 **Photo samjhao** — + menu se photo bhejo, kya dikh raha hai bata doon\n- 📧 **Gmail** — apna Gmail jodo (+ menu mein 📧 Gmail jodo), phir 'meri email dikhao' likho — poori padhne ke liye 'pehli email padho' likho; bhejne ke liye 'email bhejo' likho\n- ✉️ **Email likhwana** — 'mere liye email likho: ...' likho, poora formal email likh dunga (sirf likhta hai, bhejta nahi)\n- 💾 **Permanent save** — + menu mein 'Chat hamesha save karo' se chat aur yaadein hamesha ke liye save hongi (admin code ek baar daalo)\n- 🔊 **Bol kar sunana** — har jawab ke neeche Sunao button\n- 🧠 **Yaad rakhna** — 'yaad rakho: ...' likho, is chat mein yaad rakhunga\n- 🧰 **Tools** — + wale menu mein To-Do, Kharcha Tracker aur Quiz\n- 📄 **File padhna** — + wale menu se PDF ya text file bhejo, summary dunga\n- 🎤 **Bol kar likhna** — input ke paas mic dabao aur bol do\n- 🎨 **Naam / Rang** — + wale menu se mera naam aur rang badlo\n- ⬇️ **Chat download** — poori chat ek file mein save karo\n\nJo poochna hai likho — code, sawal, hisab, kuch bhi. Ya neeche ke button dabao:";
           var row = addMessage("ai", welcome);
           var chips = document.createElement("div");
           chips.className = "chips";
