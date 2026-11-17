@@ -648,7 +648,7 @@
           "(7) If the user asks a follow-up change to code you already gave, return the FULL updated code again, not only the diff. " +
           "(8) If the request is unclear, make the most sensible complete version instead of asking many questions. " +
           "For non-coding questions, answer normally and helpfully — study, business, videos and daily questions included. Use simple markdown (bold, lists, code blocks) when it helps." +
-          " APP FEATURES: this chat app itself can generate a photo when the user asks for one (e.g. 'photo banao: ...'), show a live Preview of HTML code (Preview button above the code), publish an HTML website live with the 'Live karo' button above the code (asks for the admin code once, then gives a live link), answer live/current questions (price, news, weather, gold rate...) using the fresh Google search results the app attaches to your prompt, save the chat and remembered facts on the server forever when the admin code is set (the user enables it from 'Chat hamesha save karo' in the + tray), read any answer aloud (Sunao button under each answer), remember facts for this chat when the user says 'yaad rakho', read a PDF or text file the user attaches from the + tray (the app extracts the file's text and sends it to you — then summarize it and answer questions about it), accept voice dictation through the mic button, let the user rename you and change your theme colour in the + tray settings, download the whole chat as a file, and it has To-do, Kharcha Tracker and Quiz tools in the + tray. The app handles those requests itself, so never claim you cannot make photos or remember things in this chat." +
+          " APP FEATURES: this chat app itself can generate a photo when the user asks for one (e.g. 'photo banao: ...'), check any link the user sends for safety (it shows name-based warnings instantly, reads the page text through the free r.jina.ai reader when it can, then you give a short Hinglish verdict — what the link looks like, what the danger is, what to do; NEVER say 'pakka safe' or '100% safe', it is only an estimate; if the page cannot be read, judge by the name only and say so clearly; never ask the user to send private or login links for checking), show a live Preview of HTML code (Preview button above the code), publish an HTML website live with the 'Live karo' button above the code (asks for the admin code once, then gives a live link), answer live/current questions (price, news, weather, gold rate...) using the fresh Google search results the app attaches to your prompt, save the chat and remembered facts on the server forever when the admin code is set (the user enables it from 'Chat hamesha save karo' in the + tray), read any answer aloud (Sunao button under each answer), remember facts for this chat when the user says 'yaad rakho', read a PDF or text file the user attaches from the + tray (the app extracts the file's text and sends it to you — then summarize it and answer questions about it), accept voice dictation through the mic button, let the user rename you and change your theme colour in the + tray settings, download the whole chat as a file, and it has To-do, Kharcha Tracker and Quiz tools in the + tray. The app handles those requests itself, so never claim you cannot make photos or remember things in this chat." +
           " THINKING RULES: before answering, think step by step silently. For maths, logic and code, double-check your result before replying. Never invent facts, names, numbers or links - if you are not sure, say so honestly and give your best guess clearly marked as a guess. Answer exactly what was asked, with no filler.";
 
         var history = []; // {role: 'user'|'assistant', content: string}
@@ -1066,7 +1066,7 @@
             return "Main **" + aiName + "** hoon — Mera AI jaisa hi chat assistant, par ye bina kisi API key ke chalta hai. Sawal poochho, hisab karwao, code likhwao — koshish poori karunga! 💪";
           }
           if (/(kya kya kar sakte|kya kar sakte|tum kya kar|help|madad|features|kaam karte ho)/.test(low)) {
-            return "Main ye sab kar sakta hoon:\n\n- **Coding (strong)** — poora chalta-hua code: website, app, game, script — ek hi file mein, Download button ke saath\n- **Code Preview** — HTML code ke upar Preview button dabao, result turant chal kar dikhega\n- **Live karo** — HTML website ke upar Live karo button se site seedha live karo\n- **Live search** — aaj ka bhav, news, mausam poochho, taza jawab milega\n- **Permanent save** — + menu mein 'Chat hamesha save karo' se chat aur yaadein hamesha ke liye save hongi\n- **Bug fix** — apna code ya error paste karo, main galti bata kar poora sahi code dunga\n- **Photo banana** — likho `photo banao: pahadon par sunset`, photo ban jayegi\n- **File padhna** — + wale menu mein **📄 File padho** se PDF ya text file bhejo, main padh kar summary dunga aur sawalon ke jawab bhi\n- **Bol kar likhna** — type karne ki jagah input ke paas 🎤 mic dabao aur bol do\n- **Bol kar sunana** — har jawab ke neeche 🔊 Sunao button hai\n- **Yaad rakhna** — `yaad rakho: ...` likho, is chat mein yaad rakhunga\n- **Naam / Rang badalna** — + wale menu mein **🎨 Naam / Rang** se mera naam aur rang apni pasand ka karo\n- **Chat download** — + wale menu mein **⬇️ Chat download** se poori chat file mein save karo\n- **Tools** — + wale menu mein To-Do list, Kharcha Tracker (chart ke saath) aur Quiz\n- **Sawal-jawab** — koi bhi topic, Hindi / Hinglish / English\n- **Hisab** — jaise `125 ka 15%` ya `45 * 8 + 20`; kharcha note karne ke liye `kharcha 200 khana`\n- **Time / date** — turant bata deta hoon\n\nBas likh kar bhejo!";
+            return "Main ye sab kar sakta hoon:\n\n- **Coding (strong)** — poora chalta-hua code: website, app, game, script — ek hi file mein, Download button ke saath\n- **Code Preview** — HTML code ke upar Preview button dabao, result turant chal kar dikhega\n- **Live karo** — HTML website ke upar Live karo button se site seedha live karo\n- **Live search** — aaj ka bhav, news, mausam poochho, taza jawab milega\n- **Link check** — koi link bhejo ('yeh link safe hai kya?'), naam + page padh kar bata doon — kabhi 'pakka safe' nahi kehta\n- **Permanent save** — + menu mein 'Chat hamesha save karo' se chat aur yaadein hamesha ke liye save hongi\n- **Bug fix** — apna code ya error paste karo, main galti bata kar poora sahi code dunga\n- **Photo banana** — likho `photo banao: pahadon par sunset`, photo ban jayegi\n- **File padhna** — + wale menu mein **📄 File padho** se PDF ya text file bhejo, main padh kar summary dunga aur sawalon ke jawab bhi\n- **Bol kar likhna** — type karne ki jagah input ke paas 🎤 mic dabao aur bol do\n- **Bol kar sunana** — har jawab ke neeche 🔊 Sunao button hai\n- **Yaad rakhna** — `yaad rakho: ...` likho, is chat mein yaad rakhunga\n- **Naam / Rang badalna** — + wale menu mein **🎨 Naam / Rang** se mera naam aur rang apni pasand ka karo\n- **Chat download** — + wale menu mein **⬇️ Chat download** se poori chat file mein save karo\n- **Tools** — + wale menu mein To-Do list, Kharcha Tracker (chart ke saath) aur Quiz\n- **Sawal-jawab** — koi bhi topic, Hindi / Hinglish / English\n- **Hisab** — jaise `125 ka 15%` ya `45 * 8 + 20`; kharcha note karne ke liye `kharcha 200 khana`\n- **Time / date** — turant bata deta hoon\n\nBas likh kar bhejo!";
           }
           if (/(thank|dhanyavad|shukriya|thanks)/.test(low)) {
             return "Koi baat nahi! 😊 Aur kuch chahiye to bas likh do.";
@@ -2231,6 +2231,133 @@
 
         /* ---------------- send flow ---------------- */
 
+        /* ---------------- link check (suraksha jaanch) ----------------
+           Link ka naam dekh kar chetawaniyan + r.jina.ai se page padh kar AI ka
+           Hinglish faisla. Ye sirf andaza hai, saboot nahi — kabhi "pakka safe"
+           nahi kehta. Private/login wale link check ke liye kabhi mat bhejo. */
+        var LINK_SHORTENERS = ["bit.ly", "tinyurl.com", "goo.gl", "t.co", "ow.ly", "is.gd", "buff.ly", "shorturl.at", "rb.gy", "cutt.ly", "shrtco.de", "rebrand.ly", "tiny.cc", "s.id", "bl.ink"];
+        var LINK_BAD_TLDS = ["xyz", "top", "club", "online", "site", "fun", "buzz", "icu", "cyou", "work", "live", "click", "link", "monster", "quest", "sbs", "rest", "cam", "bar", "party", "trade", "webcam"];
+        var LINK_BRANDS = [
+          ["paytm", "paytm.com", "paytm.in"], ["sbi", "sbi.co.in", "onlinesbi.com", "sbi.bank.in"],
+          ["google", "google.com", "google.co.in", "google.in"], ["facebook", "facebook.com", "fb.com"],
+          ["instagram", "instagram.com"], ["whatsapp", "whatsapp.com", "wa.me"],
+          ["amazon", "amazon.in", "amazon.com"], ["flipkart", "flipkart.com"],
+          ["phonepe", "phonepe.com"], ["icici", "icicibank.com"], ["hdfc", "hdfcbank.com"],
+          ["axis", "axisbank.com"], ["apple", "apple.com"], ["microsoft", "microsoft.com"],
+          ["netflix", "netflix.com"], ["pnb", "pnb.co.in", "pnbindia.in"]
+        ];
+        var LINK_BAD_WORDS = ["login", "signin", "sign-in", "otp", "kyc", "verify", "verification", "reward", "prize", "winner", "bonus", "refund", "cashback", "lottery", "password", "confirm", "secure", "update", "account"];
+
+        function extractUrls(text) {
+          var found = [];
+          var re = /(https?:\/\/[^\s<>"')]+|www\.[^\s<>"')]+)/gi;
+          var m;
+          while ((m = re.exec(text)) !== null) {
+            var u = m[0].replace(/[.,;:!?)]+$/, "");
+            if (found.indexOf(u) === -1) found.push(u);
+            if (found.length >= 3) break;
+          }
+          return found;
+        }
+
+        function linkCheckWanted(text, urls) {
+          if (!urls.length) return false;
+          // Safety poochhi gayi ho to jaanch lo
+          if (/safe|surakshit|scam|fraud|dhokha|fake|nakli|nakali|check|jaanch|jaancho|khatra|bharosa|phishing|virus/i.test(text)) return true;
+          // Ya sirf link (aur 2-3 shabd) bheja ho to bhi jaanch lo — par code wale
+          // message mein link ho to nahi (wo coding follow-up hai, link check nahi)
+          if (/(code|html|website|webpage|script|masonry|grid)/i.test(text)) return false;
+          var rest = text;
+          urls.forEach(function (u) { rest = rest.split(u).join(" "); });
+          return rest.trim().split(/\s+/).filter(Boolean).length <= 3;
+        }
+
+        function checkLinkSafety(rawUrl) {
+          var url = (rawUrl || "").trim();
+          var withScheme = /^https?:\/\//i.test(url) ? url : "https://" + url;
+          var u;
+          try { u = new URL(withScheme); } catch (e) { return { ok: false, warnings: ["Link samajh nahi aaya — sahi link bhejo."] }; }
+          var host = (u.hostname || "").toLowerCase();
+          var hay = (host + (u.pathname || "") + (u.search || "")).toLowerCase();
+          var warnings = [];
+          if (u.protocol !== "https:") warnings.push("⚠️ https nahi hai — link surakshit connection se nahi khulta");
+          if (/^\d{1,3}(\.\d{1,3}){3}$/.test(host)) warnings.push("⚠️ Naam ki jagah seedha IP address hai — asli site aise nahi hoti");
+          if (LINK_SHORTENERS.indexOf(host.replace(/^www\./, "")) !== -1) warnings.push("⚠️ Chhota kiya hua link hai — asli pata chhupa hua hai");
+          var tld = host.split(".").pop();
+          if (LINK_BAD_TLDS.indexOf(tld) !== -1) warnings.push("⚠️ ." + tld + " domain aksar spam/scam mein use hota hai");
+          var brandHit = null;
+          LINK_BRANDS.forEach(function (b) {
+            var name = b[0];
+            if (host.indexOf(name) !== -1) {
+              var real = b.slice(1);
+              var isReal = real.some(function (d) { return host === d || host.endsWith("." + d); });
+              if (!isReal) brandHit = name;
+            }
+          });
+          if (brandHit) warnings.push("⚠️ " + brandHit + " jaisa naam hai, par asli " + brandHit + " ki site nahi lagti — nakli ho sakta hai");
+          LINK_BAD_WORDS.forEach(function (w) {
+            if (hay.indexOf(w) !== -1) warnings.push("⚠️ Link mein '" + w + "' shabd hai — login/OTP/inaam wale link aksar dhokha hote hain");
+          });
+          return { ok: true, host: host, warnings: warnings };
+        }
+
+        function doLinkCheck(userText, urls) {
+          addTyping();
+          var results = urls.map(function (raw) {
+            return { url: raw, check: checkLinkSafety(raw), pageText: "", pageOk: false };
+          });
+          var first = results.map(function (r) {
+            var lines = ["🔗 " + r.url];
+            if (!r.check.ok) lines.push(r.check.warnings[0]);
+            else if (!r.check.warnings.length) lines.push("✅ Naam dekh kar koi chetawani nahi mili.");
+            else r.check.warnings.forEach(function (w) { lines.push(w); });
+            return lines.join("\n");
+          }).join("\n\n");
+          function fetchPage(i) {
+            if (i >= results.length) return Promise.resolve();
+            var raw = results[i].url;
+            var target = /^https?:\/\//i.test(raw) ? raw : "https://" + raw;
+            var ctrl = (typeof AbortController !== "undefined") ? new AbortController() : null;
+            var timer = setTimeout(function () { if (ctrl) ctrl.abort(); }, 8000);
+            var fetchOpts = ctrl ? { signal: ctrl.signal } : {};
+            return fetch("https://r.jina.ai/" + target, fetchOpts)
+              .then(function (res) { clearTimeout(timer); if (!res.ok) throw new Error("http " + res.status); return res.text(); })
+              .then(function (t) {
+                var txt = (t || "").replace(/^Title:.*$/m, "").replace(/^URL Source:.*$/m, "").trim();
+                if (txt.length > 50) { results[i].pageText = txt.slice(0, 4000); results[i].pageOk = true; }
+              })
+              .catch(function () {})
+              .then(function () { return fetchPage(i + 1); });
+          }
+          fetchPage(0).then(function () {
+            var parts = results.map(function (r, idx) {
+              var s = "Link " + (idx + 1) + ": " + r.url + "\nChetawaniyan: " + (r.check.warnings.length ? r.check.warnings.join(" | ") : "koi nahi") + "\n";
+              s += r.pageOk ? "Page ka text (shuruaat):\n" + r.pageText : "Page khul nahi paya — sirf naam se andaza lagao.";
+              return s;
+            }).join("\n\n");
+            var prompt = "Tum ek link safety checker ho. Neeche diye gaye link(s) ke baare mein Hinglish mein CHHOTA aur seedha jawab do (har link ke liye 3-4 lines):\n" +
+              "1) Link kis cheez ka lagta hai (site/page kya hai)\n" +
+              "2) Khatra kya hai (agar chetawaniyan hain to unke hisab se)\n" +
+              "3) User ko kya karna chahiye (khole, na khole, password/OTP kabhi na de)\n" +
+              "Zaroori: kabhi 'pakka safe' ya '100% safe' mat kaho — ye sirf andaza hai, saboot nahi. Agar page nahi khula to saaf bata do ki sirf naam se andaza lagaya hai. Agar link private/login wala lagta hai to batao ki aise link check ke liye mat bhejo.\n\n" + parts;
+            return callModel([{ role: "user", content: prompt }], "openai", false, 30000)
+              .then(function (verdict) { return first + "\n\n" + verdict; })
+              .catch(function () {
+                var fb = first + "\n\n⚠️ AI se faisla nahi mil paya (free AI busy hai). Naam wali jaanch upar hai — " +
+                  (results.some(function (r) { return r.check.warnings.length; }) ?
+                    "chetawaniyan hain, isliye link par password/OTP kabhi mat daalna aur paise mat bhejna." :
+                    "naam mein koi chetawani nahi mili, phir bhi anjaan link par password/OTP mat daalna.");
+                return fb;
+              });
+          }).then(function (reply) {
+            removeTyping();
+            var row = addMessage("ai", reply);
+            pushHist({ role: "assistant", content: reply });
+            scrollToMessageTop(row);
+            busy = false;
+          });
+        }
+
         function handleSend(text) {
           var userText = (text != null ? text : inputEl.value).trim();
           if (!userText || busy) return;
@@ -2261,6 +2388,13 @@
               return;
             }
             doPhotoFlow(pDesc);
+            return;
+          }
+
+          // Link check — message mein link ho aur safety poochhi gayi ho (ya sirf link bheja ho)
+          var linkUrls = extractUrls(userText);
+          if (linkUrls.length && linkCheckWanted(userText, linkUrls)) {
+            doLinkCheck(userText, linkUrls);
             return;
           }
 
@@ -2337,7 +2471,7 @@
           history = [];
           messagesEl.innerHTML = "";
           var welcome =
-            "Namaste Shiva! 😊 Main **" + aiName + "** hoon — bilkul Mera AI jaisa chat, par ye **bina API key** ke chalta hai, to Gemini wali daily limit khatm hone ki dikkat nahi.\n\nAb meri **coding aur strong** hai: poora chalta-hua code milega — aadha-adhura nahi. Website ya app ka code ek hi HTML file mein dunga, aur har code ke upar **Copy** aur **Download** button hoga — Download se seedha file save karke khol sakte ho. Apna purana code ya error paste karoge to galti bata kar poora sahi code dunga.\n\nEk saaf baat: free service kabhi-kabhi slow ho sakti hai — coding wale jawab mein 1 minute tak lag sakta hai. Basic jawab (hisab, time, date, joke) main bina net ke bhi turant de deta hoon.\n\nAb main aur bhi seekh gaya hoon:\n\n- 🖼️ **Photo banana** — likho: photo banao: pahadon par sunset\n- 👁️ **Code Preview** — HTML code ke upar Preview button se result turant dikhega\n- 🌐 **Live karo** — HTML website ke upar Live karo button se site seedha live karo (admin code ek baar daalo)\n- 🔍 **Live search** — aaj ka bhav, news, mausam poochho, taza jawab milega\n- 💾 **Permanent save** — + menu mein 'Chat hamesha save karo' se chat aur yaadein hamesha ke liye save hongi (admin code ek baar daalo)\n- 🔊 **Bol kar sunana** — har jawab ke neeche Sunao button\n- 🧠 **Yaad rakhna** — 'yaad rakho: ...' likho, is chat mein yaad rakhunga\n- 🧰 **Tools** — + wale menu mein To-Do, Kharcha Tracker aur Quiz\n- 📄 **File padhna** — + wale menu se PDF ya text file bhejo, summary dunga\n- 🎤 **Bol kar likhna** — input ke paas mic dabao aur bol do\n- 🎨 **Naam / Rang** — + wale menu se mera naam aur rang badlo\n- ⬇️ **Chat download** — poori chat ek file mein save karo\n\nJo poochna hai likho — code, sawal, hisab, kuch bhi. Ya neeche ke button dabao:";
+            "Namaste Shiva! 😊 Main **" + aiName + "** hoon — bilkul Mera AI jaisa chat, par ye **bina API key** ke chalta hai, to Gemini wali daily limit khatm hone ki dikkat nahi.\n\nAb meri **coding aur strong** hai: poora chalta-hua code milega — aadha-adhura nahi. Website ya app ka code ek hi HTML file mein dunga, aur har code ke upar **Copy** aur **Download** button hoga — Download se seedha file save karke khol sakte ho. Apna purana code ya error paste karoge to galti bata kar poora sahi code dunga.\n\nEk saaf baat: free service kabhi-kabhi slow ho sakti hai — coding wale jawab mein 1 minute tak lag sakta hai. Basic jawab (hisab, time, date, joke) main bina net ke bhi turant de deta hoon.\n\nAb main aur bhi seekh gaya hoon:\n\n- 🖼️ **Photo banana** — likho: photo banao: pahadon par sunset\n- 👁️ **Code Preview** — HTML code ke upar Preview button se result turant dikhega\n- 🌐 **Live karo** — HTML website ke upar Live karo button se site seedha live karo (admin code ek baar daalo)\n- 🔍 **Live search** — aaj ka bhav, news, mausam poochho, taza jawab milega\n- 🔗 **Link check** — koi link bhejo, safe hai ya nahi bata doon\n- 💾 **Permanent save** — + menu mein 'Chat hamesha save karo' se chat aur yaadein hamesha ke liye save hongi (admin code ek baar daalo)\n- 🔊 **Bol kar sunana** — har jawab ke neeche Sunao button\n- 🧠 **Yaad rakhna** — 'yaad rakho: ...' likho, is chat mein yaad rakhunga\n- 🧰 **Tools** — + wale menu mein To-Do, Kharcha Tracker aur Quiz\n- 📄 **File padhna** — + wale menu se PDF ya text file bhejo, summary dunga\n- 🎤 **Bol kar likhna** — input ke paas mic dabao aur bol do\n- 🎨 **Naam / Rang** — + wale menu se mera naam aur rang badlo\n- ⬇️ **Chat download** — poori chat ek file mein save karo\n\nJo poochna hai likho — code, sawal, hisab, kuch bhi. Ya neeche ke button dabao:";
           var row = addMessage("ai", welcome);
           var chips = document.createElement("div");
           chips.className = "chips";
