@@ -585,6 +585,7 @@
         <button class="chip" type="button" data-q="Tumhe kya yaad hai?">🧠 Kya yaad hai</button>
         <button class="chip" type="button" id="trayFile">📄 File padho</button>
         <button class="chip" type="button" id="trayVideo">🎬 Video samjhao</button>
+        <button class="chip" type="button" id="trayPhoto">📷 Photo samjhao</button>
         <button class="chip" type="button" id="trayGmail">📧 Gmail jodo</button>
         <button class="chip" type="button" id="traySettings">🎨 Naam / Rang</button>
         <button class="chip" type="button" id="trayBrain">🧠 Dimaag</button>
@@ -605,6 +606,7 @@
 
       <input type="file" id="fileInput" accept=".pdf,.txt,.md,.csv,.json,.log,text/plain,application/pdf" hidden />
       <input type="file" id="videoInput" accept="video/mp4,video/webm,video/quicktime" hidden />
+      <input type="file" id="photoInput" accept="image/jpeg,image/png,image/webp,image/gif" hidden />
 
       <div class="composer-wrap">
         <form class="composer" id="composerForm">
@@ -652,7 +654,7 @@
           "(7) If the user asks a follow-up change to code you already gave, return the FULL updated code again, not only the diff. " +
           "(8) If the request is unclear, make the most sensible complete version instead of asking many questions. " +
           "For non-coding questions, answer normally and helpfully — study, business, videos and daily questions included. Use simple markdown (bold, lists, code blocks) when it helps." +
-          " APP FEATURES: this chat app itself can generate a photo when the user asks for one (e.g. 'photo banao: ...'), check any link the user sends for safety (it shows name-based warnings instantly, reads the page text through the free r.jina.ai reader when it can, then you give a short Hinglish verdict — what the link looks like, what the danger is, what to do; NEVER say 'pakka safe' or '100% safe', it is only an estimate; if the page cannot be read, judge by the name only and say so clearly; never ask the user to send private or login links for checking), describe a YouTube video from its title and description (it reads the video page text through the free r.jina.ai reader, then you summarise what the video is about from the title and description ONLY — you cannot see the scenes or hear the audio, so never invent scene details; if the page cannot be read, say so honestly and do not guess), understand a video FILE the user uploads from the + tray 'Video samjhao' button (the file goes to the server, which shows it to Gemini and returns a description of the scenes and the audio — max 2.5 MB, MP4/WebM/MOV), show a live Preview of HTML code (Preview button above the code), publish an HTML website live with the 'Live karo' button above the code (asks for the admin code once, then gives a live link), answer live/current questions (price, news, weather, gold rate...) using the fresh Google search results the app attaches to your prompt, save the chat and remembered facts on the server forever when the admin code is set (the user enables it from 'Chat hamesha save karo' in the + tray), read any answer aloud (Sunao button under each answer), remember facts for this chat when the user says 'yaad rakho', read a PDF or text file the user attaches from the + tray (the app extracts the file's text and sends it to you — then summarize it and answer questions about it), accept voice dictation through the mic button, let the user rename you and change your theme colour in the + tray settings, download the whole chat as a file, and it has To-do, Kharcha Tracker and Quiz tools in the + tray. It can also read the user's own Gmail inbox when asked (each user connects their own Gmail with Google login from the + tray 'Gmail jodo' button — read-only, only the latest emails, sender + subject + a short snippet, and read one email fully when asked ('pehli email padho' or '2 number wali email padho' after the list); the mail stays in the user's own account and nothing is saved on the server; if Gmail is not connected yet, say so plainly instead of guessing). The app handles those requests itself, so never claim you cannot make photos or remember things in this chat." +
+          " APP FEATURES: this chat app itself can generate a photo when the user asks for one (e.g. 'photo banao: ...'), check any link the user sends for safety (it shows name-based warnings instantly, reads the page text through the free r.jina.ai reader when it can, then you give a short Hinglish verdict — what the link looks like, what the danger is, what to do; NEVER say 'pakka safe' or '100% safe', it is only an estimate; if the page cannot be read, judge by the name only and say so clearly; never ask the user to send private or login links for checking), describe a YouTube video from its title and description (it reads the video page text through the free r.jina.ai reader, then you summarise what the video is about from the title and description ONLY — you cannot see the scenes or hear the audio, so never invent scene details; if the page cannot be read, say so honestly and do not guess), understand a video FILE the user uploads from the + tray 'Video samjhao' button (the file goes to the server, which shows it to Gemini and returns a description of the scenes and the audio — max 2.5 MB, MP4/WebM/MOV), understand a PHOTO the user uploads from the + tray 'Photo samjhao' button (the file goes to the server, which shows it to Gemini and describes what is in it, or answers the user's question about it — max 2.5 MB, JPEG/PNG/WebP/GIF; if the user typed a question before choosing the photo, answer that question about the photo), show a live Preview of HTML code (Preview button above the code), publish an HTML website live with the 'Live karo' button above the code (asks for the admin code once, then gives a live link), answer live/current questions (price, news, weather, gold rate...) using the fresh Google search results the app attaches to your prompt, save the chat and remembered facts on the server forever when the admin code is set (the user enables it from 'Chat hamesha save karo' in the + tray), read any answer aloud (Sunao button under each answer), remember facts for this chat when the user says 'yaad rakho', read a PDF or text file the user attaches from the + tray (the app extracts the file's text and sends it to you — then summarize it and answer questions about it), accept voice dictation through the mic button, let the user rename you and change your theme colour in the + tray settings, download the whole chat as a file, and it has To-do, Kharcha Tracker and Quiz tools in the + tray. It can also read the user's own Gmail inbox when asked (each user connects their own Gmail with Google login from the + tray 'Gmail jodo' button — read-only, only the latest emails, sender + subject + a short snippet, and read one email fully when asked ('pehli email padho' or '2 number wali email padho' after the list); the mail stays in the user's own account and nothing is saved on the server; if Gmail is not connected yet, say so plainly instead of guessing). The app handles those requests itself, so never claim you cannot make photos or remember things in this chat." +
           " THINKING RULES: before answering, think step by step silently. For maths, logic and code, double-check your result before replying. Never invent facts, names, numbers or links - if you are not sure, say so honestly and give your best guess clearly marked as a guess. Answer exactly what was asked, with no filler.";
 
         var history = []; // {role: 'user'|'assistant', content: string}
@@ -1070,7 +1072,7 @@
             return "Main **" + aiName + "** hoon — Mera AI jaisa hi chat assistant, par ye bina kisi API key ke chalta hai. Sawal poochho, hisab karwao, code likhwao — koshish poori karunga! 💪";
           }
           if (/(kya kya kar sakte|kya kar sakte|tum kya kar|help|madad|features|kaam karte ho)/.test(low)) {
-            return "Main ye sab kar sakta hoon:\n\n- **Coding (strong)** — poora chalta-hua code: website, app, game, script — ek hi file mein, Download button ke saath\n- **Code Preview** — HTML code ke upar Preview button dabao, result turant chal kar dikhega\n- **Live karo** — HTML website ke upar Live karo button se site seedha live karo\n- **Live search** — aaj ka bhav, news, mausam poochho, taza jawab milega\n- **Link check** — koi link bhejo ('yeh link safe hai kya?'), naam + page padh kar bata doon — kabhi 'pakka safe' nahi kehta\n- **Video link** — YouTube link bhejo ('ye video kya hai?'), title/description se bata doon (scenes nahi dikhte)\n- **Video samjhao** — + menu mein **🎬 Video samjhao** se video file bhejo (2.5 MB tak), dekh kar + sun kar bata doon\n- **Gmail** — apna Gmail + menu mein 📧 Gmail jodo se jodo, phir 'meri email dikhao' likho — haal ki emails dikha doon; poori padhne ke liye 'pehli email padho' likho\n- **Permanent save** — + menu mein 'Chat hamesha save karo' se chat aur yaadein hamesha ke liye save hongi\n- **Bug fix** — apna code ya error paste karo, main galti bata kar poora sahi code dunga\n- **Photo banana** — likho `photo banao: pahadon par sunset`, photo ban jayegi\n- **File padhna** — + wale menu mein **📄 File padho** se PDF ya text file bhejo, main padh kar summary dunga aur sawalon ke jawab bhi\n- **Bol kar likhna** — type karne ki jagah input ke paas 🎤 mic dabao aur bol do\n- **Bol kar sunana** — har jawab ke neeche 🔊 Sunao button hai\n- **Yaad rakhna** — `yaad rakho: ...` likho, is chat mein yaad rakhunga\n- **Naam / Rang badalna** — + wale menu mein **🎨 Naam / Rang** se mera naam aur rang apni pasand ka karo\n- **Chat download** — + wale menu mein **⬇️ Chat download** se poori chat file mein save karo\n- **Tools** — + wale menu mein To-Do list, Kharcha Tracker (chart ke saath) aur Quiz\n- **Sawal-jawab** — koi bhi topic, Hindi / Hinglish / English\n- **Hisab** — jaise `125 ka 15%` ya `45 * 8 + 20`; kharcha note karne ke liye `kharcha 200 khana`\n- **Time / date** — turant bata deta hoon\n\nBas likh kar bhejo!";
+            return "Main ye sab kar sakta hoon:\n\n- **Coding (strong)** — poora chalta-hua code: website, app, game, script — ek hi file mein, Download button ke saath\n- **Code Preview** — HTML code ke upar Preview button dabao, result turant chal kar dikhega\n- **Live karo** — HTML website ke upar Live karo button se site seedha live karo\n- **Live search** — aaj ka bhav, news, mausam poochho, taza jawab milega\n- **Link check** — koi link bhejo ('yeh link safe hai kya?'), naam + page padh kar bata doon — kabhi 'pakka safe' nahi kehta\n- **Video link** — YouTube link bhejo ('ye video kya hai?'), title/description se bata doon (scenes nahi dikhte)\n- **Video samjhao** — + menu mein **🎬 Video samjhao** se video file bhejo (2.5 MB tak), dekh kar + sun kar bata doon\n- **Photo samjhao** — + menu mein **📷 Photo samjhao** se photo bhejo (2.5 MB tak), kya dikh raha hai bata doon\n- **Gmail** — apna Gmail + menu mein 📧 Gmail jodo se jodo, phir 'meri email dikhao' likho — haal ki emails dikha doon; poori padhne ke liye 'pehli email padho' likho\n- **Permanent save** — + menu mein 'Chat hamesha save karo' se chat aur yaadein hamesha ke liye save hongi\n- **Bug fix** — apna code ya error paste karo, main galti bata kar poora sahi code dunga\n- **Photo banana** — likho `photo banao: pahadon par sunset`, photo ban jayegi\n- **File padhna** — + wale menu mein **📄 File padho** se PDF ya text file bhejo, main padh kar summary dunga aur sawalon ke jawab bhi\n- **Bol kar likhna** — type karne ki jagah input ke paas 🎤 mic dabao aur bol do\n- **Bol kar sunana** — har jawab ke neeche 🔊 Sunao button hai\n- **Yaad rakhna** — `yaad rakho: ...` likho, is chat mein yaad rakhunga\n- **Naam / Rang badalna** — + wale menu mein **🎨 Naam / Rang** se mera naam aur rang apni pasand ka karo\n- **Chat download** — + wale menu mein **⬇️ Chat download** se poori chat file mein save karo\n- **Tools** — + wale menu mein To-Do list, Kharcha Tracker (chart ke saath) aur Quiz\n- **Sawal-jawab** — koi bhi topic, Hindi / Hinglish / English\n- **Hisab** — jaise `125 ka 15%` ya `45 * 8 + 20`; kharcha note karne ke liye `kharcha 200 khana`\n- **Time / date** — turant bata deta hoon\n\nBas likh kar bhejo!";
           }
           if (/(thank|dhanyavad|shukriya|thanks)/.test(low)) {
             return "Koi baat nahi! 😊 Aur kuch chahiye to bas likh do.";
@@ -1917,6 +1919,116 @@
           videoInput.value = "";
           if (f) handleVideoFile(f);
         });
+
+        var photoInput = document.getElementById("photoInput");
+        document.getElementById("trayPhoto").addEventListener("click", function () {
+          trayEl.classList.remove("open");
+          plusBtn.classList.remove("open");
+          photoInput.click();
+        });
+        photoInput.addEventListener("change", function () {
+          var f = photoInput.files && photoInput.files[0];
+          photoInput.value = "";
+          if (f) handlePhotoFile(f);
+        });
+
+        function handlePhotoFile(file) {
+          if (busy) return;
+          var okType = /^image\/(jpeg|png|webp|gif)$/i.test(file.type) || /\.(jpe?g|png|webp|gif)$/i.test(file.name);
+          if (!okType) {
+            busy = true;
+            replyLocal("Ye photo file nahi lagti 😕 — sirf **JPEG / PNG / WebP / GIF** photo chalegi. + menu mein **📷 Photo samjhao** se sahi photo chuno.");
+            return;
+          }
+          if (file.size > 2.5 * 1024 * 1024) {
+            busy = true;
+            replyLocal("Photo bahut badi hai (2.5 MB se zyada) 😕 — chhoti photo bhejo. Badi photo ho to pehle chhoti karke bhejo.");
+            return;
+          }
+          busy = true;
+          trayEl.classList.remove("open");
+          plusBtn.classList.remove("open");
+          var question = (inputEl.value || "").trim();
+          addMessage("user", "📷 Photo bheji: " + file.name + (question ? "\n" + question : ""));
+          scrollToBottom();
+          pushHist({ role: "user", content: "📷 Photo bheji: " + file.name + (question ? "\n" + question : "") });
+          inputEl.value = "";
+          autoGrow();
+          addTyping();
+          downscalePhoto(file).then(function (img) {
+            return fetch("/api/freeai?fn=photo", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ image: { mimeType: img.mimeType, data: img.data }, question: question || undefined })
+            });
+          }).then(function (res) { return res.json().then(function (d) { return { status: res.status, d: d }; }); })
+          .then(function (r) {
+            removeTyping();
+            var reply;
+            if (r.d && r.d.ok && r.d.text) reply = r.d.text;
+            else if (r.status === 429) reply = "⚠️ Photo samajhne wali free limit abhi poori ho gayi hai — dopahar ~1:30 ke baad dobara try karo.";
+            else reply = (r.d && r.d.error) ? r.d.error : "Photo samajh nahi paya — dobara try karo.";
+            var row = addMessage("ai", reply);
+            pushHist({ role: "assistant", content: reply });
+            scrollToMessageTop(row);
+            busy = false;
+          }).catch(function () {
+            removeTyping();
+            var reply = "Photo bhejne mein dikkat aayi — net check karke dobara try karo.";
+            var row = addMessage("ai", reply);
+            pushHist({ role: "assistant", content: reply });
+            scrollToMessageTop(row);
+            busy = false;
+          });
+        }
+
+        // Photo ko 1024px tak chhota karo (JPEG 0.8) taaki bhejna tez ho;
+        // canvas ya image load na chale to original photo hi bhej do
+        // (2.5 second mein image na khule to bhi original hi jaati hai).
+        function downscalePhoto(file) {
+          return new Promise(function (resolve) {
+            function readOriginal() {
+              file.arrayBuffer().then(function (buf) {
+                var bytes = new Uint8Array(buf);
+                var bin = "";
+                var CH = 8192;
+                for (var i = 0; i < bytes.length; i += CH) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + CH));
+                resolve({ mimeType: file.type || "image/jpeg", data: btoa(bin) });
+              }).catch(function () { resolve({ mimeType: file.type || "image/jpeg", data: "" }); });
+            }
+            setTimeout(readOriginal, 2500);
+            try {
+              var reader = new FileReader();
+              reader.onload = function () {
+                try {
+                  var img = new Image();
+                  img.onload = function () {
+                    try {
+                      var maxSide = 1024;
+                      var w = img.naturalWidth || img.width, h = img.naturalHeight || img.height;
+                      if (!w || !h) { readOriginal(); return; }
+                      var scale = Math.min(1, maxSide / Math.max(w, h));
+                      var cw = Math.max(1, Math.round(w * scale)), ch = Math.max(1, Math.round(h * scale));
+                      var cv = document.createElement("canvas");
+                      cv.width = cw; cv.height = ch;
+                      var ctx = cv.getContext("2d");
+                      if (!ctx) { readOriginal(); return; }
+                      ctx.drawImage(img, 0, 0, cw, ch);
+                      var url = cv.toDataURL("image/jpeg", 0.8);
+                      var m = url.match(/^data:(image\/jpeg);base64,(.*)$/);
+                      if (!m) { readOriginal(); return; }
+                      resolve({ mimeType: "image/jpeg", data: m[2] });
+                    } catch (e) { readOriginal(); }
+                  };
+                  img.onerror = readOriginal;
+                  img.src = reader.result;
+                } catch (e) { readOriginal(); }
+              };
+              reader.onerror = readOriginal;
+              reader.readAsDataURL(file);
+            } catch (e) { readOriginal(); }
+          });
+        }
 
         function handleVideoFile(file) {
           if (busy) return;
@@ -2921,7 +3033,7 @@
           history = [];
           messagesEl.innerHTML = "";
           var welcome =
-            "Namaste Shiva! 😊 Main **" + aiName + "** hoon — bilkul Mera AI jaisa chat, par ye **bina API key** ke chalta hai, to Gemini wali daily limit khatm hone ki dikkat nahi.\n\nAb meri **coding aur strong** hai: poora chalta-hua code milega — aadha-adhura nahi. Website ya app ka code ek hi HTML file mein dunga, aur har code ke upar **Copy** aur **Download** button hoga — Download se seedha file save karke khol sakte ho. Apna purana code ya error paste karoge to galti bata kar poora sahi code dunga.\n\nEk saaf baat: free service kabhi-kabhi slow ho sakti hai — coding wale jawab mein 1 minute tak lag sakta hai. Basic jawab (hisab, time, date, joke) main bina net ke bhi turant de deta hoon.\n\nAb main aur bhi seekh gaya hoon:\n\n- 🖼️ **Photo banana** — likho: photo banao: pahadon par sunset\n- 👁️ **Code Preview** — HTML code ke upar Preview button se result turant dikhega\n- 🌐 **Live karo** — HTML website ke upar Live karo button se site seedha live karo (admin code ek baar daalo)\n- 🔍 **Live search** — aaj ka bhav, news, mausam poochho, taza jawab milega\n- 🔗 **Link check** — koi link bhejo, safe hai ya nahi bata doon\n- 🎬 **Video samjhao** — YouTube link bhejo ya + menu se video file bhejo, kya ho raha hai bata doon\n- 📧 **Gmail** — apna Gmail jodo (+ menu mein 📧 Gmail jodo), phir 'meri email dikhao' likho — poori padhne ke liye 'pehli email padho' likho\n- 💾 **Permanent save** — + menu mein 'Chat hamesha save karo' se chat aur yaadein hamesha ke liye save hongi (admin code ek baar daalo)\n- 🔊 **Bol kar sunana** — har jawab ke neeche Sunao button\n- 🧠 **Yaad rakhna** — 'yaad rakho: ...' likho, is chat mein yaad rakhunga\n- 🧰 **Tools** — + wale menu mein To-Do, Kharcha Tracker aur Quiz\n- 📄 **File padhna** — + wale menu se PDF ya text file bhejo, summary dunga\n- 🎤 **Bol kar likhna** — input ke paas mic dabao aur bol do\n- 🎨 **Naam / Rang** — + wale menu se mera naam aur rang badlo\n- ⬇️ **Chat download** — poori chat ek file mein save karo\n\nJo poochna hai likho — code, sawal, hisab, kuch bhi. Ya neeche ke button dabao:";
+            "Namaste Shiva! 😊 Main **" + aiName + "** hoon — bilkul Mera AI jaisa chat, par ye **bina API key** ke chalta hai, to Gemini wali daily limit khatm hone ki dikkat nahi.\n\nAb meri **coding aur strong** hai: poora chalta-hua code milega — aadha-adhura nahi. Website ya app ka code ek hi HTML file mein dunga, aur har code ke upar **Copy** aur **Download** button hoga — Download se seedha file save karke khol sakte ho. Apna purana code ya error paste karoge to galti bata kar poora sahi code dunga.\n\nEk saaf baat: free service kabhi-kabhi slow ho sakti hai — coding wale jawab mein 1 minute tak lag sakta hai. Basic jawab (hisab, time, date, joke) main bina net ke bhi turant de deta hoon.\n\nAb main aur bhi seekh gaya hoon:\n\n- 🖼️ **Photo banana** — likho: photo banao: pahadon par sunset\n- 👁️ **Code Preview** — HTML code ke upar Preview button se result turant dikhega\n- 🌐 **Live karo** — HTML website ke upar Live karo button se site seedha live karo (admin code ek baar daalo)\n- 🔍 **Live search** — aaj ka bhav, news, mausam poochho, taza jawab milega\n- 🔗 **Link check** — koi link bhejo, safe hai ya nahi bata doon\n- 🎬 **Video samjhao** — YouTube link bhejo ya + menu se video file bhejo, kya ho raha hai bata doon\n- 📷 **Photo samjhao** — + menu se photo bhejo, kya dikh raha hai bata doon\n- 📧 **Gmail** — apna Gmail jodo (+ menu mein 📧 Gmail jodo), phir 'meri email dikhao' likho — poori padhne ke liye 'pehli email padho' likho\n- 💾 **Permanent save** — + menu mein 'Chat hamesha save karo' se chat aur yaadein hamesha ke liye save hongi (admin code ek baar daalo)\n- 🔊 **Bol kar sunana** — har jawab ke neeche Sunao button\n- 🧠 **Yaad rakhna** — 'yaad rakho: ...' likho, is chat mein yaad rakhunga\n- 🧰 **Tools** — + wale menu mein To-Do, Kharcha Tracker aur Quiz\n- 📄 **File padhna** — + wale menu se PDF ya text file bhejo, summary dunga\n- 🎤 **Bol kar likhna** — input ke paas mic dabao aur bol do\n- 🎨 **Naam / Rang** — + wale menu se mera naam aur rang badlo\n- ⬇️ **Chat download** — poori chat ek file mein save karo\n\nJo poochna hai likho — code, sawal, hisab, kuch bhi. Ya neeche ke button dabao:";
           var row = addMessage("ai", welcome);
           var chips = document.createElement("div");
           chips.className = "chips";

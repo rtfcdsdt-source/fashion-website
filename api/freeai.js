@@ -1,6 +1,6 @@
 // api/freeai.js — Free AI Chat ka EK HI server endpoint.
 // Vercel Hobby plan mein max 12 Serverless Functions hote hain — isliye Free AI Chat
-// ke chaaro kaam (live search + permanent chat + permanent memory + video samajh)
+// ke paanch kaam (live search + permanent chat + permanent memory + video samajh + photo samajh)
 // ek hi file mein hain.
 // Route ?fn= se:
 //   POST /api/freeai?fn=search {q} → {ok, results: [{title, snippet, link}]} (Serper Google Search)
@@ -11,7 +11,8 @@
 //   POST /api/freeai?fn=memory {code, memories} → yaadein save karo (admin only)
 //   POST /api/freeai?fn=memory&action=clear {code} → yaadein delete karo (admin only).
 //   POST /api/freeai?fn=video {video: {mimeType, data}} → {ok, text} (Gemini video samajh, no admin code)
-// Env: SERPER_API_KEY (search) + DATABASE_URL (ya POSTGRES_URL / NEON_DATABASE_URL) + REELS_ADMIN_CODE + GEMINI_API_KEY (video).
+//   POST /api/freeai?fn=photo {image: {mimeType, data}, question?} → {ok, text} (Gemini photo samajh, no admin code)
+// Env: SERPER_API_KEY (search) + DATABASE_URL (ya POSTGRES_URL / NEON_DATABASE_URL) + REELS_ADMIN_CODE + GEMINI_API_KEY (video + photo).
 // Storage: Neon Postgres over its raw HTTP /sql endpoint (no npm packages).
 // Chat limit: max 100 messages, har message max 4000 chars, total max ~200,000 chars.
 // Memory limit: max 30 yaadein, har yaad max 500 chars, total max ~50,000 chars.
@@ -371,6 +372,62 @@ async function handleVideo(req, res) {
   return send(res, 200, { ok: true, text: text });
 }
 
+// POST /api/freeai?fn=photo {image: {mimeType, data}, question?} → {ok, text} (Gemini photo samajh).
+// Key sirf server-side GEMINI_API_KEY se aati hai — page mein kabhi nahi hoti.
+// Photo kahin save ya log nahi hoti; sirf is ek call mein Gemini ko jaati hai.
+// Limit: JPEG/PNG/WebP/GIF, base64 max ~3.5MB (~2.6MB binary). Photo Gemini ko nahi
+// bheja ja sakta to backup chain bhi nahi chalti (backup sirf text samajhte hain).
+const PHOTO_MIMES = { "image/jpeg": 1, "image/png": 1, "image/webp": 1, "image/gif": 1 };
+const PHOTO_MODEL = "gemini-3.5-flash";
+const PHOTO_MAX_B64 = 3500000;
+
+async function handlePhoto(req, res) {
+  if (req.method !== "POST") { res.setHeader("Allow", "POST"); return send(res, 405, { ok: false, error: "Sirf POST chalega." }); }
+  const key = process.env.GEMINI_API_KEY || "";
+  if (!key.trim()) return send(res, 503, { ok: false, error: "Photo samajh abhi set nahi hua hai." });
+  const body = await readBody(req);
+  const v = body && body.image;
+  if (!v || typeof v !== "object" || typeof v.mimeType !== "string" || typeof v.data !== "string") {
+    return send(res, 400, { ok: false, error: "Photo sahi tareeke se nahi bheji gayi." });
+  }
+  const mime = v.mimeType.trim().toLowerCase();
+  let data = v.data.trim();
+  const prefix = data.match(/^data:[a-z0-9]+\/[a-z0-9.+-]+;base64,/i);
+  if (prefix) data = data.slice(prefix[0].length);
+  if (!PHOTO_MIMES[mime]) return send(res, 400, { ok: false, error: "Ye photo format nahi chalta. JPEG / PNG / WebP / GIF bhejo." });
+  if (!data || !/^[A-Za-z0-9+/=_-]+$/.test(data)) return send(res, 400, { ok: false, error: "Photo ka data kharab hai. Dobara bhejkar try karo." });
+  if (data.length > PHOTO_MAX_B64) return send(res, 400, { ok: false, error: "Photo bahut badi hai. Chhoti photo bhejkar try karo." });
+  const question = (body && typeof body.question === "string") ? body.question.trim().slice(0, 500) : "";
+  const url = "https://generativelanguage.googleapis.com/v1beta/models/" + PHOTO_MODEL + ":generateContent?key=" + encodeURIComponent(key.trim());
+  const payload = {
+    systemInstruction: { parts: [{ text: "Tum ek photo samajhne wale helper ho. Jawab HINGLISH mein, chhota aur seedha do. Photo mein jo dikhe, wahi batao — andaza mat lagao, kuch ghado mat." }] },
+    contents: [{ role: "user", parts: [
+      { text: question ? ("Is photo ko dekh kar is sawal ka jawab Hinglish mein do: " + question + "\nPhoto mein jo dikhe usi se jawab do — jo na dikhe, use ghado mat, imaandaari se bolo ki pata nahi chal raha.") : "Is photo mein kya-kya dikh raha hai, Hinglish mein batao:\n1) Photo mein kya hai — cheezein, log, jagah\n2) Photo mein likha hua text ho to woh bhi padh kar batao\n3) Photo kis baare mein lagta hai\nJo na dikhe, use ghado mat — imaandaari se bolo ki pata nahi chal raha." },
+      { inlineData: { mimeType: mime, data: data } }
+    ] }],
+    generationConfig: { temperature: 0.7, maxOutputTokens: 1024 }
+  };
+  let upstream = null;
+  try {
+    upstream = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload), signal: AbortSignal.timeout(9000) });
+  } catch (e) { upstream = null; }
+  if (!upstream) return send(res, 504, { ok: false, error: "Gemini se jod nahi paya. Thodi der baad dobara try karo." });
+  if (upstream.status === 429) return send(res, 429, { ok: false, error: "Free limit poori ho gayi hai. Thodi der ruk kar dobara try karo." });
+  if (!upstream.ok) {
+    if (upstream.status === 400 || upstream.status === 403) return send(res, 502, { ok: false, error: "AI key ya setting mein gadbad hai." });
+    return send(res, 502, { ok: false, error: "Gemini se jawab nahi mila. Thodi der baad dobara try karo." });
+  }
+  let parsed = null;
+  try { parsed = await upstream.json(); } catch (e) { parsed = null; }
+  let text = "";
+  try {
+    const parts = parsed && parsed.candidates && parsed.candidates[0] && parsed.candidates[0].content && parsed.candidates[0].content.parts;
+    if (Array.isArray(parts)) text = parts.map(function (p) { return p && typeof p.text === "string" ? p.text : ""; }).join("").trim();
+  } catch (e) { text = ""; }
+  if (!text) return send(res, 502, { ok: false, error: "Gemini ne khali jawab diya. Dobara try karo." });
+  return send(res, 200, { ok: true, text: text });
+}
+
 module.exports = async (req, res) => {
   let fn = "";
   let action = "";
@@ -386,5 +443,6 @@ module.exports = async (req, res) => {
   if (fn === "chat") return handleChat(req, res, action, codeParam);
   if (fn === "memory") return handleMemory(req, res, action, codeParam);
   if (fn === "video") return handleVideo(req, res);
+  if (fn === "photo") return handlePhoto(req, res);
   send(res, 400, { ok: false, error: "bad_fn" });
 };
