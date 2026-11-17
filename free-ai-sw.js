@@ -1,0 +1,8 @@
+// Free AI Chat — service worker (PWA install ke liye; kuch cache nahi karta, sirf pass-through).
+self.addEventListener("install", function () { self.skipWaiting(); });
+self.addEventListener("activate", function (event) {
+  event.waitUntil(self.clients.claim());
+});
+self.addEventListener("fetch", function (event) {
+  event.respondWith(fetch(event.request));
+});
