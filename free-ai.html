@@ -647,7 +647,7 @@
           "(7) If the user asks a follow-up change to code you already gave, return the FULL updated code again, not only the diff. " +
           "(8) If the request is unclear, make the most sensible complete version instead of asking many questions. " +
           "For non-coding questions, answer normally and helpfully — study, business, videos and daily questions included. Use simple markdown (bold, lists, code blocks) when it helps." +
-          " APP FEATURES: this chat app itself can generate a photo when the user asks for one (e.g. 'photo banao: ...'), show a live Preview of HTML code (Preview button above the code), read any answer aloud (Sunao button under each answer), remember facts for this chat when the user says 'yaad rakho', read a PDF or text file the user attaches from the + tray (the app extracts the file's text and sends it to you — then summarize it and answer questions about it), accept voice dictation through the mic button, let the user rename you and change your theme colour in the + tray settings, download the whole chat as a file, and it has To-do, Kharcha Tracker and Quiz tools in the + tray. The app handles those requests itself, so never claim you cannot make photos or remember things in this chat." +
+          " APP FEATURES: this chat app itself can generate a photo when the user asks for one (e.g. 'photo banao: ...'), show a live Preview of HTML code (Preview button above the code), publish an HTML website live with the 'Live karo' button above the code (asks for the admin code once, then gives a live link), read any answer aloud (Sunao button under each answer), remember facts for this chat when the user says 'yaad rakho', read a PDF or text file the user attaches from the + tray (the app extracts the file's text and sends it to you — then summarize it and answer questions about it), accept voice dictation through the mic button, let the user rename you and change your theme colour in the + tray settings, download the whole chat as a file, and it has To-do, Kharcha Tracker and Quiz tools in the + tray. The app handles those requests itself, so never claim you cannot make photos or remember things in this chat." +
           " THINKING RULES: before answering, think step by step silently. For maths, logic and code, double-check your result before replying. Never invent facts, names, numbers or links - if you are not sure, say so honestly and give your best guess clearly marked as a guess. Answer exactly what was asked, with no filler.";
 
         var history = []; // {role: 'user'|'assistant', content: string} — in-memory only
@@ -783,6 +783,12 @@
                 var actions = block.querySelector(".cb-actions");
                 actions.insertBefore(pv, actions.firstChild);
                 pv.addEventListener("click", function () { openPreview(code2); });
+                var lv = document.createElement("button");
+                lv.type = "button";
+                lv.className = "cb-dl";
+                lv.textContent = "🌐 Live karo";
+                actions.insertBefore(lv, pv.nextSibling);
+                lv.addEventListener("click", function () { publishCode(code2, block, lv); });
               }
             });
           }
@@ -983,7 +989,7 @@
             return "Main **" + aiName + "** hoon — Mera AI jaisa hi chat assistant, par ye bina kisi API key ke chalta hai. Sawal poochho, hisab karwao, code likhwao — koshish poori karunga! 💪";
           }
           if (/(kya kya kar sakte|kya kar sakte|tum kya kar|help|madad|features|kaam karte ho)/.test(low)) {
-            return "Main ye sab kar sakta hoon:\n\n- **Coding (strong)** — poora chalta-hua code: website, app, game, script — ek hi file mein, Download button ke saath\n- **Code Preview** — HTML code ke upar Preview button dabao, result turant chal kar dikhega\n- **Bug fix** — apna code ya error paste karo, main galti bata kar poora sahi code dunga\n- **Photo banana** — likho `photo banao: pahadon par sunset`, photo ban jayegi\n- **File padhna** — + wale menu mein **📄 File padho** se PDF ya text file bhejo, main padh kar summary dunga aur sawalon ke jawab bhi\n- **Bol kar likhna** — type karne ki jagah input ke paas 🎤 mic dabao aur bol do\n- **Bol kar sunana** — har jawab ke neeche 🔊 Sunao button hai\n- **Yaad rakhna** — `yaad rakho: ...` likho, is chat mein yaad rakhunga\n- **Naam / Rang badalna** — + wale menu mein **🎨 Naam / Rang** se mera naam aur rang apni pasand ka karo\n- **Chat download** — + wale menu mein **⬇️ Chat download** se poori chat file mein save karo\n- **Tools** — + wale menu mein To-Do list, Kharcha Tracker (chart ke saath) aur Quiz\n- **Sawal-jawab** — koi bhi topic, Hindi / Hinglish / English\n- **Hisab** — jaise `125 ka 15%` ya `45 * 8 + 20`; kharcha note karne ke liye `kharcha 200 khana`\n- **Time / date** — turant bata deta hoon\n\nBas likh kar bhejo!";
+            return "Main ye sab kar sakta hoon:\n\n- **Coding (strong)** — poora chalta-hua code: website, app, game, script — ek hi file mein, Download button ke saath\n- **Code Preview** — HTML code ke upar Preview button dabao, result turant chal kar dikhega\n- **Live karo** — HTML website ke upar Live karo button se site seedha live karo\n- **Bug fix** — apna code ya error paste karo, main galti bata kar poora sahi code dunga\n- **Photo banana** — likho `photo banao: pahadon par sunset`, photo ban jayegi\n- **File padhna** — + wale menu mein **📄 File padho** se PDF ya text file bhejo, main padh kar summary dunga aur sawalon ke jawab bhi\n- **Bol kar likhna** — type karne ki jagah input ke paas 🎤 mic dabao aur bol do\n- **Bol kar sunana** — har jawab ke neeche 🔊 Sunao button hai\n- **Yaad rakhna** — `yaad rakho: ...` likho, is chat mein yaad rakhunga\n- **Naam / Rang badalna** — + wale menu mein **🎨 Naam / Rang** se mera naam aur rang apni pasand ka karo\n- **Chat download** — + wale menu mein **⬇️ Chat download** se poori chat file mein save karo\n- **Tools** — + wale menu mein To-Do list, Kharcha Tracker (chart ke saath) aur Quiz\n- **Sawal-jawab** — koi bhi topic, Hindi / Hinglish / English\n- **Hisab** — jaise `125 ka 15%` ya `45 * 8 + 20`; kharcha note karne ke liye `kharcha 200 khana`\n- **Time / date** — turant bata deta hoon\n\nBas likh kar bhejo!";
           }
           if (/(thank|dhanyavad|shukriya|thanks)/.test(low)) {
             return "Koi baat nahi! 😊 Aur kuch chahiye to bas likh do.";
@@ -1193,6 +1199,68 @@
         });
 
         // HTML code ka live result — sandboxed iframe mein, bina page chhode.
+        // HTML code ko GitHub → Vercel par live karo (Mera AI wala publish endpoint)
+        function publishCode(code, block, btn) {
+          var status = block.querySelector(".cb-publish-status");
+          if (!status) {
+            status = document.createElement("div");
+            status.className = "cb-publish-status";
+            status.style.cssText = "margin:8px 10px;font-size:.85rem;white-space:pre-wrap";
+            block.appendChild(status);
+          }
+          function getCode() {
+            try { return localStorage.getItem("fg-publish-code") || localStorage.getItem("fg-photos-code") || localStorage.getItem("fg-addproduct-code") || ""; } catch (e) { return ""; }
+          }
+          function siteTitle(html) {
+            var m = html.match(/<title[^>]*>([^<]*)<\/title>/i);
+            var t = m ? m[1].trim() : "";
+            return t || "Free AI Site";
+          }
+          var adminCode = getCode();
+          if (!adminCode) {
+            status.textContent = "Live karne ke liye admin code chahiye (wahi jo Orders/Photos mein lagta hai):";
+            var row = document.createElement("div");
+            row.style.marginTop = "6px";
+            var inp = document.createElement("input");
+            inp.type = "password";
+            inp.placeholder = "Admin code daalo";
+            inp.style.cssText = "padding:8px;border:1px solid #ccc;border-radius:8px;width:55%";
+            var sb = document.createElement("button");
+            sb.type = "button";
+            sb.className = "cb-dl";
+            sb.textContent = "Save karo";
+            sb.onclick = function () { var v = inp.value.trim(); if (!v) return; try { localStorage.setItem("fg-publish-code", v); } catch (e) {} row.remove(); publishCode(code, block, btn); };
+            row.appendChild(inp);
+            row.appendChild(sb);
+            block.appendChild(row);
+            return;
+          }
+          if (code.length > 200000) { status.textContent = "❌ Code bahut bada hai (200,000 characters se zyada). Chhota code banao."; return; }
+          status.textContent = "🌐 Live ho raha hai...";
+          if (btn) btn.disabled = true;
+          fetch("/api/publish-site", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code: adminCode, title: siteTitle(code), html: code, css: "", js: "" }) })
+            .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, status: r.status, d: d }; }).catch(function () { return { ok: r.ok, status: r.status, d: {} }; }); })
+            .then(function (res) {
+              if (btn) btn.disabled = false;
+              if (!res.ok || !res.d.ok) {
+                if (res.status === 401) { try { localStorage.removeItem("fg-publish-code"); } catch (e) {} status.textContent = "❌ Code galat hai. Dobara 'Live karo' dabao aur sahi code daalo."; return; }
+                if (res.status === 503) { status.textContent = "❌ GitHub token abhi nahi laga hai. Pehle token lagana padega."; return; }
+                status.textContent = "❌ Live nahi ho paya. Dobara try karo."; return;
+              }
+              status.textContent = "✅ Live ho gaya!";
+              var a = document.createElement("a");
+              a.href = res.d.url; a.target = "_blank"; a.rel = "noopener"; a.textContent = res.d.url;
+              a.style.cssText = "display:block;margin-top:6px;word-break:break-all;color:#2563eb";
+              block.appendChild(a);
+              var cp = document.createElement("button");
+              cp.type = "button"; cp.className = "cb-dl"; cp.textContent = "Copy link";
+              cp.style.marginTop = "6px";
+              cp.addEventListener("click", function () { copyText(res.d.url, cp); });
+              block.appendChild(cp);
+            })
+            .catch(function () { if (btn) btn.disabled = false; status.textContent = "❌ Internet ya server se jod nahi paya. Dobara try karo."; });
+        }
+
         function openPreview(code) {
           var body = openOverlay("👁️ Preview", true);
           var frame = document.createElement("iframe");
@@ -2087,7 +2155,7 @@
           memories = [];
           messagesEl.innerHTML = "";
           var welcome =
-            "Namaste Shiva! 😊 Main **" + aiName + "** hoon — bilkul Mera AI jaisa chat, par ye **bina API key** ke chalta hai, to Gemini wali daily limit khatm hone ki dikkat nahi.\n\nAb meri **coding aur strong** hai: poora chalta-hua code milega — aadha-adhura nahi. Website ya app ka code ek hi HTML file mein dunga, aur har code ke upar **Copy** aur **Download** button hoga — Download se seedha file save karke khol sakte ho. Apna purana code ya error paste karoge to galti bata kar poora sahi code dunga.\n\nEk saaf baat: free service kabhi-kabhi slow ho sakti hai — coding wale jawab mein 1 minute tak lag sakta hai. Basic jawab (hisab, time, date, joke) main bina net ke bhi turant de deta hoon.\n\nAb main aur bhi seekh gaya hoon:\n\n- 🖼️ **Photo banana** — likho: photo banao: pahadon par sunset\n- 👁️ **Code Preview** — HTML code ke upar Preview button se result turant dikhega\n- 🔊 **Bol kar sunana** — har jawab ke neeche Sunao button\n- 🧠 **Yaad rakhna** — 'yaad rakho: ...' likho, is chat mein yaad rakhunga\n- 🧰 **Tools** — + wale menu mein To-Do, Kharcha Tracker aur Quiz\n- 📄 **File padhna** — + wale menu se PDF ya text file bhejo, summary dunga\n- 🎤 **Bol kar likhna** — input ke paas mic dabao aur bol do\n- 🎨 **Naam / Rang** — + wale menu se mera naam aur rang badlo\n- ⬇️ **Chat download** — poori chat ek file mein save karo\n\nJo poochna hai likho — code, sawal, hisab, kuch bhi. Ya neeche ke button dabao:";
+            "Namaste Shiva! 😊 Main **" + aiName + "** hoon — bilkul Mera AI jaisa chat, par ye **bina API key** ke chalta hai, to Gemini wali daily limit khatm hone ki dikkat nahi.\n\nAb meri **coding aur strong** hai: poora chalta-hua code milega — aadha-adhura nahi. Website ya app ka code ek hi HTML file mein dunga, aur har code ke upar **Copy** aur **Download** button hoga — Download se seedha file save karke khol sakte ho. Apna purana code ya error paste karoge to galti bata kar poora sahi code dunga.\n\nEk saaf baat: free service kabhi-kabhi slow ho sakti hai — coding wale jawab mein 1 minute tak lag sakta hai. Basic jawab (hisab, time, date, joke) main bina net ke bhi turant de deta hoon.\n\nAb main aur bhi seekh gaya hoon:\n\n- 🖼️ **Photo banana** — likho: photo banao: pahadon par sunset\n- 👁️ **Code Preview** — HTML code ke upar Preview button se result turant dikhega\n- 🌐 **Live karo** — HTML website ke upar Live karo button se site seedha live karo (admin code ek baar daalo)\n- 🔊 **Bol kar sunana** — har jawab ke neeche Sunao button\n- 🧠 **Yaad rakhna** — 'yaad rakho: ...' likho, is chat mein yaad rakhunga\n- 🧰 **Tools** — + wale menu mein To-Do, Kharcha Tracker aur Quiz\n- 📄 **File padhna** — + wale menu se PDF ya text file bhejo, summary dunga\n- 🎤 **Bol kar likhna** — input ke paas mic dabao aur bol do\n- 🎨 **Naam / Rang** — + wale menu se mera naam aur rang badlo\n- ⬇️ **Chat download** — poori chat ek file mein save karo\n\nJo poochna hai likho — code, sawal, hisab, kuch bhi. Ya neeche ke button dabao:";
           var row = addMessage("ai", welcome);
           var chips = document.createElement("div");
           chips.className = "chips";
