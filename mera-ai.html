@@ -833,11 +833,11 @@ async function send(keepMode){
   if(savedMemories.length)payload.memories=savedMemories.slice();
   var r=await fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
   var d={};try{d=await r.json()}catch(e){}
-  if(!r.ok){box.textContent=d.error||("Kuch gadbad hui (code "+r.status+"). Thodi der baad dobara try karo.");b.disabled=false;cam.disabled=false;ib.disabled=false;q.disabled=false;return}
+  if(!r.ok){box.textContent=d.error||("Kuch gadbad hui (code "+r.status+"). Thodi der baad dobara try karo.");if(box.scrollIntoView)box.scrollIntoView();b.disabled=false;cam.disabled=false;ib.disabled=false;q.disabled=false;return}
   var ans=(d.reply||"").trim();
-  if(!ans){box.textContent="Khali jawab aaya. Dobara try karo.";b.disabled=false;cam.disabled=false;ib.disabled=false;q.disabled=false;return}
-  box.textContent=ans;attachCopy(box,function(){return ans});if(Array.isArray(d.sources)&&d.sources.length){attachSources(box,d.sources,d.searchQuery||t)}hist.push({role:"assistant",text:ans});saveHist();saveServerHist();
- }catch(e){box.textContent="Internet ya server se jod nahi paya. Dobara try karo."}
+  if(!ans){box.textContent="Khali jawab aaya. Dobara try karo.";if(box.scrollIntoView)box.scrollIntoView();b.disabled=false;cam.disabled=false;ib.disabled=false;q.disabled=false;return}
+  box.textContent=ans;attachCopy(box,function(){return ans});if(Array.isArray(d.sources)&&d.sources.length){attachSources(box,d.sources,d.searchQuery||t)}hist.push({role:"assistant",text:ans});saveHist();saveServerHist();if(box.scrollIntoView)box.scrollIntoView();
+ }catch(e){box.textContent="Internet ya server se jod nahi paya. Dobara try karo.";if(box.scrollIntoView)box.scrollIntoView();}
  b.disabled=false;cam.disabled=false;ib.disabled=false;q.disabled=false;
 }
 // ---- Tasveer banana (🎨 SVG illustration; asli photo nahi banti) ----
