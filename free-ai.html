@@ -589,6 +589,7 @@
         <button class="chip" type="button" id="trayGmail">📧 Gmail jodo</button>
         <button class="chip" type="button" id="trayIg">📸 Instagram jodo</button>
         <button class="chip" type="button" id="trayIgPost">📸 Instagram post</button>
+        <button class="chip" type="button" id="trayYtUpload">📺 YouTube upload</button>
         <button class="chip" type="button" id="traySettings">🎨 Naam / Rang</button>
         <button class="chip" type="button" id="trayBrain">🧠 Dimaag</button>
         <button class="chip" type="button" id="trayDownload">⬇️ Chat download</button>
@@ -610,6 +611,7 @@
       <input type="file" id="videoInput" accept="video/mp4,video/webm,video/quicktime" hidden />
       <input type="file" id="photoInput" accept="image/jpeg,image/png,image/webp,image/gif" hidden />
       <input type="file" id="igPhotoInput" accept="image/jpeg,image/png" hidden />
+      <input type="file" id="ytVideoInput" accept="video/mp4,video/webm,video/quicktime" hidden />
 
       <div class="composer-wrap">
         <form class="composer" id="composerForm">
@@ -657,7 +659,7 @@
           "(7) If the user asks a follow-up change to code you already gave, return the FULL updated code again, not only the diff. " +
           "(8) If the request is unclear, make the most sensible complete version instead of asking many questions. " +
           "For non-coding questions, answer normally and helpfully — study, business, videos and daily questions included. Use simple markdown (bold, lists, code blocks) when it helps." +
-          " APP FEATURES: this chat app itself can generate a photo when the user asks for one (e.g. 'photo banao: ...'), check any link the user sends for safety (it shows name-based warnings instantly, reads the page text through the free r.jina.ai reader when it can, then you give a short Hinglish verdict — what the link looks like, what the danger is, what to do; NEVER say 'pakka safe' or '100% safe', it is only an estimate; if the page cannot be read, judge by the name only and say so clearly; never ask the user to send private or login links for checking), describe a YouTube video from its title and description (it reads the video page text through the free r.jina.ai reader, then you summarise what the video is about from the title and description ONLY — you cannot see the scenes or hear the audio, so never invent scene details; if the page cannot be read, say so honestly and do not guess), understand a video FILE the user uploads from the + tray 'Video samjhao' button (the file goes to the server, which shows it to Gemini and returns a description of the scenes and the audio — max 2.5 MB, MP4/WebM/MOV), understand a PHOTO the user uploads from the + tray 'Photo samjhao' button (the file goes to the server, which shows it to Gemini and describes what is in it, or answers the user's question about it — max 2.5 MB, JPEG/PNG/WebP/GIF; if the user typed a question before choosing the photo, answer that question about the photo), show a live Preview of HTML code (Preview button above the code), publish an HTML website live with the 'Live karo' button above the code (asks for the admin code once, then gives a live link), answer live/current questions (price, news, weather, gold rate...) using the fresh Google search results the app attaches to your prompt, save the chat and remembered facts on the server forever when the admin code is set (the user enables it from 'Chat hamesha save karo' in the + tray), read any answer aloud (Sunao button under each answer), remember facts for this chat when the user says 'yaad rakho', read a PDF or text file the user attaches from the + tray (the app extracts the file's text and sends it to you — then summarize it and answer questions about it), accept voice dictation through the mic button, let the user rename you and change your theme colour in the + tray settings, download the whole chat as a file, and it has To-do, Kharcha Tracker and Quiz tools in the + tray. It can also read the user's own Gmail inbox when asked (each user connects their own Gmail with Google login from the + tray 'Gmail jodo' button — read-only, only the latest emails, sender + subject + a short snippet, and read one email fully when asked ('pehli email padho' or '2 number wali email padho' after the list), and send an email when asked (step by step: who, subject, what to write — it shows the draft first and sends only after the user says 'bhej do'), and write a complete formal email for the user when asked ('mere liye email likho: ...' — subject + body, but it does NOT send it; sending needs a separate 'email bhejo'); the exact commands are 'email bhejo' to send, 'mere liye email likho: <topic>' to get a written email, 'meri email dikhao' or 'unread email dikhao' to list emails, 'pehli email padho' to read one fully — quote THESE commands in any how-to guide, never invent other command formats; the mail stays in the user's own account and nothing is saved on the server; if Gmail is not connected yet, say so plainly instead of guessing). It can also connect the user's own Instagram (Professional account only) when asked — the user connects it from the + tray 'Instagram jodo' button (Instagram login, token kept in memory only), and post a photo when asked ('instagram par post karo' — the app uploads the photo to the user's own site first for a public link, then publishes it through the Instagram API; caption is the text typed with the command). If Instagram is not connected yet, say so plainly and tell the user the Meta app setup is still needed. The app handles those requests itself, so never claim you cannot make photos or remember things in this chat." +
+          " APP FEATURES: this chat app itself can generate a photo when the user asks for one (e.g. 'photo banao: ...'), check any link the user sends for safety (it shows name-based warnings instantly, reads the page text through the free r.jina.ai reader when it can, then you give a short Hinglish verdict — what the link looks like, what the danger is, what to do; NEVER say 'pakka safe' or '100% safe', it is only an estimate; if the page cannot be read, judge by the name only and say so clearly; never ask the user to send private or login links for checking), describe a YouTube video from its title and description (it reads the video page text through the free r.jina.ai reader, then you summarise what the video is about from the title and description ONLY — you cannot see the scenes or hear the audio, so never invent scene details; if the page cannot be read, say so honestly and do not guess), understand a video FILE the user uploads from the + tray 'Video samjhao' button (the file goes to the server, which shows it to Gemini and returns a description of the scenes and the audio — max 2.5 MB, MP4/WebM/MOV), understand a PHOTO the user uploads from the + tray 'Photo samjhao' button (the file goes to the server, which shows it to Gemini and describes what is in it, or answers the user's question about it — max 2.5 MB, JPEG/PNG/WebP/GIF; if the user typed a question before choosing the photo, answer that question about the photo), show a live Preview of HTML code (Preview button above the code), publish an HTML website live with the 'Live karo' button above the code (asks for the admin code once, then gives a live link), answer live/current questions (price, news, weather, gold rate...) using the fresh Google search results the app attaches to your prompt, save the chat and remembered facts on the server forever when the admin code is set (the user enables it from 'Chat hamesha save karo' in the + tray), read any answer aloud (Sunao button under each answer), remember facts for this chat when the user says 'yaad rakho', read a PDF or text file the user attaches from the + tray (the app extracts the file's text and sends it to you — then summarize it and answer questions about it), accept voice dictation through the mic button, let the user rename you and change your theme colour in the + tray settings, download the whole chat as a file, and it has To-do, Kharcha Tracker and Quiz tools in the + tray. It can also read the user's own Gmail inbox when asked (each user connects their own Gmail with Google login from the + tray 'Gmail jodo' button — read-only, only the latest emails, sender + subject + a short snippet, and read one email fully when asked ('pehli email padho' or '2 number wali email padho' after the list), and send an email when asked (step by step: who, subject, what to write — it shows the draft first and sends only after the user says 'bhej do'), and write a complete formal email for the user when asked ('mere liye email likho: ...' — subject + body, but it does NOT send it; sending needs a separate 'email bhejo'); the exact commands are 'email bhejo' to send, 'mere liye email likho: <topic>' to get a written email, 'meri email dikhao' or 'unread email dikhao' to list emails, 'pehli email padho' to read one fully — quote THESE commands in any how-to guide, never invent other command formats; the mail stays in the user's own account and nothing is saved on the server; if Gmail is not connected yet, say so plainly instead of guessing). It can also connect the user's own Instagram (Professional account only) when asked — the user connects it from the + tray 'Instagram jodo' button (Instagram login, token kept in memory only), and post a photo when asked ('instagram par post karo' — the app uploads the photo to the user's own site first for a public link, then publishes it through the Instagram API; caption is the text typed with the command). If Instagram is not connected yet, say so plainly and tell the user the Meta app setup is still needed. It can also search YouTube videos when asked ('youtube par ... dhoondho' — it asks the server, which searches YouTube and shows the top videos with links; if the YouTube key is not set up yet, say so plainly). It can also upload a video file to the user's own YouTube channel when asked ('youtube par video upload karo' — the user picks a video file from the + tray 'YouTube upload' button or the command; the app uploads it directly to YouTube as Private using the user's Google login token, max 100 MB, MP4/WebM/MOV; the video is Private by default and the user makes it Public from the YouTube app; if Google login is not connected yet, say so plainly). The app handles those requests itself, so never claim you cannot make photos or remember things in this chat." +
           " THINKING RULES: before answering, think step by step silently. For maths, logic and code, double-check your result before replying. Never invent facts, names, numbers or links - if you are not sure, say so honestly and give your best guess clearly marked as a guess. Answer exactly what was asked, with no filler.";
 
         var history = []; // {role: 'user'|'assistant', content: string}
@@ -1075,7 +1077,7 @@
             return "Main **" + aiName + "** hoon — Mera AI jaisa hi chat assistant, par ye bina kisi API key ke chalta hai. Sawal poochho, hisab karwao, code likhwao — koshish poori karunga! 💪";
           }
           if (/(kya kya kar sakte|kya kar sakte|tum kya kar|help|madad|features|kaam karte ho)/.test(low)) {
-            return "Main ye sab kar sakta hoon:\n\n- **Coding (strong)** — poora chalta-hua code: website, app, game, script — ek hi file mein, Download button ke saath\n- **Code Preview** — HTML code ke upar Preview button dabao, result turant chal kar dikhega\n- **Live karo** — HTML website ke upar Live karo button se site seedha live karo\n- **Live search** — aaj ka bhav, news, mausam poochho, taza jawab milega\n- **Link check** — koi link bhejo ('yeh link safe hai kya?'), naam + page padh kar bata doon — kabhi 'pakka safe' nahi kehta\n- **Video link** — YouTube link bhejo ('ye video kya hai?'), title/description se bata doon (scenes nahi dikhte)\n- **Video samjhao** — + menu mein **🎬 Video samjhao** se video file bhejo (2.5 MB tak), dekh kar + sun kar bata doon\n- **Photo samjhao** — + menu mein **📷 Photo samjhao** se photo bhejo (2.5 MB tak), kya dikh raha hai bata doon\n- **Gmail** — apna Gmail + menu mein 📧 Gmail jodo se jodo, phir 'meri email dikhao' likho — haal ki emails dikha doon; poori padhne ke liye 'pehli email padho' likho; bhejne ke liye 'email bhejo' likho\n- **Email likhwana** — likho `mere liye email likho: boss ko chhutti ke liye`, poora formal email likh dunga (ye sirf likhta hai, bhejta nahi — bhejne ke liye 'email bhejo' likho)\n- **Instagram** — + menu mein 📸 Instagram jodo se apna Instagram jodo (Professional account chahiye), phir 'instagram par post karo' likh kar photo post karo\n- **Permanent save** — + menu mein 'Chat hamesha save karo' se chat aur yaadein hamesha ke liye save hongi\n- **Bug fix** — apna code ya error paste karo, main galti bata kar poora sahi code dunga\n- **Photo banana** — likho `photo banao: pahadon par sunset`, photo ban jayegi\n- **File padhna** — + wale menu mein **📄 File padho** se PDF ya text file bhejo, main padh kar summary dunga aur sawalon ke jawab bhi\n- **Bol kar likhna** — type karne ki jagah input ke paas 🎤 mic dabao aur bol do\n- **Bol kar sunana** — har jawab ke neeche 🔊 Sunao button hai\n- **Yaad rakhna** — `yaad rakho: ...` likho, is chat mein yaad rakhunga\n- **Naam / Rang badalna** — + wale menu mein **🎨 Naam / Rang** se mera naam aur rang apni pasand ka karo\n- **Chat download** — + wale menu mein **⬇️ Chat download** se poori chat file mein save karo\n- **Tools** — + wale menu mein To-Do list, Kharcha Tracker (chart ke saath) aur Quiz\n- **Sawal-jawab** — koi bhi topic, Hindi / Hinglish / English\n- **Hisab** — jaise `125 ka 15%` ya `45 * 8 + 20`; kharcha note karne ke liye `kharcha 200 khana`\n- **Time / date** — turant bata deta hoon\n\nBas likh kar bhejo!";
+            return "Main ye sab kar sakta hoon:\n\n- **Coding (strong)** — poora chalta-hua code: website, app, game, script — ek hi file mein, Download button ke saath\n- **Code Preview** — HTML code ke upar Preview button dabao, result turant chal kar dikhega\n- **Live karo** — HTML website ke upar Live karo button se site seedha live karo\n- **Live search** — aaj ka bhav, news, mausam poochho, taza jawab milega\n- **Link check** — koi link bhejo ('yeh link safe hai kya?'), naam + page padh kar bata doon — kabhi 'pakka safe' nahi kehta\n- **Video link** — YouTube link bhejo ('ye video kya hai?'), title/description se bata doon (scenes nahi dikhte)\n- **Video samjhao** — + menu mein **🎬 Video samjhao** se video file bhejo (2.5 MB tak), dekh kar + sun kar bata doon\n- **Photo samjhao** — + menu mein **📷 Photo samjhao** se photo bhejo (2.5 MB tak), kya dikh raha hai bata doon\n- **Gmail** — apna Gmail + menu mein 📧 Gmail jodo se jodo, phir 'meri email dikhao' likho — haal ki emails dikha doon; poori padhne ke liye 'pehli email padho' likho; bhejne ke liye 'email bhejo' likho\n- **Email likhwana** — likho `mere liye email likho: boss ko chhutti ke liye`, poora formal email likh dunga (ye sirf likhta hai, bhejta nahi — bhejne ke liye 'email bhejo' likho)\n- **Instagram** — + menu mein 📸 Instagram jodo se apna Instagram jodo (Professional account chahiye), phir 'instagram par post karo' likh kar photo post karo\n- **YouTube search** — likho `youtube par dance video dhoondho`, top videos + link dunga\n- **YouTube upload** — + menu mein 📺 YouTube upload se video chuno, apne channel par Private upload ho jayegi (Public YouTube app se karo)\n- **Permanent save** — + menu mein 'Chat hamesha save karo' se chat aur yaadein hamesha ke liye save hongi\n- **Bug fix** — apna code ya error paste karo, main galti bata kar poora sahi code dunga\n- **Photo banana** — likho `photo banao: pahadon par sunset`, photo ban jayegi\n- **File padhna** — + wale menu mein **📄 File padho** se PDF ya text file bhejo, main padh kar summary dunga aur sawalon ke jawab bhi\n- **Bol kar likhna** — type karne ki jagah input ke paas 🎤 mic dabao aur bol do\n- **Bol kar sunana** — har jawab ke neeche 🔊 Sunao button hai\n- **Yaad rakhna** — `yaad rakho: ...` likho, is chat mein yaad rakhunga\n- **Naam / Rang badalna** — + wale menu mein **🎨 Naam / Rang** se mera naam aur rang apni pasand ka karo\n- **Chat download** — + wale menu mein **⬇️ Chat download** se poori chat file mein save karo\n- **Tools** — + wale menu mein To-Do list, Kharcha Tracker (chart ke saath) aur Quiz\n- **Sawal-jawab** — koi bhi topic, Hindi / Hinglish / English\n- **Hisab** — jaise `125 ka 15%` ya `45 * 8 + 20`; kharcha note karne ke liye `kharcha 200 khana`\n- **Time / date** — turant bata deta hoon\n\nBas likh kar bhejo!";
           }
           if (/(thank|dhanyavad|shukriya|thanks)/.test(low)) {
             return "Koi baat nahi! 😊 Aur kuch chahiye to bas likh do.";
@@ -1956,6 +1958,22 @@
           if (f) igPostPhoto(f);
         });
 
+        var ytVideoInput = document.getElementById("ytVideoInput");
+        document.getElementById("trayYtUpload").addEventListener("click", function () {
+          trayEl.classList.remove("open");
+          plusBtn.classList.remove("open");
+          if (busy) return;
+          busy = true;
+          addMessage("user", "youtube par video upload karo");
+          pushHist({ role: "user", content: "youtube par video upload karo" });
+          ytUploadStart("youtube par video upload karo");
+        });
+        ytVideoInput.addEventListener("change", function () {
+          var f = ytVideoInput.files && ytVideoInput.files[0];
+          ytVideoInput.value = "";
+          if (f) ytUploadVideo(f);
+        });
+
         function handlePhotoFile(file) {
           if (busy) return;
           var okType = /^image\/(jpeg|png|webp|gif)$/i.test(file.type) || /\.(jpe?g|png|webp|gif)$/i.test(file.name);
@@ -2671,6 +2689,11 @@
         var igUsername = "";
         var igCaption = "";
         var igPickTimer = null;
+
+        // ---- YouTube search + upload ----
+        var ytPickTimer = null;
+        var ytUploadTitle = "";
+        var YT_UPLOAD_MAX = 100 * 1024 * 1024; // 100 MB
         function gmailHasToken() { return !!gmailToken; }
         function updateGmailButton() {
           var b = document.getElementById("trayGmail");
@@ -2682,7 +2705,7 @@
             if (!gmailTokenClient) {
               gmailTokenClient = window.google.accounts.oauth2.initTokenClient({
                 client_id: GMAIL_CLIENT_ID,
-                scope: "https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/gmail.send",
+                scope: "https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/gmail.send https://www.googleapis.com/auth/youtube.upload",
                 callback: function (resp) {
                   var f = gmailTokenCb; gmailTokenCb = null;
                   if (gmailTokenTimer) { clearTimeout(gmailTokenTimer); gmailTokenTimer = null; }
@@ -3274,6 +3297,152 @@
           }, (typeof window !== "undefined" && window.IG_POLL_MS) || 5000);
         }
 
+        // ---- YouTube search + upload (upload hamesha Private; Public YouTube app se karo) ----
+        function ytSearchWanted(text) {
+          if (!text) return false;
+          var low = String(text).toLowerCase();
+          // "youtube kaise chalate hain" jaisa SAWAL search nahi karta — AI guide deta hai
+          if (/kaise|kya hota|kya hai|kya chahiye|tarika|tareeka|steps|step by step|sikhao|samjhao|matlab kya/.test(low)) return false;
+          if (low.indexOf("youtube") < 0 && low.indexOf("youtu.be") < 0) return false;
+          return /(dhoondho|dhundo|khojo|search|dekho|dikhao|video|song|gaana|gana)/.test(low);
+        }
+        function ytUploadWanted(text) {
+          if (!text) return false;
+          var low = String(text).toLowerCase();
+          if (/kaise|kya hota|kya hai|kya chahiye|tarika|tareeka|steps|step by step|sikhao|samjhao|matlab kya/.test(low)) return false;
+          if (low.indexOf("youtube") < 0 && low.indexOf("youtu.be") < 0) return false;
+          return /(upload|chadhao|daalo|daal|post karo|bhejo)/.test(low);
+        }
+        function ytSearchQuery(userText) {
+          var q = String(userText || "").replace(/youtube|youtu\.be/gi, "").replace(/\b(par|pe|mein|me)\b\s*(dhoondho|dhundo|khojo|search|dekho|dikhao)\b/gi, "").replace(/\b(dhoondho|dhundo|khojo|search|dekho|dikhao)\b/gi, "").replace(/^\s*(par|pe|mein|me)\b\s*/gi, "").trim().replace(/\s+/g, " ").slice(0, 200);
+          return q;
+        }
+        function doYouTubeSearch(userText) {
+          var q = ytSearchQuery(userText);
+          if (!q) {
+            replyLocal("🎬 YouTube par kya dhoondhna hai? Jaise likho: youtube par dance video dhoondho");
+            return;
+          }
+          addTyping();
+          fetch("/api/freeai?fn=youtube", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ q: q }) })
+            .then(function (r) { return r.json().catch(function () { return null; }); })
+            .then(function (j) {
+              removeTyping();
+              if (!j || !j.ok) {
+                var msg = "🎬 YouTube search nahi hua — " + ((j && j.error) ? j.error : "dobara try karo.");
+                var row = addMessage("ai", msg);
+                pushHist({ role: "assistant", content: msg });
+                scrollToMessageTop(row);
+                busy = false;
+                return;
+              }
+              var list = (j.results || []).map(function (v, i) {
+                return (i + 1) + ". " + v.title + " — " + v.channel + "\n" + v.link;
+              }).join("\n\n");
+              var msg2 = list ? "🎬 YouTube par mile:\n\n" + list : "🎬 YouTube par '" + q + "' ke liye kuch nahi mila — dusre shabd try karo.";
+              var row2 = addMessage("ai", msg2);
+              pushHist({ role: "assistant", content: msg2 });
+              scrollToMessageTop(row2);
+              busy = false;
+            })
+            .catch(function () {
+              removeTyping();
+              var msg3 = "🎬 YouTube se jod nahi paya — thodi der baad dobara try karo.";
+              var row3 = addMessage("ai", msg3);
+              pushHist({ role: "assistant", content: msg3 });
+              scrollToMessageTop(row3);
+              busy = false;
+            });
+        }
+        function ytUploadStart(userText) {
+          if (!window.google || !window.google.accounts || !window.google.accounts.oauth2) {
+            replyLocal("📺 Google login abhi load nahi hua — net check karke page dobara kholo, phir 'youtube par video upload karo' likho.");
+            return;
+          }
+          var title = String(userText || "").replace(/youtube|youtu\.be/gi, "").replace(/\b(par|pe|mein|me)\b\s*(upload|chadhao|daalo|daal|post karo|bhejo)\s*(karo|kar do)?/gi, "").replace(/\b(upload|chadhao|daalo|daal|post karo|bhejo)\b/gi, "").trim().replace(/\s+/g, " ").slice(0, 100);
+          ytUploadTitle = title || "";
+          if (!gmailToken) {
+            replyLocal("📺 YouTube upload ke liye pehle Google login chahiye — + menu mein 📧 Gmail jodo dabakar apna Gmail chun kar Allow karo, phir 'youtube par video upload karo' likho.");
+            return;
+          }
+          // Video picker band kar diya to 60s mein chat khud chalu ho jaye (Gmail popup wala fix jaisa)
+          if (ytPickTimer) clearTimeout(ytPickTimer);
+          ytPickTimer = setTimeout(function () { ytPickTimer = null; busy = false; }, 60000);
+          replyLocal("📺 Video chuno — jo video upload karni hai, use chuno. Video **Private** upload hogi (sirf tum dekh sakoge); YouTube app se use Public kar sakte ho.");
+          document.getElementById("ytVideoInput").click();
+        }
+        function ytUploadVideo(file) {
+          if (ytPickTimer) { clearTimeout(ytPickTimer); ytPickTimer = null; }
+          busy = true;
+          if (!/^video\//i.test(file.type) && !/\.(mp4|webm|mov)$/i.test(file.name)) {
+            replyLocal("📺 Ye video file nahi lagti 😕 — sirf **MP4 / WebM / MOV** video chalegi. + menu mein **📺 YouTube upload** se sahi video chuno.");
+            return;
+          }
+          if (file.size > YT_UPLOAD_MAX) {
+            replyLocal("📺 Video bahut badi hai (100 MB se zyada) — chhoti video chuno.");
+            return;
+          }
+          var title = ytUploadTitle || file.name.replace(/\.[^.]+$/, "").replace(/[_-]+/g, " ").trim().slice(0, 100) || "Free AI Chat video";
+          addTyping();
+          var retried = false;
+          function startSession() {
+            return fetch("https://www.googleapis.com/upload/youtube/v3/videos?uploadType=resumable&part=snippet,status", {
+              method: "POST",
+              headers: {
+                "Authorization": "Bearer " + gmailToken,
+                "Content-Type": "application/json; charset=UTF-8",
+                "X-Upload-Content-Type": file.type || "video/mp4",
+                "X-Upload-Content-Length": String(file.size)
+              },
+              body: JSON.stringify({ snippet: { title: title, description: "Uploaded via Free AI Chat" }, status: { privacyStatus: "private" } })
+            });
+          }
+          function doUpload() {
+            return startSession().then(function (r) {
+              if ((r.status === 401 || r.status === 403) && !retried) {
+                retried = true;
+                gmailToken = "";
+                updateGmailButton();
+                return new Promise(function (resolve) {
+                  requestGmailToken(function (tok) {
+                    if (!tok) { resolve(null); return; }
+                    doUpload().then(resolve, function () { resolve(null); });
+                  });
+                });
+              }
+              if (!r.ok) throw new Error("http " + r.status);
+              var loc = r.headers.get("Location") || r.headers.get("location");
+              if (!loc) throw new Error("no_upload_url");
+              return fetch(loc, { method: "PUT", headers: { "Content-Type": file.type || "video/mp4" }, body: file });
+            });
+          }
+          doUpload()
+            .then(function (r) {
+              if (!r) throw new Error("no_token");
+              if (!r.ok) throw new Error("http " + r.status);
+              return r.json();
+            })
+            .then(function (j) {
+              removeTyping();
+              var id = j && j.id ? String(j.id) : "";
+              var msg = id
+                ? "✅ YouTube par upload ho gaya (Private)! 🎉\nhttps://www.youtube.com/watch?v=" + id + "\n\nVideo abhi sirf tum dekh sakte ho — YouTube app mein khol kar use Public karo."
+                : "📺 Upload to ho gaya, par video ka link nahi mila — YouTube app mein apne channel par check karo.";
+              var row = addMessage("ai", msg);
+              pushHist({ role: "assistant", content: msg });
+              scrollToMessageTop(row);
+              busy = false;
+            })
+            .catch(function () {
+              removeTyping();
+              var msg = "📺 YouTube upload nahi hua — dobara try karo. (Agar Google ne permission nahi di ho to + menu mein 📧 Gmail jodo dobara dabakar Allow karo.)";
+              var row = addMessage("ai", msg);
+              pushHist({ role: "assistant", content: msg });
+              scrollToMessageTop(row);
+              busy = false;
+            });
+        }
+
         function handleSend(text) {
           var userText = (text != null ? text : inputEl.value).trim();
           if (!userText || busy) return;
@@ -3388,6 +3557,17 @@
             return;
           }
 
+          // YouTube upload — video channel par chadhao (Private); search se pehle, kyunki "upload karo" mein "video" bhi hota hai
+          if (ytUploadWanted(userText)) {
+            ytUploadStart(userText);
+            return;
+          }
+          // YouTube search — video dhoondho
+          if (ytSearchWanted(userText)) {
+            doYouTubeSearch(userText);
+            return;
+          }
+
           // Pehle local turant jawab (hisab/time/date) — bina net ke bhi chalta hai
           var local = tryLocalAnswer(userText);
           if (local !== null) {
@@ -3461,7 +3641,7 @@
           history = [];
           messagesEl.innerHTML = "";
           var welcome =
-            "Namaste Shiva! 😊 Main **" + aiName + "** hoon — bilkul Mera AI jaisa chat, par ye **bina API key** ke chalta hai, to Gemini wali daily limit khatm hone ki dikkat nahi.\n\nAb meri **coding aur strong** hai: poora chalta-hua code milega — aadha-adhura nahi. Website ya app ka code ek hi HTML file mein dunga, aur har code ke upar **Copy** aur **Download** button hoga — Download se seedha file save karke khol sakte ho. Apna purana code ya error paste karoge to galti bata kar poora sahi code dunga.\n\nEk saaf baat: free service kabhi-kabhi slow ho sakti hai — coding wale jawab mein 1 minute tak lag sakta hai. Basic jawab (hisab, time, date, joke) main bina net ke bhi turant de deta hoon.\n\nAb main aur bhi seekh gaya hoon:\n\n- 🖼️ **Photo banana** — likho: photo banao: pahadon par sunset\n- 👁️ **Code Preview** — HTML code ke upar Preview button se result turant dikhega\n- 🌐 **Live karo** — HTML website ke upar Live karo button se site seedha live karo (admin code ek baar daalo)\n- 🔍 **Live search** — aaj ka bhav, news, mausam poochho, taza jawab milega\n- 🔗 **Link check** — koi link bhejo, safe hai ya nahi bata doon\n- 🎬 **Video samjhao** — YouTube link bhejo ya + menu se video file bhejo, kya ho raha hai bata doon\n- 📷 **Photo samjhao** — + menu se photo bhejo, kya dikh raha hai bata doon\n- 📧 **Gmail** — apna Gmail jodo (+ menu mein 📧 Gmail jodo), phir 'meri email dikhao' likho — poori padhne ke liye 'pehli email padho' likho; bhejne ke liye 'email bhejo' likho\n- ✉️ **Email likhwana** — 'mere liye email likho: ...' likho, poora formal email likh dunga (sirf likhta hai, bhejta nahi)\n- 📸 **Instagram** — + menu mein 📸 Instagram jodo se apna Instagram jodo, phir 'instagram par post karo' likh kar photo post karo\n- 💾 **Permanent save** — + menu mein 'Chat hamesha save karo' se chat aur yaadein hamesha ke liye save hongi (admin code ek baar daalo)\n- 🔊 **Bol kar sunana** — har jawab ke neeche Sunao button\n- 🧠 **Yaad rakhna** — 'yaad rakho: ...' likho, is chat mein yaad rakhunga\n- 🧰 **Tools** — + wale menu mein To-Do, Kharcha Tracker aur Quiz\n- 📄 **File padhna** — + wale menu se PDF ya text file bhejo, summary dunga\n- 🎤 **Bol kar likhna** — input ke paas mic dabao aur bol do\n- 🎨 **Naam / Rang** — + wale menu se mera naam aur rang badlo\n- ⬇️ **Chat download** — poori chat ek file mein save karo\n\nJo poochna hai likho — code, sawal, hisab, kuch bhi. Ya neeche ke button dabao:";
+            "Namaste Shiva! 😊 Main **" + aiName + "** hoon — bilkul Mera AI jaisa chat, par ye **bina API key** ke chalta hai, to Gemini wali daily limit khatm hone ki dikkat nahi.\n\nAb meri **coding aur strong** hai: poora chalta-hua code milega — aadha-adhura nahi. Website ya app ka code ek hi HTML file mein dunga, aur har code ke upar **Copy** aur **Download** button hoga — Download se seedha file save karke khol sakte ho. Apna purana code ya error paste karoge to galti bata kar poora sahi code dunga.\n\nEk saaf baat: free service kabhi-kabhi slow ho sakti hai — coding wale jawab mein 1 minute tak lag sakta hai. Basic jawab (hisab, time, date, joke) main bina net ke bhi turant de deta hoon.\n\nAb main aur bhi seekh gaya hoon:\n\n- 🖼️ **Photo banana** — likho: photo banao: pahadon par sunset\n- 👁️ **Code Preview** — HTML code ke upar Preview button se result turant dikhega\n- 🌐 **Live karo** — HTML website ke upar Live karo button se site seedha live karo (admin code ek baar daalo)\n- 🔍 **Live search** — aaj ka bhav, news, mausam poochho, taza jawab milega\n- 🔗 **Link check** — koi link bhejo, safe hai ya nahi bata doon\n- 🎬 **Video samjhao** — YouTube link bhejo ya + menu se video file bhejo, kya ho raha hai bata doon\n- 📷 **Photo samjhao** — + menu se photo bhejo, kya dikh raha hai bata doon\n- 📧 **Gmail** — apna Gmail jodo (+ menu mein 📧 Gmail jodo), phir 'meri email dikhao' likho — poori padhne ke liye 'pehli email padho' likho; bhejne ke liye 'email bhejo' likho\n- ✉️ **Email likhwana** — 'mere liye email likho: ...' likho, poora formal email likh dunga (sirf likhta hai, bhejta nahi)\n- 📸 **Instagram** — + menu mein 📸 Instagram jodo se apna Instagram jodo, phir 'instagram par post karo' likh kar photo post karo\n- 📺 **YouTube** — 'youtube par ... dhoondho' likho, video list + link dunga; + menu mein 📺 YouTube upload se video apne channel par Private upload karo\n- 💾 **Permanent save** — + menu mein 'Chat hamesha save karo' se chat aur yaadein hamesha ke liye save hongi (admin code ek baar daalo)\n- 🔊 **Bol kar sunana** — har jawab ke neeche Sunao button\n- 🧠 **Yaad rakhna** — 'yaad rakho: ...' likho, is chat mein yaad rakhunga\n- 🧰 **Tools** — + wale menu mein To-Do, Kharcha Tracker aur Quiz\n- 📄 **File padhna** — + wale menu se PDF ya text file bhejo, summary dunga\n- 🎤 **Bol kar likhna** — input ke paas mic dabao aur bol do\n- 🎨 **Naam / Rang** — + wale menu se mera naam aur rang badlo\n- ⬇️ **Chat download** — poori chat ek file mein save karo\n\nJo poochna hai likho — code, sawal, hisab, kuch bhi. Ya neeche ke button dabao:";
           var row = addMessage("ai", welcome);
           var chips = document.createElement("div");
           chips.className = "chips";

@@ -1,7 +1,7 @@
 // api/freeai.js — Free AI Chat ka EK HI server endpoint.
 // Vercel Hobby plan mein max 12 Serverless Functions hote hain — isliye Free AI Chat
-// ke chhah kaam (live search + permanent chat + permanent memory + video samajh + photo samajh
-// + Instagram token exchange) ek hi file mein hain.
+// ke saat kaam (live search + permanent chat + permanent memory + video samajh + photo samajh
+// + Instagram token exchange + YouTube search) ek hi file mein hain.
 // Route ?fn= se:
 //   POST /api/freeai?fn=search {q} → {ok, results: [{title, snippet, link}]} (Serper Google Search)
 //   GET  /api/freeai?fn=chat&code=... → chat load karo (admin only)
@@ -13,7 +13,8 @@
 //   POST /api/freeai?fn=video {video: {mimeType, data}} → {ok, text} (Gemini video samajh, no admin code)
 //   POST /api/freeai?fn=photo {image: {mimeType, data}, question?} → {ok, text} (Gemini photo samajh, no admin code)
 //   POST /api/freeai?fn=ig-exchange {code, redirect_uri} → {ok, access_token, user_id, expires_in} (Instagram Login token, no admin code)
-// Env: SERPER_API_KEY (search) + DATABASE_URL (ya POSTGRES_URL / NEON_DATABASE_URL) + REELS_ADMIN_CODE + GEMINI_API_KEY (video + photo) + IG_APP_ID + IG_APP_SECRET (Instagram exchange).
+//   POST /api/freeai?fn=youtube {q} → {ok, results: [{videoId, title, channel, link}]} (YouTube search, no admin code)
+// Env: SERPER_API_KEY (search) + DATABASE_URL (ya POSTGRES_URL / NEON_DATABASE_URL) + REELS_ADMIN_CODE + GEMINI_API_KEY (video + photo) + IG_APP_ID + IG_APP_SECRET (Instagram exchange) + YOUTUBE_API_KEY (YouTube search).
 // Storage: Neon Postgres over its raw HTTP /sql endpoint (no npm packages).
 // Chat limit: max 100 messages, har message max 4000 chars, total max ~200,000 chars.
 // Memory limit: max 30 yaadein, har yaad max 500 chars, total max ~50,000 chars.
@@ -466,6 +467,30 @@ async function handleIgExchange(req, res) {
   }
 }
 
+// ---- YouTube search (YouTube Data API v3; key na ho → 503, chat kabhi nahi rukta) ----
+async function handleYoutube(req, res) {
+  if (req.method !== "POST") { res.setHeader("Allow", "POST"); return send(res, 405, { ok: false, error: "Sirf POST chalega." }); }
+  const key = (process.env.YOUTUBE_API_KEY || "").trim();
+  if (!key) return send(res, 503, { ok: false, error: "YouTube search abhi set nahi hua hai — YouTube Data API ki key Vercel mein daalni baki hai." });
+  const body = await readBody(req);
+  const q = typeof (body && body.q) === "string" ? body.q.trim().slice(0, 200) : "";
+  if (!q) return send(res, 400, { ok: false, error: "Kya dhoondhna hai, wo likho." });
+  try {
+    const url = "https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=5&q=" + encodeURIComponent(q) + "&key=" + encodeURIComponent(key);
+    const r = await fetch(url, { signal: AbortSignal.timeout(9000) });
+    const j = await r.json().catch(function () { return null; });
+    if (!r.ok || !j || !Array.isArray(j.items)) return send(res, 502, { ok: false, error: "YouTube se jawab nahi mila — thodi der baad dobara try karo." });
+    const results = j.items.map(function (it) {
+      var id = it && it.id && it.id.videoId ? String(it.id.videoId) : "";
+      var sn = (it && it.snippet) || {};
+      return { videoId: id, title: String(sn.title || ""), channel: String(sn.channelTitle || ""), link: id ? "https://www.youtube.com/watch?v=" + id : "" };
+    }).filter(function (x) { return !!x.videoId; });
+    return send(res, 200, { ok: true, results: results });
+  } catch (e) {
+    return send(res, 504, { ok: false, error: "YouTube se jod nahi paya — thodi der baad dobara try karo." });
+  }
+}
+
 module.exports = async (req, res) => {
   let fn = "";
   let action = "";
@@ -483,5 +508,6 @@ module.exports = async (req, res) => {
   if (fn === "video") return handleVideo(req, res);
   if (fn === "photo") return handlePhoto(req, res);
   if (fn === "ig-exchange") return handleIgExchange(req, res);
+  if (fn === "youtube") return handleYoutube(req, res);
   send(res, 400, { ok: false, error: "bad_fn" });
 };
