@@ -836,27 +836,38 @@
               });
             });
             // HTML code par Preview button — result turant dekhne ke liye
+            // AI kabhi-kabhi lamba code 2-3 block mein deta hai, ya bina html label ke —
+            // isliye HTML jaisa dikhne wala har block (div/img/button/style...) par bhi
+            // Preview/Live karo dikhao, aur Preview/Live karo mein usi jawab ke saare
+            // HTML wale block jod kar do (aadha page preview na ho).
+            var htmlPres = [];
             bubble.querySelectorAll(".codeblock").forEach(function (block) {
               var langEl2 = block.querySelector(".cb-lang");
               var pre2 = block.querySelector("pre");
               var lang2 = langEl2 ? langEl2.textContent.toLowerCase() : "";
               var code2 = pre2 ? pre2.textContent : "";
-              if (lang2 === "html" || lang2 === "htm" || /<!doctype html|<html[\s>]/i.test(code2)) {
+              var isHtml = lang2 === "html" || lang2 === "htm" || /<!doctype html|<html[\s>]/i.test(code2) ||
+                /<(div|img|button|style|script|head|body|h1|h2|h3|header|section|main|footer|a|span|input)[\s>]/.test(code2);
+              if (isHtml) {
+                htmlPres.push(pre2);
                 var pv = document.createElement("button");
                 pv.type = "button";
                 pv.className = "cb-dl";
                 pv.textContent = "👁 Preview";
                 var actions = block.querySelector(".cb-actions");
                 actions.insertBefore(pv, actions.firstChild);
-                pv.addEventListener("click", function () { openPreview(code2); });
+                pv.addEventListener("click", function () { openPreview(fullPageCode()); });
                 var lv = document.createElement("button");
                 lv.type = "button";
                 lv.className = "cb-dl";
                 lv.textContent = "🌐 Live karo";
                 actions.insertBefore(lv, pv.nextSibling);
-                lv.addEventListener("click", function () { publishCode(code2, block, lv); });
+                lv.addEventListener("click", function () { publishCode(fullPageCode(), block, lv); });
               }
             });
+            function fullPageCode() {
+              return htmlPres.map(function (p) { return p.textContent; }).join("\n");
+            }
           }
           row.appendChild(bubble);
           messagesEl.appendChild(row);
