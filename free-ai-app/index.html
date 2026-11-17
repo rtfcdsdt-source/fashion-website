@@ -1,0 +1,3739 @@
+<!doctype html>
+<html lang="hi">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="icon" href="/free-ai-icon.svg" type="image/svg+xml" />
+    <link rel="manifest" href="/free-ai-manifest.json" />
+    <meta name="theme-color" content="#2563eb" />
+    <title>Free AI Chat</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #ffffff;
+        --bar-bg: #ffffff;
+        --bar-border: #e8e8e8;
+        --user-bubble: #b7dcfb;
+        --user-text: #10222e;
+        --ai-bubble: #f1f1f1;
+        --ai-text: #1c1c1e;
+        --composer-bg: #f1f1f1;
+        --composer-text: #1c1c1e;
+        --placeholder: #8a8a8e;
+        --send-bg: #5b93f5;
+        --send-bg-off: #c9d9f6;
+        --copy-bg: #ffffff;
+        --copy-border: #dcdcdc;
+        --copy-text: #333333;
+        --chip-bg: #ffffff;
+        --chip-border: #d7e6f7;
+        --chip-text: #2b6cb0;
+        --code-bg: #e7e7e7;
+        --code-block-bg: #1e2430;
+        --code-block-text: #e8edf5;
+        --dot: #b9b9bd;
+        --status-ok: #2fae5f;
+        --status-warn: #e08a00;
+        --status-text: #6d6d72;
+        --tray-bg: #ffffff;
+        --shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        --scrim: rgba(15, 20, 28, 0.55);
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          color-scheme: dark;
+          --bg: #121417;
+          --bar-bg: #121417;
+          --bar-border: #26292e;
+          --user-bubble: #2f5b82;
+          --user-text: #eef6fd;
+          --ai-bubble: #22262b;
+          --ai-text: #eceef1;
+          --composer-bg: #22262b;
+          --composer-text: #eceef1;
+          --placeholder: #8e959e;
+          --send-bg: #5b93f5;
+          --send-bg-off: #33465f;
+          --copy-bg: #2c3138;
+          --copy-border: #3a4048;
+          --copy-text: #d7dbe0;
+          --chip-bg: #1b1f24;
+          --chip-border: #33506e;
+          --chip-text: #9cc8f5;
+          --code-bg: #33383f;
+          --code-block-bg: #0c0f14;
+          --code-block-text: #e8edf5;
+          --dot: #5a6068;
+          --status-text: #9aa1a9;
+          --tray-bg: #1b1f24;
+        }
+      }
+      * { box-sizing: border-box; }
+      html, body { height: 100%; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        font-family: "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+      .app {
+        display: flex;
+        flex-direction: column;
+        height: 100dvh;
+        max-width: 860px;
+        margin: 0 auto;
+      }
+
+      /* ---------- top status bar ---------- */
+      .topbar {
+        flex: 0 0 auto;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 14px;
+        background: var(--bar-bg);
+        border-bottom: 1px solid var(--bar-border);
+      }
+      .status-dot {
+        width: 9px; height: 9px; border-radius: 50%;
+        background: var(--status-ok);
+        flex: 0 0 auto;
+      }
+      .status-dot.warn { background: var(--status-warn); }
+      .status-text {
+        font-size: 13.5px;
+        color: var(--status-text);
+        flex: 1 1 auto;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .newchat-btn {
+        flex: 0 0 auto;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        min-height: 36px;
+        padding: 6px 12px;
+        border: 1px solid var(--chip-border);
+        background: var(--chip-bg);
+        color: var(--chip-text);
+        border-radius: 999px;
+        font-size: 13.5px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      .newchat-btn:active { transform: scale(0.97); }
+
+      /* ---------- messages ---------- */
+      .messages {
+        flex: 1 1 auto;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        padding: 14px 12px 10px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        scroll-behavior: smooth;
+      }
+      .row { display: flex; width: 100%; }
+      .row.user { justify-content: flex-end; }
+      .row.ai { justify-content: flex-start; }
+      .bubble {
+        max-width: 88%;
+        padding: 12px 16px;
+        font-size: 16.5px;
+        line-height: 1.5;
+        overflow-wrap: anywhere;
+        box-shadow: var(--shadow);
+      }
+      @media (min-width: 640px) { .bubble { max-width: 76%; } }
+      .row.user .bubble {
+        background: var(--user-bubble);
+        color: var(--user-text);
+        border-radius: 24px;
+      }
+      .row.ai .bubble {
+        background: var(--ai-bubble);
+        color: var(--ai-text);
+        border-radius: 24px;
+      }
+      .bubble p { margin: 0 0 10px; }
+      .bubble p:last-child { margin-bottom: 0; }
+      .bubble ul, .bubble ol { margin: 4px 0 10px; padding-left: 22px; }
+      .bubble li { margin: 2px 0; }
+      .bubble code {
+        background: var(--code-bg);
+        padding: 1px 6px;
+        border-radius: 6px;
+        font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+        font-size: 0.88em;
+      }
+      .codeblock {
+        background: var(--code-block-bg);
+        color: var(--code-block-text);
+        border-radius: 14px;
+        padding: 12px 14px;
+        margin: 8px 0 10px;
+        overflow-x: auto;
+      }
+      .codeblock pre {
+        margin: 0;
+        font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+        font-size: 13.5px;
+        line-height: 1.55;
+        white-space: pre;
+      }
+      .codeblock .cb-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        margin-bottom: 6px;
+      }
+      .cb-lang {
+        font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+        font-size: 12px;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: #9fb4cc;
+      }
+      .cb-actions { display: flex; gap: 6px; flex: 0 0 auto; }
+      .cb-copy, .cb-dl {
+        min-height: 32px;
+        border: 1px solid rgba(255,255,255,0.25);
+        background: rgba(255,255,255,0.08);
+        color: #e8edf5;
+        border-radius: 8px;
+        font-size: 12.5px;
+        padding: 4px 10px;
+        cursor: pointer;
+      }
+      .cb-copy:active, .cb-dl:active { transform: scale(0.95); }
+      .copy-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        min-height: 34px;
+        margin-top: 10px;
+        padding: 5px 12px;
+        background: var(--copy-bg);
+        border: 1px solid var(--copy-border);
+        color: var(--copy-text);
+        border-radius: 999px;
+        font-size: 13.5px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      .copy-btn svg { width: 15px; height: 15px; flex: 0 0 auto; }
+      .copy-btn:active { transform: scale(0.96); }
+
+      /* typing indicator */
+      .typing { display: inline-flex; gap: 5px; align-items: center; padding: 4px 2px; }
+      .typing span {
+        width: 8px; height: 8px; border-radius: 50%;
+        background: var(--dot);
+        animation: blink 1.2s infinite;
+      }
+      .typing span:nth-child(2) { animation-delay: 0.2s; }
+      .typing span:nth-child(3) { animation-delay: 0.4s; }
+      @keyframes blink {
+        0%, 80%, 100% { opacity: 0.25; transform: translateY(0); }
+        40% { opacity: 1; transform: translateY(-2px); }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .typing span { animation: none; opacity: 0.6; }
+        .messages { scroll-behavior: auto; }
+      }
+
+      /* suggestion chips (empty state) */
+      .chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        padding: 2px 2px 4px;
+      }
+      .chip {
+        min-height: 38px;
+        padding: 8px 14px;
+        border-radius: 999px;
+        border: 1px solid var(--chip-border);
+        background: var(--chip-bg);
+        color: var(--chip-text);
+        font-size: 14.5px;
+        font-weight: 600;
+        cursor: pointer;
+        text-align: left;
+      }
+      .chip:active { transform: scale(0.97); }
+
+      /* ---------- quick action tray ---------- */
+      .tray {
+        flex: 0 0 auto;
+        display: none;
+        flex-wrap: wrap;
+        gap: 8px;
+        padding: 10px 12px 2px;
+        background: var(--tray-bg);
+      }
+      .tray.open { display: flex; }
+
+      /* ---------- overlay sheet (preview + tools) ---------- */
+      .overlay {
+        position: fixed; inset: 0;
+        background: var(--scrim);
+        z-index: 50;
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+      }
+      .overlay[hidden] { display: none; }
+      .sheet {
+        background: var(--bg);
+        width: 100%;
+        max-height: 92dvh;
+        display: flex;
+        flex-direction: column;
+        border-radius: 20px 20px 0 0;
+        overflow: hidden;
+      }
+      @media (min-width: 640px) {
+        .overlay { align-items: center; }
+        .sheet { width: min(680px, 94vw); max-height: 88dvh; border-radius: 20px; }
+      }
+      .overlay.full .sheet {
+        width: 100%; max-width: none;
+        height: 100dvh; max-height: 100dvh;
+        border-radius: 0;
+      }
+      .sheet-head {
+        flex: 0 0 auto;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 12px 16px;
+        border-bottom: 1px solid var(--bar-border);
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--ai-text);
+      }
+      .sheet-close {
+        width: 38px; height: 38px;
+        border: none; border-radius: 50%;
+        background: var(--ai-bubble);
+        color: var(--ai-text);
+        font-size: 17px;
+        cursor: pointer;
+        flex: 0 0 auto;
+      }
+      .sheet-body {
+        flex: 1 1 auto;
+        overflow-y: auto;
+        padding: 16px;
+        color: var(--ai-text);
+      }
+      .overlay.full .sheet-body { padding: 0; overflow: hidden; }
+      .sheet-body iframe {
+        width: 100%; height: 100%;
+        border: none;
+        background: #ffffff;
+        display: block;
+      }
+      .tool-menu-btn {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        width: 100%;
+        text-align: left;
+        padding: 14px;
+        margin-bottom: 10px;
+        border: 1px solid var(--bar-border);
+        background: var(--ai-bubble);
+        color: var(--ai-text);
+        border-radius: 14px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      .tool-menu-btn small {
+        display: block;
+        font-weight: 400;
+        font-size: 13.5px;
+        color: var(--status-text);
+        margin-top: 2px;
+      }
+      .tool-back {
+        min-height: 34px;
+        padding: 6px 12px;
+        margin-bottom: 14px;
+        border: 1px solid var(--chip-border);
+        background: var(--chip-bg);
+        color: var(--chip-text);
+        border-radius: 999px;
+        font-size: 13.5px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      .tool-row { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+      .tool-input {
+        flex: 1 1 120px;
+        min-height: 46px;
+        border: 1px solid var(--bar-border);
+        background: var(--composer-bg);
+        color: var(--composer-text);
+        border-radius: 12px;
+        padding: 10px 12px;
+        font: inherit;
+        font-size: 16px;
+      }
+      .tool-add {
+        min-height: 46px;
+        padding: 10px 18px;
+        border: none;
+        border-radius: 12px;
+        background: var(--send-bg);
+        color: #ffffff;
+        font-size: 15.5px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+      .tool-add:active, .tool-menu-btn:active, .tool-back:active { transform: scale(0.98); }
+      .todo-item, .kh-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 12px;
+        border: 1px solid var(--bar-border);
+        border-radius: 12px;
+        margin-bottom: 8px;
+        background: var(--bg);
+      }
+      .todo-item .t-text { flex: 1 1 auto; font-size: 15.5px; cursor: pointer; }
+      .todo-item.done .t-text { text-decoration: line-through; opacity: 0.55; }
+      .kh-item .k-note { flex: 1 1 auto; font-size: 15.5px; }
+      .kh-item .k-amt { font-weight: 700; font-size: 15.5px; }
+      .item-del {
+        border: none;
+        background: transparent;
+        color: var(--placeholder);
+        font-size: 18px;
+        cursor: pointer;
+        padding: 4px 8px;
+        flex: 0 0 auto;
+      }
+      .tool-total { font-size: 16px; font-weight: 700; margin: 4px 0 12px; }
+      .tool-empty { color: var(--status-text); font-size: 15px; padding: 8px 0 14px; }
+      .chart-wrap { margin: 6px 0 14px; color: var(--ai-text); }
+      .quiz-q { font-size: 17px; font-weight: 700; margin-bottom: 12px; line-height: 1.45; }
+      .quiz-opt {
+        display: block;
+        width: 100%;
+        text-align: left;
+        padding: 12px 14px;
+        margin-bottom: 8px;
+        border: 1px solid var(--bar-border);
+        background: var(--bg);
+        color: var(--ai-text);
+        border-radius: 12px;
+        font-size: 15.5px;
+        cursor: pointer;
+      }
+      .quiz-opt.right { border-color: var(--status-ok); background: rgba(47, 174, 95, 0.12); font-weight: 700; }
+      .quiz-opt.wrong { border-color: #d64545; background: rgba(214, 69, 69, 0.10); }
+      .quiz-opt:disabled { cursor: default; }
+
+      /* photo in chat */
+      .chat-photo { width: 100%; max-width: 420px; border-radius: 14px; display: block; }
+      .photo-cap { font-size: 13.5px; color: var(--status-text); margin-top: 8px; line-height: 1.45; }
+      .photo-loading { font-size: 15px; padding: 6px 2px; }
+
+      /* ---------- naam / rang themes ---------- */
+      :root[data-theme="green"] { --send-bg: #2f9e5f; --send-bg-off: #c4e3d0; --chip-text: #1e7a46; --chip-border: #bfe0cd; }
+      :root[data-theme="orange"] { --send-bg: #e8710a; --send-bg-off: #f6ddc6; --chip-text: #b35408; --chip-border: #f2d7ba; }
+      :root[data-theme="pink"] { --send-bg: #d6336c; --send-bg-off: #f3ccd9; --chip-text: #b02a5a; --chip-border: #f0c3d3; }
+      :root[data-theme="purple"] { --send-bg: #7c5cd6; --send-bg-off: #ddd2f7; --chip-text: #5f43b8; --chip-border: #d8ccf5; }
+      @media (prefers-color-scheme: dark) {
+        :root[data-theme="green"] { --send-bg-off: #274a36; --chip-text: #7fd6a4; --chip-border: #2c5c40; }
+        :root[data-theme="orange"] { --send-bg-off: #54381c; --chip-text: #f5b27a; --chip-border: #6b4520; }
+        :root[data-theme="pink"] { --send-bg-off: #55283c; --chip-text: #f2a0bd; --chip-border: #63304a; }
+        :root[data-theme="purple"] { --send-bg-off: #3a3160; --chip-text: #bda9f2; --chip-border: #4a3d75; }
+      }
+
+      /* ---------- mic (bol kar likhna) ---------- */
+      .mic-btn {
+        flex: 0 0 auto;
+        width: 44px; height: 44px;
+        border: none;
+        background: transparent;
+        color: var(--placeholder);
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .mic-btn svg { width: 22px; height: 22px; }
+      .mic-btn.rec { color: #e0483e; animation: micPulse 1.1s ease-in-out infinite; }
+      @keyframes micPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+      @media (prefers-reduced-motion: reduce) { .mic-btn.rec { animation: none; } }
+
+      /* ---------- settings (naam / rang) ---------- */
+      .set-label { font-size: 13.5px; font-weight: 700; color: var(--status-text); margin: 16px 0 8px; }
+      .set-label:first-child { margin-top: 0; }
+      .swatches { display: flex; gap: 10px; flex-wrap: wrap; }
+      .swatch {
+        display: flex; flex-direction: column; align-items: center; gap: 6px;
+        border: none; background: transparent; cursor: pointer;
+        color: var(--ai-text); font-size: 12.5px; padding: 4px;
+      }
+      .swatch .dotc { width: 40px; height: 40px; border-radius: 50%; border: 3px solid transparent; }
+      .swatch.sel .dotc { border-color: var(--ai-text); }
+      .swatch:active { transform: scale(0.95); }
+      .set-apply { width: 100%; margin-top: 18px; }
+
+      /* ---------- composer ---------- */
+      .composer-wrap {
+        flex: 0 0 auto;
+        padding: 8px 12px calc(10px + env(safe-area-inset-bottom));
+        background: var(--bg);
+      }
+      .composer {
+        display: flex;
+        align-items: flex-end;
+        gap: 8px;
+      }
+      .input-pill {
+        flex: 1 1 auto;
+        display: flex;
+        align-items: flex-end;
+        background: var(--composer-bg);
+        border-radius: 28px;
+        padding: 6px 8px 6px 6px;
+        min-height: 56px;
+      }
+      .plus-btn {
+        flex: 0 0 auto;
+        width: 44px; height: 44px;
+        border: none;
+        background: transparent;
+        color: var(--placeholder);
+        font-size: 26px;
+        line-height: 1;
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .plus-btn.open { transform: rotate(45deg); }
+      .plus-btn { transition: transform 0.15s ease; }
+      #input {
+        flex: 1 1 auto;
+        border: none;
+        outline: none;
+        background: transparent;
+        color: var(--composer-text);
+        font: inherit;
+        font-size: 16.5px;
+        line-height: 1.4;
+        resize: none;
+        max-height: 132px;
+        padding: 10px 4px;
+      }
+      #input::placeholder { color: var(--placeholder); }
+      .send-btn {
+        flex: 0 0 auto;
+        width: 52px; height: 52px;
+        border: none;
+        border-radius: 50%;
+        background: var(--send-bg-off);
+        color: #ffffff;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.15s ease, transform 0.1s ease;
+      }
+      .send-btn.ready { background: var(--send-bg); }
+      .send-btn:active { transform: scale(0.94); }
+      .send-btn svg { width: 24px; height: 24px; margin-left: 2px; }
+      .send-btn:disabled { cursor: default; }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <div class="topbar">
+        <span class="status-dot" id="statusDot"></span>
+        <span class="status-text" id="statusText">Free AI ready — bina API key</span>
+        <button class="newchat-btn" id="newChatBtn" type="button" aria-label="Nayi chat shuru karo">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+          Nayi chat
+        </button>
+      </div>
+
+      <div class="messages" id="messages" aria-live="polite"></div>
+
+      <div class="tray" id="tray">
+        <button class="chip" type="button" data-q="Ek mazedaar joke sunao">😄 Joke sunao</button>
+        <button class="chip" type="button" data-q="Abhi time kya ho raha hai?">🕐 Time kya hai</button>
+        <button class="chip" type="button" data-q="Aaj ki date aur din batao">📅 Aaj ki date</button>
+        <button class="chip" type="button" data-q="125 ka 15% kitna hota hai?">🧮 Hisab karo</button>
+        <button class="chip" type="button" data-q="Ek calculator app ka poora HTML code banao jo ek hi file mein chale">💻 Calculator ka code banao</button>
+        <button class="chip" type="button" data-q="Tum kya-kya kar sakte ho?">❓ Kya kar sakte ho</button>
+        <button class="chip" type="button" data-q="Ek photo banao: pahadon mein khoobsurat sunset">🖼️ Photo banao</button>
+        <button class="chip" type="button" id="trayTools">🧰 Tools</button>
+        <button class="chip" type="button" data-q="Tumhe kya yaad hai?">🧠 Kya yaad hai</button>
+        <button class="chip" type="button" id="trayFile">📄 File padho</button>
+        <button class="chip" type="button" id="trayVideo">🎬 Video samjhao</button>
+        <button class="chip" type="button" id="trayPhoto">📷 Photo samjhao</button>
+        <button class="chip" type="button" id="trayGmail">📧 Gmail jodo</button>
+        <button class="chip" type="button" id="trayIg">📸 Instagram jodo</button>
+        <button class="chip" type="button" id="trayIgPost">📸 Instagram post</button>
+        <button class="chip" type="button" id="trayYtUpload">📺 YouTube upload</button>
+        <button class="chip" type="button" id="trayInstallApp" style="display:none">📲 App install karo</button>
+        <button class="chip" type="button" id="traySettings">🎨 Naam / Rang</button>
+        <button class="chip" type="button" id="trayBrain">🧠 Dimaag</button>
+        <button class="chip" type="button" id="trayDownload">⬇️ Chat download</button>
+        <button class="chip" type="button" id="traySave">💾 Chat hamesha save karo</button>
+        <button class="chip" type="button" id="trayClear">🧹 Chat saaf karo</button>
+      </div>
+
+      <div class="overlay" id="overlay" hidden>
+        <div class="sheet" id="sheet" role="dialog" aria-modal="true">
+          <div class="sheet-head">
+            <span id="sheetTitle">Preview</span>
+            <button class="sheet-close" id="sheetClose" type="button" aria-label="Band karo">✕</button>
+          </div>
+          <div class="sheet-body" id="sheetBody"></div>
+        </div>
+      </div>
+
+      <input type="file" id="fileInput" accept=".pdf,.txt,.md,.csv,.json,.log,text/plain,application/pdf" hidden />
+      <input type="file" id="videoInput" accept="video/mp4,video/webm,video/quicktime" hidden />
+      <input type="file" id="photoInput" accept="image/jpeg,image/png,image/webp,image/gif" hidden />
+      <input type="file" id="igPhotoInput" accept="image/jpeg,image/png" hidden />
+      <input type="file" id="ytVideoInput" accept="video/mp4,video/webm,video/quicktime" hidden />
+
+      <div class="composer-wrap">
+        <form class="composer" id="composerForm">
+          <div class="input-pill">
+            <button class="plus-btn" id="plusBtn" type="button" aria-label="Quick options kholo">+</button>
+            <textarea id="input" rows="1" placeholder="Yahan likho..." autocomplete="off"></textarea>
+            <button class="mic-btn" id="micBtn" type="button" aria-label="Bol kar likho">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><path d="M12 19v3"/></svg>
+            </button>
+          </div>
+          <button class="send-btn" id="sendBtn" type="submit" aria-label="Bhejo">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3.4 20.4l17.8-7.5c.8-.35.8-1.45 0-1.8L3.4 3.6c-.66-.29-1.39.2-1.39.91L2 9.12c0 .5.37.93.87.99L17 12 2.87 13.88c-.5.07-.87.5-.87 1l.01 4.61c0 .72.73 1.2 1.39.91z"/></svg>
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script async defer src="https://accounts.google.com/gsi/client"></script>
+    <script>
+      (function () {
+        "use strict";
+
+        var messagesEl = document.getElementById("messages");
+        var inputEl = document.getElementById("input");
+        var formEl = document.getElementById("composerForm");
+        var sendBtn = document.getElementById("sendBtn");
+        var plusBtn = document.getElementById("plusBtn");
+        var trayEl = document.getElementById("tray");
+        var statusDot = document.getElementById("statusDot");
+        var statusText = document.getElementById("statusText");
+        var newChatBtn = document.getElementById("newChatBtn");
+
+        var SYSTEM_PROMPT =
+          "You are a friendly AI assistant in a chat app, and an expert senior software developer. The user's name is Shiva and he usually writes in Hinglish (Hindi written in Roman script, mixed with English). " +
+          "Reply in the same language and style as the user's message: if he writes Hinglish, reply in Hinglish; if English, reply in English; if Hindi in Devanagari, reply in Devanagari. " +
+          "Be helpful, warm and natural, like a smart friend. Keep answers as short as the question needs — simple questions get short answers. " +
+          "CODING RULES — follow these strictly whenever the user asks for code, a website, an app, a script, a fix or an explanation of code: " +
+          "(1) Always give COMPLETE, working, ready-to-run code — never partial snippets, never '...' placeholders, never 'baaki code khud likh lo'. " +
+          "(2) For a web page or web app, default to ONE single self-contained HTML file with the CSS inside a <style> tag and the JavaScript inside a <script> tag at the end of the body, so Shiva can save it as one .html file and open it directly. Mention multiple files only when truly necessary. " +
+          "(3) Put every code block in a fenced markdown block WITH the language name, like ```html, ```javascript, ```python or ```css. " +
+          "(4) The code must be mobile-friendly (responsive, works on a phone screen) and use clean modern code with no external dependency unless it is genuinely needed. " +
+          "(5) After the code, add a SHORT explanation in simple Hinglish: what the code does and how to run or use it, in 2-5 short lines or bullet points. Do not write a long essay. " +
+          "(6) If the user pastes code or an error, find the bug, explain the mistake in one or two simple lines, and then give the FULL corrected code — not just the changed lines. " +
+          "(7) If the user asks a follow-up change to code you already gave, return the FULL updated code again, not only the diff. " +
+          "(8) If the request is unclear, make the most sensible complete version instead of asking many questions. " +
+          "For non-coding questions, answer normally and helpfully — study, business, videos and daily questions included. Use simple markdown (bold, lists, code blocks) when it helps." +
+          " APP FEATURES: this chat app itself can generate a photo when the user asks for one (e.g. 'photo banao: ...'), check any link the user sends for safety (it shows name-based warnings instantly, reads the page text through the free r.jina.ai reader when it can, then you give a short Hinglish verdict — what the link looks like, what the danger is, what to do; NEVER say 'pakka safe' or '100% safe', it is only an estimate; if the page cannot be read, judge by the name only and say so clearly; never ask the user to send private or login links for checking), describe a YouTube video from its title and description (it reads the video page text through the free r.jina.ai reader, then you summarise what the video is about from the title and description ONLY — you cannot see the scenes or hear the audio, so never invent scene details; if the page cannot be read, say so honestly and do not guess), understand a video FILE the user uploads from the + tray 'Video samjhao' button (the file goes to the server, which shows it to Gemini and returns a description of the scenes and the audio — max 2.5 MB, MP4/WebM/MOV), understand a PHOTO the user uploads from the + tray 'Photo samjhao' button (the file goes to the server, which shows it to Gemini and describes what is in it, or answers the user's question about it — max 2.5 MB, JPEG/PNG/WebP/GIF; if the user typed a question before choosing the photo, answer that question about the photo), show a live Preview of HTML code (Preview button above the code), publish an HTML website live with the 'Live karo' button above the code (asks for the admin code once, then gives a live link), answer live/current questions (price, news, weather, gold rate...) using the fresh Google search results the app attaches to your prompt, save the chat and remembered facts on the server forever when the admin code is set (the user enables it from 'Chat hamesha save karo' in the + tray), read any answer aloud (Sunao button under each answer), remember facts for this chat when the user says 'yaad rakho', read a PDF or text file the user attaches from the + tray (the app extracts the file's text and sends it to you — then summarize it and answer questions about it), accept voice dictation through the mic button, let the user rename you and change your theme colour in the + tray settings, download the whole chat as a file; the user can also install this chat as a phone app (the + tray 'App install karo' button appears when Chrome offers it, otherwise Chrome menu → 'Add to Home screen'); and it has To-do, Kharcha Tracker and Quiz tools in the + tray. It can also read the user's own Gmail inbox when asked (each user connects their own Gmail with Google login from the + tray 'Gmail jodo' button — read-only, only the latest emails, sender + subject + a short snippet, and read one email fully when asked ('pehli email padho' or '2 number wali email padho' after the list), and send an email when asked (step by step: who, subject, what to write — it shows the draft first and sends only after the user says 'bhej do'), and write a complete formal email for the user when asked ('mere liye email likho: ...' — subject + body, but it does NOT send it; sending needs a separate 'email bhejo'); the exact commands are 'email bhejo' to send, 'mere liye email likho: <topic>' to get a written email, 'meri email dikhao' or 'unread email dikhao' to list emails, 'pehli email padho' to read one fully — quote THESE commands in any how-to guide, never invent other command formats; the mail stays in the user's own account and nothing is saved on the server; if Gmail is not connected yet, say so plainly instead of guessing). It can also connect the user's own Instagram (Professional account only) when asked — the user connects it from the + tray 'Instagram jodo' button (Instagram login, token kept in memory only), and post a photo when asked ('instagram par post karo' — the app uploads the photo to the user's own site first for a public link, then publishes it through the Instagram API; caption is the text typed with the command). If Instagram is not connected yet, say so plainly and tell the user the Meta app setup is still needed. It can also search YouTube videos when asked ('youtube par ... dhoondho' — it asks the server, which searches YouTube and shows the top videos with links; if the YouTube key is not set up yet, say so plainly). It can also upload a video file to the user's own YouTube channel when asked ('youtube par video upload karo' — the user picks a video file from the + tray 'YouTube upload' button or the command; the app uploads it directly to YouTube as Public (sabko dikhegi) using the user's Google login token, max 100 MB, MP4/WebM/MOV; if Google login is not connected yet, say so plainly). The app handles those requests itself, so never claim you cannot make photos or remember things in this chat." +
+          " THINKING RULES: before answering, think step by step silently. For maths, logic and code, double-check your result before replying. Never invent facts, names, numbers or links - if you are not sure, say so honestly and give your best guess clearly marked as a guess. Answer exactly what was asked, with no filler.";
+
+        var history = []; // {role: 'user'|'assistant', content: string}
+        var busy = false;
+        // ---- Server save (admin code ho to chat + yaadein hamesha ke liye server par save) ----
+        var serverChatTimer = null;
+        function getAdminCode() {
+          try { return localStorage.getItem("fg-publish-code") || localStorage.getItem("fg-photos-code") || localStorage.getItem("fg-addproduct-code") || ""; } catch (e) { return ""; }
+        }
+        function serverChatOn() { return !!getAdminCode(); }
+        function pushHist(role, content) {
+          if (role && typeof role === "object") {
+            history.push({ role: role.role, content: role.content });
+          } else {
+            history.push({ role: role, content: content });
+          }
+          saveServerHist();
+        }
+        function saveServerHist() {
+          if (!serverChatOn()) return;
+          clearTimeout(serverChatTimer);
+          serverChatTimer = setTimeout(function () {
+            try {
+              var msgs = history.slice(-100).map(function (h) { return { role: h.role, text: h.content }; });
+              fetch("https://fashion-website-theta-taupe.vercel.app/api/freeai?fn=chat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code: getAdminCode(), messages: msgs }) }).catch(function () {});
+            } catch (e) {}
+          }, 800);
+        }
+        function loadServerHist() {
+          return fetch("https://fashion-website-theta-taupe.vercel.app/api/freeai?fn=chat&code=" + encodeURIComponent(getAdminCode()))
+            .then(function (r) { return r.json().catch(function () { return {}; }); })
+            .then(function (d) {
+              if (!d || !d.ok || !Array.isArray(d.messages)) return null;
+              return d.messages.filter(function (m) { return m && typeof m.text === "string"; }).map(function (m) { return { role: m.role === "assistant" ? "assistant" : "user", content: m.text }; });
+            })
+            .catch(function () { return null; });
+        }
+        function renderHist() {
+          messagesEl.innerHTML = "";
+          history.forEach(function (m) { addMessage(m.role, m.content); });
+          scrollToBottom();
+        }
+        function syncChatFromServer() {
+          if (!serverChatOn()) return;
+          loadServerHist().then(function (srv) {
+            if (srv === null) return;
+            if (srv.length) { history = srv; renderHist(); }
+            else if (history.length) { saveServerHist(); }
+          });
+        }
+        function loadMemories() {
+          if (!serverChatOn()) return;
+          fetch("https://fashion-website-theta-taupe.vercel.app/api/freeai?fn=memory&code=" + encodeURIComponent(getAdminCode()))
+            .then(function (r) { return r.json().catch(function () { return {}; }); })
+            .then(function (d) {
+              if (d && d.ok && Array.isArray(d.memories)) {
+                if (d.memories.length) {
+                  memories = d.memories.filter(function (m) { return typeof m === "string"; });
+                } else if (memories.length) {
+                  saveMemories();
+                }
+              }
+            })
+            .catch(function () {});
+        }
+        function saveMemories() {
+          if (!serverChatOn()) return;
+          try { fetch("https://fashion-website-theta-taupe.vercel.app/api/freeai?fn=memory", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code: getAdminCode(), memories: memories }) }).catch(function () {}); } catch (e) {}
+        }
+        var memories = []; // 'yaad rakho' wali baatein — sirf is chat ke liye (page band = khatm)
+        var todos = [];    // To-Do tool ka data — in-memory
+        var kharchas = []; // Kharcha tool ka data — {amount, note}, in-memory
+        var aiName = "Free AI"; // Settings se badla ja sakta hai — sirf is session ke liye
+
+        /* ---------------- rendering ---------------- */
+
+        function escapeHtml(s) {
+          return s
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;");
+        }
+
+        var LANG_EXT = {
+          html: "html", htm: "html", css: "css", javascript: "js", js: "js",
+          typescript: "ts", ts: "ts", python: "py", py: "py", java: "java",
+          c: "c", cpp: "cpp", "c++": "cpp", csharp: "cs", "c#": "cs",
+          php: "php", sql: "sql", json: "json", xml: "xml", bash: "sh",
+          sh: "sh", shell: "sh", text: "txt", txt: "txt"
+        };
+
+        // Small, safe markdown: code blocks, inline code, bold, lists, paragraphs.
+        function renderMarkdown(text) {
+          var blocks = [];
+          var work = text.replace(/```([\w+#-]*)\n?([\s\S]*?)```/g, function (m, lang, code) {
+            blocks.push({ lang: (lang || "").toLowerCase(), code: code.replace(/\n$/, "") });
+            return "\u0001" + (blocks.length - 1) + "\u0001";
+          });
+          var html = escapeHtml(work);
+          html = html.replace(/`([^`\n]+)`/g, "<code>$1</code>");
+          html = html.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+          var lines = html.split("\n");
+          var out = [];
+          var listType = null;
+          function closeList() {
+            if (listType) { out.push(listType === "ul" ? "</ul>" : "</ol>"); listType = null; }
+          }
+          lines.forEach(function (line) {
+            var trimmed = line.trim();
+            var blockMatch = trimmed.match(/^\u0001(\d+)\u0001$/);
+            if (blockMatch) {
+              closeList();
+              var blk = blocks[parseInt(blockMatch[1], 10)] || { lang: "", code: "" };
+              var label = blk.lang ? escapeHtml(blk.lang) : "code";
+              out.push(
+                '<div class="codeblock"><div class="cb-head"><span class="cb-lang">' + label + '</span>' +
+                '<span class="cb-actions"><button type="button" class="cb-dl">Download</button>' +
+                '<button type="button" class="cb-copy">Copy</button></span></div><pre>' +
+                escapeHtml(blk.code) + "</pre></div>"
+              );
+              return;
+            }
+            var ul = trimmed.match(/^[-*•]\s+(.*)$/);
+            var ol = trimmed.match(/^\d+[.)]\s+(.*)$/);
+            if (ul) {
+              if (listType !== "ul") { closeList(); out.push("<ul>"); listType = "ul"; }
+              out.push("<li>" + ul[1] + "</li>");
+              return;
+            }
+            if (ol) {
+              if (listType !== "ol") { closeList(); out.push("<ol>"); listType = "ol"; }
+              out.push("<li>" + ol[1] + "</li>");
+              return;
+            }
+            closeList();
+            if (trimmed === "") return;
+            out.push("<p>" + trimmed + "</p>");
+          });
+          closeList();
+          return out.join("");
+        }
+
+        var CLIPBOARD_SVG =
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
+
+        function addMessage(role, text) {
+          var row = document.createElement("div");
+          row.className = "row " + (role === "user" ? "user" : "ai");
+          var bubble = document.createElement("div");
+          bubble.className = "bubble";
+          if (role === "user") {
+            bubble.textContent = text;
+          } else {
+            bubble.innerHTML = renderMarkdown(text);
+            var copyBtn = document.createElement("button");
+            copyBtn.type = "button";
+            copyBtn.className = "copy-btn";
+            copyBtn.innerHTML = CLIPBOARD_SVG + "<span>Copy</span>";
+            copyBtn.addEventListener("click", function () {
+              copyText(text, copyBtn);
+            });
+            bubble.appendChild(copyBtn);
+            if ("speechSynthesis" in window) {
+              var speakBtn = document.createElement("button");
+              speakBtn.type = "button";
+              speakBtn.className = "copy-btn speak-btn";
+              speakBtn.style.marginLeft = "8px";
+              speakBtn.innerHTML = "🔊 <span>Sunao</span>";
+              speakBtn.addEventListener("click", function () { speakText(text, speakBtn); });
+              bubble.appendChild(speakBtn);
+            }
+            bubble.querySelectorAll(".cb-copy").forEach(function (btn) {
+              btn.addEventListener("click", function () {
+                var pre = btn.closest(".codeblock").querySelector("pre");
+                copyText(pre ? pre.textContent : "", btn);
+              });
+            });
+            bubble.querySelectorAll(".cb-dl").forEach(function (btn) {
+              btn.addEventListener("click", function () {
+                var block = btn.closest(".codeblock");
+                var pre = block.querySelector("pre");
+                var langEl = block.querySelector(".cb-lang");
+                downloadCode(pre ? pre.textContent : "", langEl ? langEl.textContent : "", btn);
+              });
+            });
+            // HTML code par Preview button — result turant dekhne ke liye
+            // AI kabhi-kabhi lamba code 2-3 block mein deta hai, ya bina html label ke —
+            // isliye HTML jaisa dikhne wala har block (div/img/button/style...) par bhi
+            // Preview/Live karo dikhao, aur Preview/Live karo mein usi jawab ke saare
+            // HTML wale block jod kar do (aadha page preview na ho).
+            var htmlPres = [];
+            bubble.querySelectorAll(".codeblock").forEach(function (block) {
+              var langEl2 = block.querySelector(".cb-lang");
+              var pre2 = block.querySelector("pre");
+              var lang2 = langEl2 ? langEl2.textContent.toLowerCase() : "";
+              var code2 = pre2 ? pre2.textContent : "";
+              var isHtml = lang2 === "html" || lang2 === "htm" || /<!doctype html|<html[\s>]/i.test(code2) ||
+                /<(div|img|button|style|script|head|body|h1|h2|h3|header|section|main|footer|a|span|input)[\s>]/.test(code2);
+              if (isHtml) {
+                htmlPres.push(pre2);
+                var pv = document.createElement("button");
+                pv.type = "button";
+                pv.className = "cb-dl";
+                pv.textContent = "👁 Preview";
+                var actions = block.querySelector(".cb-actions");
+                actions.insertBefore(pv, actions.firstChild);
+                pv.addEventListener("click", function () { openPreview(fullPageCode()); });
+                var lv = document.createElement("button");
+                lv.type = "button";
+                lv.className = "cb-dl";
+                lv.textContent = "🌐 Live karo";
+                actions.insertBefore(lv, pv.nextSibling);
+                lv.addEventListener("click", function () { publishCode(fullPageCode(), block, lv); });
+              }
+            });
+            function fullPageCode() {
+              return htmlPres.map(function (p) { return p.textContent; }).join("\n");
+            }
+          }
+          row.appendChild(bubble);
+          messagesEl.appendChild(row);
+          return row;
+        }
+
+        function addTyping() {
+          var row = document.createElement("div");
+          row.className = "row ai";
+          row.id = "typingRow";
+          var bubble = document.createElement("div");
+          bubble.className = "bubble";
+          bubble.innerHTML = '<div class="typing"><span></span><span></span><span></span></div>';
+          row.appendChild(bubble);
+          messagesEl.appendChild(row);
+          scrollToBottom();
+          return row;
+        }
+
+        function removeTyping() {
+          var t = document.getElementById("typingRow");
+          if (t) t.remove();
+        }
+
+        function copyText(text, btn) {
+          function done() {
+            if (!btn) return;
+            var label = btn.querySelector("span") || btn;
+            var old = label.textContent;
+            label.textContent = "Copy ho gaya";
+            setTimeout(function () { label.textContent = old; }, 1600);
+          }
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(done, function () { legacyCopy(text); done(); });
+          } else {
+            legacyCopy(text);
+            done();
+          }
+        }
+        function legacyCopy(text) {
+          var ta = document.createElement("textarea");
+          ta.value = text;
+          ta.style.position = "fixed";
+          ta.style.opacity = "0";
+          document.body.appendChild(ta);
+          ta.select();
+          try { document.execCommand("copy"); } catch (e) {}
+          ta.remove();
+        }
+
+        // Code ko seedha file bana kar download — save karke turant khola ja sakta hai.
+        function downloadCode(code, lang, btn) {
+          var ext = LANG_EXT[(lang || "").toLowerCase()] || "txt";
+          var blob = new Blob([code], { type: "text/plain;charset=utf-8" });
+          var url = URL.createObjectURL(blob);
+          var a = document.createElement("a");
+          a.href = url;
+          a.download = "code." + ext;
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
+          if (btn) {
+            var old = btn.textContent;
+            btn.textContent = "Ho gaya ✓";
+            setTimeout(function () { btn.textContent = old; }, 1600);
+          }
+        }
+
+        /* ---------------- scrolling ----------------
+           User ki do baatein (Mera AI wali fixes):
+           1) Jawab aane par screen jawab ke SHURU par jaye, end par nahi.
+           2) Keyboard sirf user ke tap par khule — is liye code kabhi
+              input.focus() nahi bulata. */
+
+        function scrollToBottom() {
+          messagesEl.scrollTop = messagesEl.scrollHeight;
+        }
+        function scrollToMessageTop(row) {
+          requestAnimationFrame(function () {
+            var top = row.offsetTop - 10;
+            messagesEl.scrollTo({ top: top, behavior: "smooth" });
+          });
+        }
+
+        /* ---------------- status ---------------- */
+        function setStatus(ok, text) {
+          statusDot.classList.toggle("warn", !ok);
+          statusText.textContent = text;
+        }
+
+        /* ---------------- local brain (fallback + turant jawab) ---------------- */
+
+        // Safe arithmetic parser — no eval. Supports + - * / % ^ ( ) and decimals.
+        function evalMath(expr) {
+          var s = expr.replace(/,/g, "").replace(/\s+/g, "");
+          if (!/^[-+0-9.+\-*/%^()]+$/.test(s) || s.length > 80) return null;
+          var pos = 0;
+          function peek() { return s[pos]; }
+          function parseExpr() {
+            var v = parseTerm();
+            while (peek() === "+" || peek() === "-") {
+              var op = s[pos++];
+              var r = parseTerm();
+              v = op === "+" ? v + r : v - r;
+            }
+            return v;
+          }
+          function parseTerm() {
+            var v = parseFactor();
+            while (peek() === "*" || peek() === "/" || peek() === "%") {
+              var op = s[pos++];
+              var r = parseFactor();
+              if (op === "*") v = v * r;
+              else if (op === "/") { if (r === 0) throw new Error("div0"); v = v / r; }
+              else v = v % r;
+            }
+            return v;
+          }
+          function parseFactor() {
+            var base = parseUnary();
+            if (peek() === "^") { pos++; var exp = parseFactor(); return Math.pow(base, exp); }
+            return base;
+          }
+          function parseUnary() {
+            if (peek() === "-") { pos++; return -parseUnary(); }
+            if (peek() === "+") { pos++; return parseUnary(); }
+            return parseAtom();
+          }
+          function parseAtom() {
+            if (peek() === "(") {
+              pos++;
+              var v = parseExpr();
+              if (peek() !== ")") throw new Error("paren");
+              pos++;
+              return v;
+            }
+            var m = s.slice(pos).match(/^\d*\.?\d+/);
+            if (!m) throw new Error("num");
+            pos += m[0].length;
+            return parseFloat(m[0]);
+          }
+          try {
+            var result = parseExpr();
+            if (pos !== s.length || !isFinite(result)) return null;
+            return Math.round(result * 1e10) / 1e10;
+          } catch (e) {
+            return null;
+          }
+        }
+
+        function tryLocalAnswer(raw) {
+          var q = raw.trim();
+          var low = q.toLowerCase();
+
+          // --- hisab (calculator) ---
+          var pct = low.match(/([\d.,]+)\s*(?:ka|of|%)\s*([\d.,]+)\s*%/) || low.match(/([\d.,]+)\s*%\s*(?:of|ka)\s*([\d.,]+)/);
+          var pctSimple = low.match(/([\d.,]+)\s*%\s*(?:of|ka)\s*([\d.,]+)/);
+          var percentOf = null;
+          if (pctSimple) percentOf = { p: parseFloat(pctSimple[1]), n: parseFloat(pctSimple[2]) };
+          else {
+            var m2 = low.match(/([\d.,]+)\s+ka\s+([\d.,]+)\s*%/);
+            if (m2) percentOf = { p: parseFloat(m2[2]), n: parseFloat(m2[1]) };
+          }
+          if (percentOf && isFinite(percentOf.p) && isFinite(percentOf.n)) {
+            var val = (percentOf.p / 100) * percentOf.n;
+            val = Math.round(val * 1e10) / 1e10;
+            return percentOf.n + " ka " + percentOf.p + "% = **" + val + "**";
+          }
+          var cleaned = low
+            .replace(/kitna hota hai|kitna hai|kitne hote hain|calculate|hisab karo|hisab|batao|barabar|please|plz/g, "")
+            .replace(/[=?]/g, "")
+            .replace(/x/g, "*")
+            .trim();
+          if (/^[-+0-9][0-9.+\-*/%^() ]*$/.test(cleaned) && /[+\-*/%^]/.test(cleaned)) {
+            var r = evalMath(cleaned);
+            if (r !== null) return cleaned.replace(/\*/g, " × ").replace(/\//g, " ÷ ") + " = **" + r + "**";
+          }
+
+          // --- time / date / din ---
+          var now = new Date();
+          if (/(time|samay|baj)/.test(low) && /(kya|hai|ho raha|now|current)/.test(low)) {
+            var t = now.toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit", hour12: true });
+            return "Abhi time hai **" + t + "** ⏰";
+          }
+          if (/(aaj).*(date|din|tarikh|day)|(?:date|tarikh)\s*(kya|hai|batao)/.test(low)) {
+            var dstr = now.toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+            return "Aaj hai **" + dstr + "** 📅";
+          }
+
+          // --- pehchan / salaam ---
+          if (/^(hi|hii+|hello|hey|namaste|namaskar|hola|hy)\b/.test(low) && low.length < 25) {
+            return "Namaste! 😊 Main " + aiName + " hoon. Batao, aaj kis cheez mein madad karun — sawal, hisab, code, ya kuch aur?";
+          }
+          if (/(tum kaun ho|tumhara naam|who are you|your name|aap kaun)/.test(low)) {
+            return "Main **" + aiName + "** hoon — Mera AI jaisa hi chat assistant, par ye bina kisi API key ke chalta hai. Sawal poochho, hisab karwao, code likhwao — koshish poori karunga! 💪";
+          }
+          if (/(kya kya kar sakte|kya kar sakte|tum kya kar|help|madad|features|kaam karte ho)/.test(low)) {
+            return "Main ye sab kar sakta hoon:\n\n- **Coding (strong)** — poora chalta-hua code: website, app, game, script — ek hi file mein, Download button ke saath\n- **Code Preview** — HTML code ke upar Preview button dabao, result turant chal kar dikhega\n- **Live karo** — HTML website ke upar Live karo button se site seedha live karo\n- **Live search** — aaj ka bhav, news, mausam poochho, taza jawab milega\n- **Link check** — koi link bhejo ('yeh link safe hai kya?'), naam + page padh kar bata doon — kabhi 'pakka safe' nahi kehta\n- **Video link** — YouTube link bhejo ('ye video kya hai?'), title/description se bata doon (scenes nahi dikhte)\n- **Video samjhao** — + menu mein **🎬 Video samjhao** se video file bhejo (2.5 MB tak), dekh kar + sun kar bata doon\n- **Photo samjhao** — + menu mein **📷 Photo samjhao** se photo bhejo (2.5 MB tak), kya dikh raha hai bata doon\n- **Gmail** — apna Gmail + menu mein 📧 Gmail jodo se jodo, phir 'meri email dikhao' likho — haal ki emails dikha doon; poori padhne ke liye 'pehli email padho' likho; bhejne ke liye 'email bhejo' likho\n- **Email likhwana** — likho `mere liye email likho: boss ko chhutti ke liye`, poora formal email likh dunga (ye sirf likhta hai, bhejta nahi — bhejne ke liye 'email bhejo' likho)\n- **Instagram** — + menu mein 📸 Instagram jodo se apna Instagram jodo (Professional account chahiye), phir 'instagram par post karo' likh kar photo post karo\n- **YouTube search** — likho `youtube par dance video dhoondho`, top videos + link dunga\n- **YouTube upload** — + menu mein 📺 YouTube upload se video chuno, apne channel par Public upload ho jayegi (sabko dikhegi)\n- **App install** — + menu mein 📲 App install karo se app install karo (Chrome menu → 'Add to Home screen' se bhi hota hai)\n- **Permanent save** — + menu mein 'Chat hamesha save karo' se chat aur yaadein hamesha ke liye save hongi\n- **Bug fix** — apna code ya error paste karo, main galti bata kar poora sahi code dunga\n- **Photo banana** — likho `photo banao: pahadon par sunset`, photo ban jayegi\n- **File padhna** — + wale menu mein **📄 File padho** se PDF ya text file bhejo, main padh kar summary dunga aur sawalon ke jawab bhi\n- **Bol kar likhna** — type karne ki jagah input ke paas 🎤 mic dabao aur bol do\n- **Bol kar sunana** — har jawab ke neeche 🔊 Sunao button hai\n- **Yaad rakhna** — `yaad rakho: ...` likho, is chat mein yaad rakhunga\n- **Naam / Rang badalna** — + wale menu mein **🎨 Naam / Rang** se mera naam aur rang apni pasand ka karo\n- **Chat download** — + wale menu mein **⬇️ Chat download** se poori chat file mein save karo\n- **Tools** — + wale menu mein To-Do list, Kharcha Tracker (chart ke saath) aur Quiz\n- **Sawal-jawab** — koi bhi topic, Hindi / Hinglish / English\n- **Hisab** — jaise `125 ka 15%` ya `45 * 8 + 20`; kharcha note karne ke liye `kharcha 200 khana`\n- **Time / date** — turant bata deta hoon\n\nBas likh kar bhejo!";
+          }
+          if (/(thank|dhanyavad|shukriya|thanks)/.test(low)) {
+            return "Koi baat nahi! 😊 Aur kuch chahiye to bas likh do.";
+          }
+          if (/^(bye|alvida|goodbye|good night|shubh ratri)\b/.test(low)) {
+            return "Alvida! 👋 Jab zaroorat ho, wapas aa jana — main yahin hoon.";
+          }
+          if (/(joke|hasao|funny)/.test(low)) {
+            var jokes = [
+              "Teacher: Batao, 'kal' kise kehte hain?\nStudent: Sir, jis din homework karna hota hai! 😄",
+              "Ek aadmi doctor se: Doctor sahab, mujhe bhoolne ki bimari hai.\nDoctor: Kab se hai?\nAadmi: Kab se kya? 😅",
+              "Pati: Aaj khana bahut tasty hai!\nPatni: Haan, aaj maine hotel se mangwaya hai. 😂",
+              "Student: Sir, main exam mein fail ho gaya.\nTeacher: Kyun?\nStudent: Kyunki sawaal hi aise the jo mujhe nahi aate the! 🤣"
+            ];
+            return jokes[Math.floor(Math.random() * jokes.length)];
+          }
+          return null;
+        }
+
+        function offlineAnswer() {
+          return "Abhi free AI se jawab nahi aa paya — do baar try kiya, shayad net slow hai ya free service busy hai. 😕\n\nApna sawal dobara bhej do — aksar dusri baar mein jawab aa jata hai, khaaskar coding wale sawalon par thoda time lagta hai. Tab tak main basic cheezein turant de sakta hoon — **hisab** (`45 * 8 + 20`), **time**, **date**, ya **joke** likh kar dekho.";
+        }
+
+        /* ---------------- free AI (bina API key) ---------------- */
+
+        var chosenModel = "auto"; // "auto" ya koi model ka naam
+        var deepMode = false;     // true = jawab ko dobara check karke sudharo
+        var modelList = [];       // Pollinations se mili free models ki list
+        var PREFERRED = ["openai-large", "gemini-large", "deepseek", "claude", "gemini", "mistral", "llama", "openai"];
+
+        function loadModels() {
+          return fetch("https://text.pollinations.ai/models")
+            .then(function (r) { return r.json(); })
+            .then(function (arr) {
+              var names = [];
+              (Array.isArray(arr) ? arr : []).forEach(function (m) {
+                var n = typeof m === "string" ? m : (m && m.name);
+                var isText = typeof m === "string" || !m.output_modalities || m.output_modalities.indexOf("text") !== -1;
+                var isAudio = /audio|tts|whisper/i.test(n || "");
+                if (n && isText && !isAudio && names.indexOf(n) === -1) names.push(n);
+              });
+              modelList = names;
+            })
+            .catch(function () { /* list na mili to auto mode "openai" par chalega */ });
+        }
+
+        function looksLikeCode(t) {
+          return /\b(code|html|css|javascript|python|script|website|app|function|bug|error)\b/i.test(t) || /```/.test(t);
+        }
+
+        function modelChain(userText) {
+          var chain = [];
+          function add(m) { if (m && chain.indexOf(m) === -1) chain.push(m); }
+          if (chosenModel !== "auto") add(chosenModel);
+          else {
+            if (looksLikeCode(userText)) {
+              modelList.forEach(function (m) { if (/coder/i.test(m)) add(m); });
+            }
+            PREFERRED.forEach(function (p) {
+              modelList.forEach(function (m) { if (m === p) add(m); });
+            });
+          }
+          chain = chain.slice(0, 3);
+          add("openai"); // aakhri bharosemand fallback
+          return chain;
+        }
+
+        function callModel(msgs, model, jsonMode, timeoutMs) {
+          var controller = new AbortController();
+          var timer = setTimeout(function () { controller.abort(); }, timeoutMs);
+          var payload = { messages: msgs, model: model };
+          if (jsonMode) payload.jsonMode = true;
+          return fetch("https://text.pollinations.ai/", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+            signal: controller.signal
+          })
+            .then(function (res) {
+              clearTimeout(timer);
+              if (!res.ok) throw new Error("http " + res.status);
+              return res.text();
+            })
+            .then(function (txt) {
+              var clean = extractReply(txt);
+              if (!clean) throw new Error("empty");
+              return clean;
+            })
+            .catch(function (err) {
+              clearTimeout(timer);
+              throw err;
+            });
+        }
+
+        // ---- Live search (taza Google results, server endpoint se) ----
+        var lastLiveSources = [];
+        var LIVE_WORDS = ["aaj", "आज", "today", "abhi", "अभी", "current", "latest", "live", "taza", "ताज़ा", "fresh", "price", "bhav", "भाव", "rate", "daam", "दाम", "kimat", "कीमत", "sona", "gold", "chandi", "silver", "bitcoin", "crypto", "petrol", "diesel", "stock", "share", "sensex", "nifty", "dollar", "rupee", "news", "khabar", "खबर", "mausam", "मौसम", "weather", "barish", "बारिश", "temperature", "match", "cricket", "score"];
+        function needsLiveInfo(text) {
+          if (!text) return false;
+          var low = String(text).toLowerCase();
+          for (var i = 0; i < LIVE_WORDS.length; i++) {
+            if (low.indexOf(LIVE_WORDS[i].toLowerCase()) >= 0) return true;
+          }
+          return false;
+        }
+        function searchLive(query) {
+          var controller = new AbortController();
+          var timer = setTimeout(function () { controller.abort(); }, 4000);
+          return fetch("https://fashion-website-theta-taupe.vercel.app/api/freeai?fn=search", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ q: query }), signal: controller.signal })
+            .then(function (r) { clearTimeout(timer); return r.json().catch(function () { return {}; }); })
+            .then(function (d) { return (d && d.ok && Array.isArray(d.results)) ? d.results : []; })
+            .catch(function () { clearTimeout(timer); return []; });
+        }
+
+        function askFreeAI(userText) {
+          var searchP = needsLiveInfo(userText) ? searchLive(userText) : Promise.resolve([]);
+          return searchP.then(function (sources) {
+            lastLiveSources = sources || [];
+            var msgs = [{ role: "system", content: buildSystemPrompt() }];
+            history.slice(-20).forEach(function (h) { msgs.push(h); });
+            msgs.push({ role: "user", content: userText });
+            if (lastLiveSources.length) {
+              msgs.push({ role: "user", content: "Taza Google search results (aaj ki jaankari) — inke hisab se sawal ka jawab do:\n" + lastLiveSources.map(function (s, i) { return (i + 1) + ". " + (s.title || "") + " — " + (s.snippet || "") + (s.link ? " (" + s.link + ")" : ""); }).join("\n") + "\nAgar results mein jawab na ho to imaandari se bata do ki taza jaankari nahi mili." });
+            }
+
+            var chain = modelChain(userText);
+            var used = chain[0];
+            var i = 0;
+            function next() {
+              if (i >= chain.length) {
+                // sab plain mode fail — aakhri koshish JSON mode se
+                return callModel(msgs, "openai", true, 60000);
+              }
+              var m = chain[i++];
+              var isLast = i >= chain.length;
+              used = m;
+              return callModel(msgs, m, false, isLast ? 60000 : 30000).catch(next);
+            }
+
+            return next().then(function (draft) {
+              if (!deepMode || draft.length < 40) return draft;
+              var review = msgs.concat([
+                { role: "assistant", content: draft },
+                { role: "user", content: "Is jawab ko dhyan se check karo: kya koi galti, adhura hissa, galat hisab ya adhura code hai? Agar hai to use theek karke POORA final jawab do. Agar sab sahi hai to wahi jawab dobara do. Check ke baare mein kuch mat likho, sirf final jawab do. Same language aur style rakho." }
+              ]);
+              return callModel(review, used, false, 45000).catch(function () { return draft; });
+            });
+          });
+        }
+
+        // Jawab kabhi plain text aata hai, kabhi OpenAI-style JSON, aur JSON mode mein
+        // model apni marzi ka JSON deta hai ({"answer": ...} jaisa) — teeno sambhalo.
+        function extractReply(txt) {
+          var t = (txt || "").trim();
+          if (!t) return "";
+          if (t.charAt(0) === "{") {
+            try {
+              var data = JSON.parse(t);
+              if (data && data.choices && data.choices[0] && data.choices[0].message) {
+                return (data.choices[0].message.content || "").trim();
+              }
+              if (data && typeof data.content === "string") return data.content.trim();
+              var picked = pickFromJson(data);
+              if (picked) return picked;
+              return ""; // JSON mila par andar jawab nahi — retry trigger hoga
+            } catch (e) { /* plain text hi samjho */ }
+          }
+          return t;
+        }
+
+        function pickFromJson(data) {
+          if (!data || typeof data !== "object") return "";
+          var parts = [];
+          ["answer", "response", "reply", "text", "message", "explanation", "description"].forEach(function (k) {
+            if (typeof data[k] === "string" && data[k].trim()) parts.push(data[k].trim());
+          });
+          if (typeof data.code === "string" && data.code.trim()) {
+            var lang = typeof data.language === "string" ? data.language.toLowerCase() : "";
+            if (!LANG_EXT[lang]) lang = "";
+            parts.push("```" + lang + "\n" + data.code.replace(/\n$/, "") + "\n```");
+          }
+          // Kabhi code language wale key mein aata hai: {"html": "...", "css": "..."}
+          Object.keys(data).forEach(function (k) {
+            var lk = k.toLowerCase();
+            if (LANG_EXT[lk] && typeof data[k] === "string" && data[k].trim()) {
+              parts.push("```" + lk + "\n" + data[k].replace(/\n$/, "") + "\n```");
+            }
+          });
+          if (!parts.length) {
+            for (var k in data) {
+              if (typeof data[k] === "string" && data[k].trim().length > 1) parts.push(data[k].trim());
+            }
+          }
+          return parts.join("\n\n");
+        }
+
+        /* ---------------- system prompt + yaad (memory) ---------------- */
+
+        function buildSystemPrompt() {
+          var s = "Your name in this app is " + aiName + ". " + SYSTEM_PROMPT;
+          if (memories.length) {
+            s += " Facts the user asked you to remember in this chat (use them naturally when relevant): " + memories.join("; ") + ".";
+          }
+          return s;
+        }
+
+        function fmtNum(n) {
+          return (Math.round(n * 100) / 100).toLocaleString("en-IN");
+        }
+        function totalKharcha() {
+          return kharchas.reduce(function (sum, k) { return sum + k.amount; }, 0);
+        }
+
+        /* ---------------- overlay (preview + tools) ---------------- */
+
+        var overlayEl = document.getElementById("overlay");
+        var sheetTitle = document.getElementById("sheetTitle");
+        var sheetBody = document.getElementById("sheetBody");
+
+        function openOverlay(title, full) {
+          sheetTitle.textContent = title;
+          sheetBody.innerHTML = "";
+          overlayEl.classList.toggle("full", !!full);
+          overlayEl.hidden = false;
+          return sheetBody;
+        }
+        function closeOverlay() {
+          overlayEl.hidden = true;
+          sheetBody.innerHTML = "";
+        }
+        document.getElementById("sheetClose").addEventListener("click", closeOverlay);
+        overlayEl.addEventListener("click", function (e) {
+          if (e.target === overlayEl) closeOverlay();
+        });
+
+        // HTML code ka live result — sandboxed iframe mein, bina page chhode.
+        // HTML code ko GitHub → Vercel par live karo (Mera AI wala publish endpoint)
+        function publishCode(code, block, btn) {
+          var status = block.querySelector(".cb-publish-status");
+          if (!status) {
+            status = document.createElement("div");
+            status.className = "cb-publish-status";
+            status.style.cssText = "margin:8px 10px;font-size:.85rem;white-space:pre-wrap";
+            block.appendChild(status);
+          }
+          function getCode() {
+            try { return localStorage.getItem("fg-publish-code") || localStorage.getItem("fg-photos-code") || localStorage.getItem("fg-addproduct-code") || ""; } catch (e) { return ""; }
+          }
+          function siteTitle(html) {
+            var m = html.match(/<title[^>]*>([^<]*)<\/title>/i);
+            var t = m ? m[1].trim() : "";
+            return t || "Free AI Site";
+          }
+          var adminCode = getCode();
+          if (!adminCode) {
+            status.textContent = "Live karne ke liye admin code chahiye (wahi jo Orders/Photos mein lagta hai):";
+            var row = document.createElement("div");
+            row.style.marginTop = "6px";
+            var inp = document.createElement("input");
+            inp.type = "password";
+            inp.placeholder = "Admin code daalo";
+            inp.style.cssText = "padding:8px;border:1px solid #ccc;border-radius:8px;width:55%";
+            var sb = document.createElement("button");
+            sb.type = "button";
+            sb.className = "cb-dl";
+            sb.textContent = "Save karo";
+            sb.onclick = function () { var v = inp.value.trim(); if (!v) return; try { localStorage.setItem("fg-publish-code", v); } catch (e) {} row.remove(); publishCode(code, block, btn); };
+            row.appendChild(inp);
+            row.appendChild(sb);
+            block.appendChild(row);
+            return;
+          }
+          if (code.length > 200000) { status.textContent = "❌ Code bahut bada hai (200,000 characters se zyada). Chhota code banao."; return; }
+          status.textContent = "🌐 Live ho raha hai...";
+          if (btn) btn.disabled = true;
+          fetch("https://fashion-website-theta-taupe.vercel.app/api/publish-site", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code: adminCode, title: siteTitle(code), html: code, css: "", js: "" }) })
+            .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, status: r.status, d: d }; }).catch(function () { return { ok: r.ok, status: r.status, d: {} }; }); })
+            .then(function (res) {
+              if (btn) btn.disabled = false;
+              if (!res.ok || !res.d.ok) {
+                if (res.status === 401) { try { localStorage.removeItem("fg-publish-code"); } catch (e) {} status.textContent = "❌ Code galat hai. Dobara 'Live karo' dabao aur sahi code daalo."; return; }
+                if (res.status === 503) { status.textContent = "❌ GitHub token abhi nahi laga hai. Pehle token lagana padega."; return; }
+                status.textContent = "❌ Live nahi ho paya. Dobara try karo."; return;
+              }
+              status.textContent = "✅ Live ho gaya!";
+              var a = document.createElement("a");
+              a.href = res.d.url; a.target = "_blank"; a.rel = "noopener"; a.textContent = res.d.url;
+              a.style.cssText = "display:block;margin-top:6px;word-break:break-all;color:#2563eb";
+              block.appendChild(a);
+              var cp = document.createElement("button");
+              cp.type = "button"; cp.className = "cb-dl"; cp.textContent = "Copy link";
+              cp.style.marginTop = "6px";
+              cp.addEventListener("click", function () { copyText(res.d.url, cp); });
+              block.appendChild(cp);
+            })
+            .catch(function () { if (btn) btn.disabled = false; status.textContent = "❌ Internet ya server se jod nahi paya. Dobara try karo."; });
+        }
+
+        // Live search ke sources — jawab ke neeche Google results dikhao
+        function attachLiveSources(bubble, sources, query) {
+          if (!sources || !sources.length || !bubble) return;
+          var wrap = document.createElement("div");
+          wrap.style.cssText = "margin-top:10px;border-top:1px solid #eee;padding-top:8px";
+          var h = document.createElement("div");
+          h.style.cssText = "font-weight:700;margin-bottom:6px";
+          h.textContent = "🔍 Google par mile results:";
+          wrap.appendChild(h);
+          sources.slice(0, 5).forEach(function (s) {
+            if (!s || !s.link || !/^https?:\/\//.test(s.link)) return;
+            var a = document.createElement("a");
+            a.href = s.link; a.target = "_blank"; a.rel = "noopener";
+            a.style.cssText = "display:block;text-decoration:none;color:inherit;background:#f6f6f6;border:1px solid #e5e5e5;border-radius:10px;padding:8px 10px;margin-bottom:6px";
+            var ti = document.createElement("div");
+            ti.style.cssText = "font-weight:700;color:#1a0dab";
+            ti.textContent = s.title || s.link;
+            a.appendChild(ti);
+            if (s.snippet) {
+              var sn = document.createElement("div");
+              sn.style.cssText = "font-size:13px;color:#444;margin-top:2px";
+              sn.textContent = s.snippet;
+              a.appendChild(sn);
+            }
+            wrap.appendChild(a);
+          });
+          var g = document.createElement("a");
+          g.href = "https://www.google.com/search?q=" + encodeURIComponent(query || "");
+          g.target = "_blank"; g.rel = "noopener";
+          g.style.cssText = "display:inline-block;background:#E7000C;color:#fff;font-weight:700;border-radius:20px;padding:8px 14px;text-decoration:none;margin-top:2px";
+          g.textContent = "🔍 Google par kholo";
+          wrap.appendChild(g);
+          bubble.appendChild(wrap);
+        }
+
+        function openPreview(code) {
+          var body = openOverlay("👁️ Preview", true);
+          var frame = document.createElement("iframe");
+          frame.setAttribute("sandbox", "allow-scripts allow-modals");
+          frame.title = "Code preview";
+          frame.srcdoc = code;
+          body.appendChild(frame);
+        }
+
+        /* ---------------- bol kar sunana (speak) ---------------- */
+
+        var speaking = false;
+        function resetSpeakLabels() {
+          document.querySelectorAll(".speak-btn span").forEach(function (s) { s.textContent = "Sunao"; });
+        }
+        function speakText(text, btn) {
+          if (!("speechSynthesis" in window)) return;
+          if (speaking) {
+            speechSynthesis.cancel();
+            speaking = false;
+            resetSpeakLabels();
+            return;
+          }
+          var clean = text
+            .replace(/```[\s\S]*?```/g, " Code upar diya hai, dekh lo. ")
+            .replace(/`([^`]*)`/g, "$1")
+            .replace(/\*\*([^*]+)\*\*/g, "$1")
+            .replace(/[#>*_~]/g, " ")
+            .replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2190}-\u{21FF}\u{FE0F}]/gu, "")
+            .replace(/\s+/g, " ")
+            .trim();
+          if (!clean) return;
+          if (clean.length > 900) clean = clean.slice(0, 900);
+          var u = new SpeechSynthesisUtterance(clean);
+          u.lang = /[\u0900-\u097F]/.test(text) ? "hi-IN" : "en-IN";
+          speaking = true;
+          var label = btn.querySelector("span");
+          if (label) label.textContent = "Roko";
+          u.onend = u.onerror = function () {
+            speaking = false;
+            resetSpeakLabels();
+          };
+          speechSynthesis.cancel();
+          speechSynthesis.speak(u);
+        }
+
+        /* ---------------- local reply helper ---------------- */
+
+        function replyLocal(text) {
+          setTimeout(function () {
+            var row = addMessage("ai", text);
+            pushHist({ role: "assistant", content: text });
+            scrollToMessageTop(row);
+            busy = false;
+          }, 250);
+        }
+
+        /* ---------------- app commands: yaad + kharcha ----------------
+           Ye commands bina net ke, app ke andar hi chalte hain. */
+
+        function matchAppCommand(raw) {
+          var low = raw.toLowerCase();
+
+          // sab bhool jao
+          if (/bhool jao|bhool ja\b|sab bhool|yaad saaf|yaad clear/.test(low)) {
+            if (!memories.length) return "Abhi maine kuch yaad hi nahi rakha hai — bhoolne ko kuch hai hi nahi! 😄";
+            memories = [];
+            saveMemories();
+            return serverChatOn() ? "Theek hai, sab bhool gaya! 🧹 Ab hamesha ke liye kuch bhi yaad nahi hai." : "Theek hai, sab bhool gaya! 🧹 Ab is chat mein kuch bhi yaad nahi hai.";
+          }
+
+          // yaad rakho: ...
+          var save = raw.match(/yaad\s*(?:rakho|kar lo|karlo|rakh lo)[:\-]?\s*(.+)/i);
+          if (save && save[1].trim().length > 1) {
+            var fact = save[1].trim().replace(/[。.]+$/, "");
+            memories.push(fact);
+            saveMemories();
+            return "Yaad kar liya! 🧠\n\n**" + fact + "**\n\n" + (serverChatOn() ? "Ye baat maine hamesha ke liye yaad rakh li hai (server par save ho gayi)." : "Ye baat main is poori chat mein yaad rakhunga.") + " Aur kuch yaad karwana ho to bas 'yaad rakho:' likh kar bhej do.";
+          }
+
+          // kya yaad hai
+          if (/kya yaad hai|kya-kya yaad|kya kya yaad|tumhe kya yaad|yaad hai kya/.test(low)) {
+            if (!memories.length) {
+              return "Abhi tak tumne kuch yaad karne ko nahi kaha. Kuch yaad karwana ho to aise likho:\n\n`yaad rakho: meri pasand ki chai bina cheeni wali hai`";
+            }
+            var list = memories.map(function (m, i) { return (i + 1) + ". " + m; }).join("\n");
+            return "Mujhe is chat mein ye baatein yaad hain: 🧠\n\n" + list + "\n\nSab bhulwana ho to likho: **sab bhool jao**";
+          }
+
+          // kharcha add: "kharcha 200 khana" ya "200 kharcha khana"
+          var kh = raw.match(/kharcha?\s+(?:rs\.?|₹)?\s*(\d+(?:\.\d+)?)\s*(.*)/i) ||
+                   raw.match(/(?:rs\.?|₹)?\s*(\d+(?:\.\d+)?)\s*(?:ka\s+)?kharcha?\s*(?:hua\s*)?(.*)/i);
+          if (kh && parseFloat(kh[1]) > 0 && !/kitna|total|dikhao|hisaab|hisab/.test(low)) {
+            var amt = parseFloat(kh[1]);
+            var note = (kh[2] || "").trim() || "Kharcha";
+            kharchas.push({ amount: amt, note: note });
+            return "Note kar liya! 💰\n\n**₹" + fmtNum(amt) + "** — " + note + "\n\nAb tak ka kul kharcha: **₹" + fmtNum(totalKharcha()) + "**\nPoora hisaab aur chart dekhna ho to + wale menu ke **Tools** mein Kharcha Tracker kholo.";
+          }
+
+          // kharcha summary
+          if (/kharcha?/.test(low) && /kitna|total|dikhao|hisaab|hisab/.test(low)) {
+            if (!kharchas.length) return "Abhi koi kharcha note nahi hai. Jab kharcha ho to aise likho: `kharcha 200 khana` — main note kar lunga. 💰";
+            return "Ab tak ka kul kharcha hai **₹" + fmtNum(totalKharcha()) + "** (" + kharchas.length + " kharche). Poora hisaab + chart + wale menu ke Tools mein Kharcha Tracker mein hai. 💰";
+          }
+
+          return null;
+        }
+
+        /* ---------------- photo banana ----------------
+           Free image service (bina key) — pehle Hinglish description ko
+           English prompt mein badlo, phir photo banao. */
+
+        function photoDesc(raw) {
+          var low = raw.toLowerCase();
+          var hasNoun = /(photo|image|tasveer|picture|pic\b|wallpaper)/.test(low);
+          var hasVerb = /(banao|bana do|banana|chahiye|dikhao|generate|create|make|draw|bana\b)/.test(low);
+          if (!hasNoun || !hasVerb) return null;
+          // "photo gallery website ka code banao" jaisi coding request photo nahi hai — use AI par jaane do
+          // Code/site ko theek karne wali baat (grid, masonry, header, button...) bhi photo request nahi hai
+          if (/(code|html|website|webpage|web page|script|grid|masonry|header|column|button|layout|pill)/.test(low)) return null;
+          var parts = raw.split(/[:：]/);
+          if (parts.length > 1 && parts[1].trim().length > 2) return parts[1].trim();
+          var d = " " + low + " ";
+          d = d.replace(/\b(please|plz|mere liye|meri|mera|mujhe|zara|bhai|sundar)\b/g, " ");
+          d = d.replace(/\b(photo|image|tasveer|picture|wallpaper)\b/g, " ");
+          d = d.replace(/\b(banao|bana do|banana hai|banana|bana|chahiye|dikhao|generate|create|make|draw|ek|ki|ka|ke|of|an|a|the)\b/g, " ");
+          return d.replace(/\s+/g, " ").trim();
+        }
+
+        function doPhotoFlow(desc) {
+          addTyping();
+          translatePrompt(desc).then(function (enPrompt) {
+            removeTyping();
+            busy = false;
+            addPhotoMessage(desc, enPrompt);
+          });
+        }
+
+        function translatePrompt(desc) {
+          var controller = new AbortController();
+          var timer = setTimeout(function () { controller.abort(); }, 30000);
+          return fetch("https://text.pollinations.ai/", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              messages: [
+                { role: "system", content: "You convert image requests into image-generation prompts." },
+                { role: "user", content: "Convert this into one short, vivid English prompt for an AI image generator. Reply with ONLY the prompt text, no quotes, no explanation: " + desc }
+              ],
+              model: "openai"
+            }),
+            signal: controller.signal
+          })
+            .then(function (r) {
+              clearTimeout(timer);
+              if (!r.ok) throw new Error("http " + r.status);
+              return r.text();
+            })
+            .then(function (t) {
+              var p = extractReply(t).replace(/^["']+|["']+$/g, "").trim();
+              return p.length > 3 && p.length < 300 ? p : desc;
+            })
+            .catch(function () {
+              clearTimeout(timer);
+              return desc;
+            });
+        }
+
+        function addPhotoMessage(desc, enPrompt) {
+          var row = document.createElement("div");
+          row.className = "row ai";
+          var bubble = document.createElement("div");
+          bubble.className = "bubble";
+          bubble.innerHTML = '<div class="photo-loading">🎨 Photo ban raha hai… thoda time lagega</div>';
+          row.appendChild(bubble);
+          messagesEl.appendChild(row);
+          scrollToMessageTop(row);
+
+          var img = new Image();
+          img.className = "chat-photo";
+          img.alt = desc;
+          img.onload = function () {
+            bubble.innerHTML = "";
+            bubble.appendChild(img);
+            var cap = document.createElement("div");
+            cap.className = "photo-cap";
+            cap.textContent = "📸 " + desc + " — save karne ke liye photo par der tak dabao (long-press). Aur photo chahiye to bas likh do!";
+            bubble.appendChild(cap);
+            pushHist({ role: "assistant", content: "Maine ek photo banaya: " + desc });
+            scrollToMessageTop(row);
+          };
+          img.onerror = function () {
+            bubble.innerHTML = "";
+            var p = document.createElement("p");
+            p.textContent = "Photo nahi ban paya 😕 — free photo service abhi busy lag rahi hai. Thodi der mein dobara 'photo banao' likh kar try karo.";
+            bubble.appendChild(p);
+            pushHist({ role: "assistant", content: "Photo nahi ban paya — free photo service busy thi." });
+          };
+          img.src = "https://image.pollinations.ai/prompt/" + encodeURIComponent(enPrompt) +
+            "?width=768&height=1024&seed=" + Math.floor(Math.random() * 100000) + "&nologo=true";
+        }
+
+        /* ---------------- tools: menu, to-do, kharcha, quiz ---------------- */
+
+        function openToolsMenu() {
+          trayEl.classList.remove("open");
+          plusBtn.classList.remove("open");
+          var body = openOverlay("🧰 Tools", false);
+          [
+            ["✅", "To-Do List", "Kaam ki list banao — ho jaye to tap karke tick karo", showTodo],
+            ["💰", "Kharcha Tracker", "Roz ka kharcha note karo, chart ke saath", showKharcha],
+            ["🧠", "Quiz Khelo", "10 aasan sawal — dekho kitne sahi hote hain", showQuiz]
+          ].forEach(function (t) {
+            var b = document.createElement("button");
+            b.type = "button";
+            b.className = "tool-menu-btn";
+            b.innerHTML = '<span style="font-size:24px">' + t[0] + "</span><span>" + t[1] + "<small>" + t[2] + "</small></span>";
+            b.addEventListener("click", t[3]);
+            body.appendChild(b);
+          });
+        }
+
+        function toolHead(body, title) {
+          sheetTitle.textContent = title;
+          body.innerHTML = "";
+          var back = document.createElement("button");
+          back.type = "button";
+          back.className = "tool-back";
+          back.textContent = "← Saare Tools";
+          back.addEventListener("click", openToolsMenu);
+          body.appendChild(back);
+        }
+
+        function showTodo() {
+          var body = sheetBody;
+          toolHead(body, "✅ To-Do List");
+          var row = document.createElement("div");
+          row.className = "tool-row";
+          var inp = document.createElement("input");
+          inp.className = "tool-input";
+          inp.type = "text";
+          inp.placeholder = "Naya kaam likho...";
+          var add = document.createElement("button");
+          add.type = "button";
+          add.className = "tool-add";
+          add.textContent = "Add karo";
+          row.appendChild(inp);
+          row.appendChild(add);
+          body.appendChild(row);
+          var list = document.createElement("div");
+          body.appendChild(list);
+
+          function render() {
+            list.innerHTML = "";
+            if (!todos.length) {
+              list.innerHTML = '<div class="tool-empty">Abhi list khaali hai — pehla kaam upar likh kar Add karo.</div>';
+              return;
+            }
+            todos.forEach(function (item, i) {
+              var d = document.createElement("div");
+              d.className = "todo-item" + (item.done ? " done" : "");
+              var t = document.createElement("span");
+              t.className = "t-text";
+              t.textContent = (item.done ? "✅ " : "⬜ ") + item.text;
+              t.addEventListener("click", function () { item.done = !item.done; render(); });
+              var del = document.createElement("button");
+              del.type = "button";
+              del.className = "item-del";
+              del.textContent = "✕";
+              del.setAttribute("aria-label", "Hatao");
+              del.addEventListener("click", function () { todos.splice(i, 1); render(); });
+              d.appendChild(t);
+              d.appendChild(del);
+              list.appendChild(d);
+            });
+          }
+          function doAdd() {
+            var v = inp.value.trim();
+            if (!v) return;
+            todos.push({ text: v, done: false });
+            inp.value = "";
+            render();
+          }
+          add.addEventListener("click", doAdd);
+          inp.addEventListener("keydown", function (e) {
+            if (e.key === "Enter") { e.preventDefault(); doAdd(); }
+          });
+          render();
+        }
+
+        function showKharcha() {
+          var body = sheetBody;
+          toolHead(body, "💰 Kharcha Tracker");
+          var row = document.createElement("div");
+          row.className = "tool-row";
+          var amt = document.createElement("input");
+          amt.className = "tool-input";
+          amt.type = "number";
+          amt.min = "0";
+          amt.placeholder = "₹ Amount";
+          amt.style.flex = "0 1 110px";
+          var note = document.createElement("input");
+          note.className = "tool-input";
+          note.type = "text";
+          note.placeholder = "Kis cheez par? (khana, safar...)";
+          var add = document.createElement("button");
+          add.type = "button";
+          add.className = "tool-add";
+          add.textContent = "Add karo";
+          row.appendChild(amt);
+          row.appendChild(note);
+          row.appendChild(add);
+          body.appendChild(row);
+          var wrap = document.createElement("div");
+          body.appendChild(wrap);
+
+          function render() {
+            wrap.innerHTML = "";
+            var total = document.createElement("div");
+            total.className = "tool-total";
+            total.textContent = "Kul kharcha: ₹" + fmtNum(totalKharcha()) + " (" + kharchas.length + " kharche)";
+            wrap.appendChild(total);
+            if (!kharchas.length) {
+              var e = document.createElement("div");
+              e.className = "tool-empty";
+              e.textContent = "Abhi koi kharcha nahi. Upar amount + cheez likh kar Add karo — ya chat mein likho: kharcha 200 khana";
+              wrap.appendChild(e);
+              return;
+            }
+            wrap.appendChild(buildKharchaChart());
+            kharchas.slice().reverse().forEach(function (k, ri) {
+              var idx = kharchas.length - 1 - ri;
+              var d = document.createElement("div");
+              d.className = "kh-item";
+              var n = document.createElement("span");
+              n.className = "k-note";
+              n.textContent = k.note;
+              var a = document.createElement("span");
+              a.className = "k-amt";
+              a.textContent = "₹" + fmtNum(k.amount);
+              var del = document.createElement("button");
+              del.type = "button";
+              del.className = "item-del";
+              del.textContent = "✕";
+              del.setAttribute("aria-label", "Hatao");
+              del.addEventListener("click", function () { kharchas.splice(idx, 1); render(); });
+              d.appendChild(n);
+              d.appendChild(a);
+              d.appendChild(del);
+              wrap.appendChild(d);
+            });
+          }
+          function doAdd() {
+            var v = parseFloat(amt.value);
+            if (!isFinite(v) || v <= 0) return;
+            kharchas.push({ amount: v, note: note.value.trim() || "Kharcha" });
+            amt.value = "";
+            note.value = "";
+            render();
+          }
+          add.addEventListener("click", doAdd);
+          render();
+        }
+
+        // Chart — cheez ke hisaab se kul kharcha (sirf asli note kiye kharche se)
+        function buildKharchaChart() {
+          var groups = {};
+          kharchas.forEach(function (k) {
+            var key = (k.note || "kharcha").trim().toLowerCase();
+            groups[key] = (groups[key] || 0) + k.amount;
+          });
+          var entries = Object.keys(groups).map(function (k) { return [k, groups[k]]; })
+            .sort(function (a, b) { return b[1] - a[1]; }).slice(0, 6);
+          var max = entries[0][1];
+          var accent = getComputedStyle(document.documentElement).getPropertyValue("--send-bg").trim() || "#5b93f5";
+          var rowH = 30, W = 320, H = entries.length * rowH + 6;
+          var svg = '<svg viewBox="0 0 ' + W + " " + H + '" width="100%" role="img" aria-label="Kharcha chart">';
+          entries.forEach(function (e, i) {
+            var y = i * rowH + 4;
+            var bw = Math.max(4, Math.round((e[1] / max) * 140));
+            var label = e[0].length > 11 ? e[0].slice(0, 11) + "…" : e[0];
+            svg += '<text x="0" y="' + (y + 15) + '" font-size="12" fill="currentColor">' + escapeHtml(label) + "</text>";
+            svg += '<rect x="100" y="' + y + '" width="' + bw + '" height="18" rx="5" fill="' + accent + '"></rect>';
+            svg += '<text x="' + (106 + bw) + '" y="' + (y + 15) + '" font-size="12" font-weight="700" fill="currentColor">₹' + fmtNum(e[1]) + "</text>";
+          });
+          svg += "</svg>";
+          var div = document.createElement("div");
+          div.className = "chart-wrap";
+          div.innerHTML = svg;
+          return div;
+        }
+
+        var QUIZ = [
+          { q: "Bharat ki rajdhani kaunsi hai?", options: ["Mumbai", "New Delhi", "Kolkata", "Chennai"], answer: 1 },
+          { q: "Taj Mahal kis shahar mein hai?", options: ["Jaipur", "Delhi", "Agra", "Lucknow"], answer: 2 },
+          { q: "Cricket mein ek over mein kitni balls hoti hain?", options: ["4", "5", "6", "8"], answer: 2 },
+          { q: "Paani ka chemical formula kya hai?", options: ["CO2", "H2O", "O2", "NaCl"], answer: 1 },
+          { q: "Bharat ke pehle Pradhan Mantri kaun the?", options: ["Sardar Patel", "Dr. Rajendra Prasad", "Jawaharlal Nehru", "Lal Bahadur Shastri"], answer: 2 },
+          { q: "Suraj kis disha se ugta (nikalta) hai?", options: ["Paschim", "Poorab", "Uttar", "Dakshin"], answer: 1 },
+          { q: "Ek saal mein kitne mahine hote hain?", options: ["10", "11", "12", "13"], answer: 2 },
+          { q: "Computer ka 'dimaag' kise kehte hain?", options: ["Monitor", "Keyboard", "CPU", "Mouse"], answer: 2 },
+          { q: "Duniya ka sabse bada mahasagar kaunsa hai?", options: ["Atlantic", "Indian", "Arctic", "Pacific (Prashant)"], answer: 3 },
+          { q: "Ramayan kisne likhi thi?", options: ["Tulsidas", "Valmiki", "Ved Vyas", "Kalidas"], answer: 1 }
+        ];
+        var quizState = null;
+
+        function showQuiz() {
+          var body = sheetBody;
+          toolHead(body, "🧠 Quiz Khelo");
+          quizState = { i: 0, score: 0 };
+          renderQuizQ(body);
+        }
+
+        function renderQuizQ(body) {
+          while (body.children.length > 1) body.removeChild(body.lastChild);
+          var st = quizState;
+          if (st.i >= QUIZ.length) {
+            var done = document.createElement("div");
+            var msg = st.score >= 8 ? "Bahut badhiya! 🏆" : st.score >= 5 ? "Achha khela! 👍 Thoda aur practice karo." : "Koi baat nahi — dobara try karo, score badhega! 💪";
+            done.innerHTML = '<div class="quiz-q">Quiz khatm! 🎉</div>' +
+              '<p style="font-size:16px">Tumhara score: <strong>' + st.score + " / " + QUIZ.length + "</strong></p><p>" + msg + "</p>";
+            var again = document.createElement("button");
+            again.type = "button";
+            again.className = "tool-add";
+            again.textContent = "Dobara khelo";
+            again.addEventListener("click", function () {
+              quizState = { i: 0, score: 0 };
+              renderQuizQ(body);
+            });
+            done.appendChild(again);
+            body.appendChild(done);
+            return;
+          }
+          var item = QUIZ[st.i];
+          var prog = document.createElement("div");
+          prog.className = "tool-empty";
+          prog.textContent = "Sawal " + (st.i + 1) + " / " + QUIZ.length + "  •  Score: " + st.score;
+          body.appendChild(prog);
+          var q = document.createElement("div");
+          q.className = "quiz-q";
+          q.textContent = item.q;
+          body.appendChild(q);
+          item.options.forEach(function (opt, oi) {
+            var b = document.createElement("button");
+            b.type = "button";
+            b.className = "quiz-opt";
+            b.textContent = opt;
+            b.addEventListener("click", function () {
+              var opts = body.querySelectorAll(".quiz-opt");
+              opts.forEach(function (o) { o.disabled = true; });
+              opts[item.answer].classList.add("right");
+              if (oi === item.answer) st.score++;
+              else b.classList.add("wrong");
+              var next = document.createElement("button");
+              next.type = "button";
+              next.className = "tool-add";
+              next.style.marginTop = "6px";
+              next.textContent = st.i + 1 >= QUIZ.length ? "Result dekho" : "Agla sawal →";
+              next.addEventListener("click", function () { st.i++; renderQuizQ(body); });
+              body.appendChild(next);
+            });
+            body.appendChild(b);
+          });
+        }
+
+        document.getElementById("trayTools").addEventListener("click", openToolsMenu);
+
+        /* ---------------- file padhna (PDF / text) ----------------
+           PDF ka text pdf.js (CDN, classic build) se, text file seedha
+           FileReader se. Text AI ko bhej kar summary + sawal-jawab. */
+
+        var fileInput = document.getElementById("fileInput");
+        if (window.pdfjsLib) {
+          try {
+            pdfjsLib.GlobalWorkerOptions.workerSrc =
+              "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+          } catch (e) {}
+        }
+
+        document.getElementById("trayFile").addEventListener("click", function () {
+          trayEl.classList.remove("open");
+          plusBtn.classList.remove("open");
+          fileInput.click();
+        });
+        fileInput.addEventListener("change", function () {
+          var f = fileInput.files && fileInput.files[0];
+          fileInput.value = "";
+          if (f) handleFile(f);
+        });
+
+        var videoInput = document.getElementById("videoInput");
+        document.getElementById("trayVideo").addEventListener("click", function () {
+          trayEl.classList.remove("open");
+          plusBtn.classList.remove("open");
+          videoInput.click();
+        });
+        document.getElementById("trayGmail").addEventListener("click", function () {
+          trayEl.classList.remove("open");
+          plusBtn.classList.remove("open");
+          if (gmailHasToken()) {
+            replyLocal("📧 Gmail juda hua hai ✓ — ab 'meri email dikhao' likho, haal ki emails dikha doon.");
+            return;
+          }
+          requestGmailToken(function (tok) {
+            if (!tok) { replyLocal("📧 Gmail jud nahi paya — Google popup mein apna Gmail chun kar Allow karna tha. Dobara dabakar try karo."); return; }
+            replyLocal("📧 Gmail jud gaya ✓ — ab 'meri email dikhao' likho, haal ki emails dikha doon.");
+          });
+        });
+        videoInput.addEventListener("change", function () {
+          var f = videoInput.files && videoInput.files[0];
+          videoInput.value = "";
+          if (f) handleVideoFile(f);
+        });
+
+        var photoInput = document.getElementById("photoInput");
+        document.getElementById("trayPhoto").addEventListener("click", function () {
+          trayEl.classList.remove("open");
+          plusBtn.classList.remove("open");
+          photoInput.click();
+        });
+        photoInput.addEventListener("change", function () {
+          var f = photoInput.files && photoInput.files[0];
+          photoInput.value = "";
+          if (f) handlePhotoFile(f);
+        });
+
+        var igPhotoInput = document.getElementById("igPhotoInput");
+        document.getElementById("trayIg").addEventListener("click", function () {
+          trayEl.classList.remove("open");
+          plusBtn.classList.remove("open");
+          igConnect();
+        });
+        document.getElementById("trayIgPost").addEventListener("click", function () {
+          trayEl.classList.remove("open");
+          plusBtn.classList.remove("open");
+          if (busy) return;
+          busy = true;
+          addMessage("user", "instagram par post karo");
+          pushHist({ role: "user", content: "instagram par post karo" });
+          igPostStart("instagram par post karo");
+        });
+        igPhotoInput.addEventListener("change", function () {
+          var f = igPhotoInput.files && igPhotoInput.files[0];
+          igPhotoInput.value = "";
+          if (f) igPostPhoto(f);
+        });
+
+        var ytVideoInput = document.getElementById("ytVideoInput");
+        document.getElementById("trayYtUpload").addEventListener("click", function () {
+          trayEl.classList.remove("open");
+          plusBtn.classList.remove("open");
+          if (busy) return;
+          busy = true;
+          addMessage("user", "youtube par video upload karo");
+          pushHist({ role: "user", content: "youtube par video upload karo" });
+          ytUploadStart("youtube par video upload karo");
+        });
+        // ---- PWA: app install (beforeinstallprompt) + service worker ----
+        var deferredInstallPrompt = null;
+        window.addEventListener("beforeinstallprompt", function (e) {
+          e.preventDefault();
+          deferredInstallPrompt = e;
+          var b = document.getElementById("trayInstallApp");
+          if (b) b.style.display = "";
+        });
+        document.getElementById("trayInstallApp").addEventListener("click", function () {
+          trayEl.classList.remove("open");
+          plusBtn.classList.remove("open");
+          if (deferredInstallPrompt) {
+            var p = deferredInstallPrompt;
+            deferredInstallPrompt = null;
+            p.prompt();
+            if (p.userChoice) p.userChoice.then(function () {
+              var b = document.getElementById("trayInstallApp");
+              if (b) b.style.display = "none";
+            });
+          } else {
+            replyLocal("📲 App install karne ke liye Chrome ke menu (⋮) mein **'Add to Home screen'** ya **'Install app'** dabao — Free AI Chat ka icon home screen par aa jayega, app ki tarah khulega.");
+          }
+        });
+        if ("serviceWorker" in navigator) {
+          navigator.serviceWorker.register("/free-ai-sw.js", { scope: "/" }).catch(function () {});
+        }
+        ytVideoInput.addEventListener("change", function () {
+          var f = ytVideoInput.files && ytVideoInput.files[0];
+          ytVideoInput.value = "";
+          if (f) ytUploadVideo(f);
+        });
+
+        function handlePhotoFile(file) {
+          if (busy) return;
+          var okType = /^image\/(jpeg|png|webp|gif)$/i.test(file.type) || /\.(jpe?g|png|webp|gif)$/i.test(file.name);
+          if (!okType) {
+            busy = true;
+            replyLocal("Ye photo file nahi lagti 😕 — sirf **JPEG / PNG / WebP / GIF** photo chalegi. + menu mein **📷 Photo samjhao** se sahi photo chuno.");
+            return;
+          }
+          if (file.size > 2.5 * 1024 * 1024) {
+            busy = true;
+            replyLocal("Photo bahut badi hai (2.5 MB se zyada) 😕 — chhoti photo bhejo. Badi photo ho to pehle chhoti karke bhejo.");
+            return;
+          }
+          busy = true;
+          trayEl.classList.remove("open");
+          plusBtn.classList.remove("open");
+          var question = (inputEl.value || "").trim();
+          addMessage("user", "📷 Photo bheji: " + file.name + (question ? "\n" + question : ""));
+          scrollToBottom();
+          pushHist({ role: "user", content: "📷 Photo bheji: " + file.name + (question ? "\n" + question : "") });
+          inputEl.value = "";
+          autoGrow();
+          addTyping();
+          downscalePhoto(file).then(function (img) {
+            return fetch("https://fashion-website-theta-taupe.vercel.app/api/freeai?fn=photo", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ image: { mimeType: img.mimeType, data: img.data }, question: question || undefined })
+            });
+          }).then(function (res) { return res.json().then(function (d) { return { status: res.status, d: d }; }); })
+          .then(function (r) {
+            removeTyping();
+            var reply;
+            if (r.d && r.d.ok && r.d.text) reply = r.d.text;
+            else if (r.status === 429) reply = "⚠️ Photo samajhne wali free limit abhi poori ho gayi hai — dopahar ~1:30 ke baad dobara try karo.";
+            else reply = (r.d && r.d.error) ? r.d.error : "Photo samajh nahi paya — dobara try karo.";
+            var row = addMessage("ai", reply);
+            pushHist({ role: "assistant", content: reply });
+            scrollToMessageTop(row);
+            busy = false;
+          }).catch(function () {
+            removeTyping();
+            var reply = "Photo bhejne mein dikkat aayi — net check karke dobara try karo.";
+            var row = addMessage("ai", reply);
+            pushHist({ role: "assistant", content: reply });
+            scrollToMessageTop(row);
+            busy = false;
+          });
+        }
+
+        // Photo ko 1024px tak chhota karo (JPEG 0.8) taaki bhejna tez ho;
+        // canvas ya image load na chale to original photo hi bhej do
+        // (2.5 second mein image na khule to bhi original hi jaati hai).
+        function downscalePhoto(file) {
+          return new Promise(function (resolve) {
+            function readOriginal() {
+              file.arrayBuffer().then(function (buf) {
+                var bytes = new Uint8Array(buf);
+                var bin = "";
+                var CH = 8192;
+                for (var i = 0; i < bytes.length; i += CH) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + CH));
+                resolve({ mimeType: file.type || "image/jpeg", data: btoa(bin) });
+              }).catch(function () { resolve({ mimeType: file.type || "image/jpeg", data: "" }); });
+            }
+            setTimeout(readOriginal, 2500);
+            try {
+              var reader = new FileReader();
+              reader.onload = function () {
+                try {
+                  var img = new Image();
+                  img.onload = function () {
+                    try {
+                      var maxSide = 1024;
+                      var w = img.naturalWidth || img.width, h = img.naturalHeight || img.height;
+                      if (!w || !h) { readOriginal(); return; }
+                      var scale = Math.min(1, maxSide / Math.max(w, h));
+                      var cw = Math.max(1, Math.round(w * scale)), ch = Math.max(1, Math.round(h * scale));
+                      var cv = document.createElement("canvas");
+                      cv.width = cw; cv.height = ch;
+                      var ctx = cv.getContext("2d");
+                      if (!ctx) { readOriginal(); return; }
+                      ctx.drawImage(img, 0, 0, cw, ch);
+                      var url = cv.toDataURL("image/jpeg", 0.8);
+                      var m = url.match(/^data:(image\/jpeg);base64,(.*)$/);
+                      if (!m) { readOriginal(); return; }
+                      resolve({ mimeType: "image/jpeg", data: m[2] });
+                    } catch (e) { readOriginal(); }
+                  };
+                  img.onerror = readOriginal;
+                  img.src = reader.result;
+                } catch (e) { readOriginal(); }
+              };
+              reader.onerror = readOriginal;
+              reader.readAsDataURL(file);
+            } catch (e) { readOriginal(); }
+          });
+        }
+
+        function handleVideoFile(file) {
+          if (busy) return;
+          var okType = /^video\/(mp4|webm|quicktime)$/i.test(file.type) || /\.(mp4|webm|mov)$/i.test(file.name);
+          if (!okType) {
+            busy = true;
+            replyLocal("Ye video file nahi lagti 😕 — sirf **MP4 / WebM / MOV** video chalegi. + menu mein **🎬 Video samjhao** se sahi file chuno.");
+            return;
+          }
+          if (file.size > 2.5 * 1024 * 1024) {
+            busy = true;
+            replyLocal("Video bahut bada hai (2.5 MB se zyada) 😕 — chhota video bhejo (10-15 second ka clip). Bada video ho to pehle chhota karke bhejo.");
+            return;
+          }
+          busy = true;
+          trayEl.classList.remove("open");
+          plusBtn.classList.remove("open");
+          addMessage("user", "🎬 Video bheji: " + file.name);
+          scrollToBottom();
+          pushHist({ role: "user", content: "🎬 Video bheji: " + file.name });
+          addTyping();
+          file.arrayBuffer().then(function (buf) {
+            var bytes = new Uint8Array(buf);
+            var bin = "";
+            var CH = 8192;
+            for (var i = 0; i < bytes.length; i += CH) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + CH));
+            var b64 = btoa(bin);
+            return fetch("https://fashion-website-theta-taupe.vercel.app/api/freeai?fn=video", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ video: { mimeType: file.type || "video/mp4", data: b64 } })
+            });
+          }).then(function (res) { return res.json().then(function (d) { return { status: res.status, d: d }; }); })
+          .then(function (r) {
+            removeTyping();
+            var reply;
+            if (r.d && r.d.ok && r.d.text) reply = r.d.text;
+            else if (r.status === 429) reply = "⚠️ Video samajhne wali free limit abhi poori ho gayi hai — dopahar ~1:30 ke baad dobara try karo. Tab tak YouTube link se title/description wala rasta chalega.";
+            else reply = (r.d && r.d.error) ? r.d.error : "Video samajh nahi paya — dobara try karo.";
+            var row = addMessage("ai", reply);
+            pushHist({ role: "assistant", content: reply });
+            scrollToMessageTop(row);
+            busy = false;
+          }).catch(function () {
+            removeTyping();
+            var reply = "Video bhejne mein dikkat aayi — net check karke dobara try karo.";
+            var row = addMessage("ai", reply);
+            pushHist({ role: "assistant", content: reply });
+            scrollToMessageTop(row);
+            busy = false;
+          });
+        }
+
+        function extractFileText(file, isPdf) {
+          if (isPdf) {
+            if (!window.pdfjsLib) return Promise.reject(new Error("pdf library load nahi hui"));
+            return file.arrayBuffer().then(function (buf) {
+              return pdfjsLib.getDocument({ data: buf }).promise;
+            }).then(function (pdf) {
+              var count = Math.min(pdf.numPages, 30);
+              var seq = Promise.resolve("");
+              for (var p = 1; p <= count; p++) {
+                (function (pn) {
+                  seq = seq.then(function (acc) {
+                    return pdf.getPage(pn).then(function (page) {
+                      return page.getTextContent();
+                    }).then(function (tc) {
+                      var line = tc.items.map(function (it) { return it.str; }).join(" ");
+                      return acc + "\n" + line;
+                    });
+                  });
+                })(p);
+              }
+              return seq;
+            });
+          }
+          if (file.text) return file.text();
+          return new Promise(function (res, rej) {
+            var r = new FileReader();
+            r.onload = function () { res(r.result); };
+            r.onerror = rej;
+            r.readAsText(file);
+          });
+        }
+
+        function handleFile(file) {
+          if (busy) return;
+          var isPdf = /\.pdf$/i.test(file.name) || file.type === "application/pdf";
+          var isText = /^text\//.test(file.type) || /\.(txt|md|csv|json|log)$/i.test(file.name);
+          if (!isPdf && !isText) {
+            busy = true;
+            replyLocal("Ye file main nahi padh sakta 😕 — sirf **PDF** ya **text file** (.txt, .md, .csv, .json) chalegi. + wale menu mein **📄 File padho** se sahi file chuno.");
+            return;
+          }
+          if (file.size > 8 * 1024 * 1024) {
+            busy = true;
+            replyLocal("File bahut badi hai (8 MB se zyada) 😕 — chhoti file bhejo, main turant padh dunga.");
+            return;
+          }
+          busy = true;
+          trayEl.classList.remove("open");
+          plusBtn.classList.remove("open");
+          addMessage("user", "📄 File bheji: " + file.name);
+          scrollToBottom();
+          pushHist({ role: "user", content: "Maine ek file bheji hai: " + file.name + " — iska summary chahiye." });
+          addTyping();
+          extractFileText(file, isPdf).then(function (text) {
+            removeTyping();
+            text = (text || "").replace(/\s+\n/g, "\n").trim();
+            if (text.length < 10) {
+              var r0 = addMessage("ai", "File khul to gayi, par usmein padhne layak text nahi mila 😕 — agar ye scanned photo wali PDF hai to uska text nahi nikalta. Koi text wali file try karo.");
+              pushHist({ role: "assistant", content: "File mein text nahi mila." });
+              scrollToMessageTop(r0);
+              busy = false;
+              return;
+            }
+            var clipped = text.slice(0, 12000);
+            var truncNote = text.length > 12000
+              ? " (File lambi thi, isliye pehle 12,000 akshar hi padhe hain — baaki par sawal ho to file ka woh hissa alag se bhej dena.)"
+              : "";
+            var prompt =
+              "Neeche meri bheji hui file \"" + file.name + "\" ka text hai. Pehle iska aasan Hinglish mein summary do, phir main points bullet mein batao." + truncNote +
+              "\n\n--- FILE TEXT ---\n" + clipped;
+            askFreeAI(prompt).then(function (reply) {
+              var row = addMessage("ai", reply);
+              pushHist({ role: "assistant", content: reply });
+              setStatus(true, aiName + " online — bina API key");
+              scrollToMessageTop(row);
+              busy = false;
+            }).catch(function () {
+              var row2 = addMessage("ai", "File padh to li, par abhi free AI se summary nahi aa paya 😕 — thodi der mein file dobara bhej kar try karo.");
+              pushHist({ role: "assistant", content: "File ki summary nahi ban payi — free AI busy tha." });
+              setStatus(false, aiName + " busy — basic mode");
+              scrollToMessageTop(row2);
+              busy = false;
+            });
+          }).catch(function () {
+            removeTyping();
+            var row3 = addMessage("ai", "File padhne mein dikkat aayi 😕 — net slow ho sakta hai (PDF library net se aati hai). Dobara try karo, ya koi text file bhej kar dekho.");
+            pushHist({ role: "assistant", content: "File padhne mein dikkat aayi." });
+            scrollToMessageTop(row3);
+            busy = false;
+          });
+        }
+
+        /* ---------------- bol kar likhna (voice input) ----------------
+           Browser ki apni speech recognition — Hindi (hi-IN) pehle,
+           fail ho to English (en-IN). Support na ho to imaandaar note. */
+
+        var micBtn = document.getElementById("micBtn");
+        var recognition = null;
+        var listening = false;
+
+        function stopListening() {
+          listening = false;
+          micBtn.classList.remove("rec");
+          if (recognition) { try { recognition.stop(); } catch (e) {} recognition = null; }
+        }
+
+        micBtn.addEventListener("click", function () {
+          if (listening) { stopListening(); return; }
+          var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+          if (!SR) {
+            if (!busy) {
+              busy = true;
+              replyLocal("Is browser mein bol-kar-likhna (voice typing) support nahi hai 😕 — Chrome browser mein khologe to mic chalega. Tab tak type karke bhejo, main yahin hoon!");
+            }
+            return;
+          }
+          recognition = new SR();
+          recognition.interimResults = true;
+          recognition.continuous = false;
+          var base = inputEl.value ? inputEl.value.replace(/\s+$/, "") + " " : "";
+          recognition.onresult = function (e) {
+            var txt = "";
+            for (var i = 0; i < e.results.length; i++) txt += e.results[i][0].transcript;
+            inputEl.value = base + txt;
+            autoGrow();
+          };
+          recognition.onend = function () { listening = false; micBtn.classList.remove("rec"); recognition = null; };
+          recognition.onerror = function () { listening = false; micBtn.classList.remove("rec"); recognition = null; };
+          try {
+            recognition.lang = "hi-IN";
+            recognition.start();
+            listening = true;
+            micBtn.classList.add("rec");
+          } catch (e) {
+            try {
+              recognition.lang = "en-IN";
+              recognition.start();
+              listening = true;
+              micBtn.classList.add("rec");
+            } catch (e2) { listening = false; micBtn.classList.remove("rec"); }
+          }
+        });
+
+        /* ---------------- naam / rang (settings) ---------------- */
+
+        var THEME_LIST = [
+          ["blue", "Neela", "#5b93f5"],
+          ["green", "Hara", "#2f9e5f"],
+          ["orange", "Narangi", "#e8710a"],
+          ["pink", "Gulabi", "#d6336c"],
+          ["purple", "Baingani", "#7c5cd6"]
+        ];
+
+        function openSettings() {
+          trayEl.classList.remove("open");
+          plusBtn.classList.remove("open");
+          var body = openOverlay("🎨 Naam / Rang", false);
+          var selTheme = document.documentElement.getAttribute("data-theme") || "blue";
+
+          var l1 = document.createElement("div");
+          l1.className = "set-label";
+          l1.textContent = "Mera naam kya rakhein?";
+          body.appendChild(l1);
+          var nameInp = document.createElement("input");
+          nameInp.className = "tool-input";
+          nameInp.type = "text";
+          nameInp.maxLength = 20;
+          nameInp.value = aiName;
+          nameInp.style.width = "100%";
+          body.appendChild(nameInp);
+
+          var l2 = document.createElement("div");
+          l2.className = "set-label";
+          l2.textContent = "Rang chuno (button aur theme ka rang)";
+          body.appendChild(l2);
+          var sw = document.createElement("div");
+          sw.className = "swatches";
+          THEME_LIST.forEach(function (t) {
+            var b = document.createElement("button");
+            b.type = "button";
+            b.className = "swatch" + (t[0] === selTheme ? " sel" : "");
+            b.innerHTML = '<span class="dotc" style="background:' + t[2] + '"></span>' + t[1];
+            b.addEventListener("click", function () {
+              selTheme = t[0];
+              sw.querySelectorAll(".swatch").forEach(function (s) { s.classList.remove("sel"); });
+              b.classList.add("sel");
+            });
+            sw.appendChild(b);
+          });
+          body.appendChild(sw);
+
+          var apply = document.createElement("button");
+          apply.type = "button";
+          apply.className = "tool-add set-apply";
+          apply.textContent = "Lagao ✓";
+          apply.addEventListener("click", function () {
+            var nm = nameInp.value.trim().slice(0, 20);
+            if (nm) aiName = nm;
+            if (selTheme === "blue") document.documentElement.removeAttribute("data-theme");
+            else document.documentElement.setAttribute("data-theme", selTheme);
+            closeOverlay();
+            setStatus(true, aiName + " ready — bina API key");
+            if (!busy) {
+              busy = true;
+              replyLocal("Ho gaya! 🎉 Ab mera naam hai **" + aiName + "** aur rang bhi badal gaya. Kaisa laga? Aur kuch badalna ho to + wale menu mein **🎨 Naam / Rang** phir se khol lena.");
+            }
+          });
+          body.appendChild(apply);
+        }
+        document.getElementById("traySettings").addEventListener("click", openSettings);
+
+        /* ---------------- dimaag (model + deep mode) ---------------- */
+
+        function openBrain() {
+          trayEl.classList.remove("open");
+          plusBtn.classList.remove("open");
+          var body = openOverlay("🧠 Dimaag", false);
+
+          var l1 = document.createElement("div");
+          l1.className = "set-label";
+          l1.textContent = "Kaun sa free AI model use karein?";
+          body.appendChild(l1);
+          var sel = document.createElement("select");
+          sel.className = "tool-input";
+          sel.style.width = "100%";
+          var optAuto = document.createElement("option");
+          optAuto.value = "auto";
+          optAuto.textContent = "Auto (sabse achha available chunega)";
+          sel.appendChild(optAuto);
+          modelList.forEach(function (m) {
+            var o = document.createElement("option");
+            o.value = m;
+            o.textContent = m;
+            sel.appendChild(o);
+          });
+          sel.value = chosenModel;
+          body.appendChild(sel);
+
+          var l2 = document.createElement("div");
+          l2.className = "set-label";
+          l2.textContent = "Gehra soch (Deep mode)";
+          body.appendChild(l2);
+          var chk = document.createElement("label");
+          chk.style.display = "flex";
+          chk.style.gap = "8px";
+          chk.style.alignItems = "center";
+          var cb = document.createElement("input");
+          cb.type = "checkbox";
+          cb.checked = deepMode;
+          chk.appendChild(cb);
+          chk.appendChild(document.createTextNode("Jawab dene se pehle khud dobara check kare (jawab thoda der se aayega)"));
+          body.appendChild(chk);
+
+          if (!modelList.length) {
+            var note = document.createElement("div");
+            note.className = "set-label";
+            note.textContent = "Models ki list abhi nahi mili (net ya service ki dikkat). Auto mode chalega.";
+            body.appendChild(note);
+          }
+
+          var apply = document.createElement("button");
+          apply.type = "button";
+          apply.className = "tool-add set-apply";
+          apply.textContent = "Lagao ✓";
+          apply.addEventListener("click", function () {
+            chosenModel = sel.value;
+            deepMode = cb.checked;
+            closeOverlay();
+            setStatus(true, aiName + " ready — " + (chosenModel === "auto" ? "auto model" : chosenModel) + (deepMode ? " + deep" : ""));
+          });
+          body.appendChild(apply);
+        }
+        document.getElementById("trayBrain").addEventListener("click", openBrain);
+
+        /* ---------------- permanent save: admin code ---------------- */
+
+        function askServerCode() {
+          trayEl.classList.remove("open");
+          plusBtn.classList.remove("open");
+          if (serverChatOn()) {
+            if (!busy) { busy = true; replyLocal("Admin code pehle se daala hua hai — chat aur yaadein hamesha ke liye save ho rahi hain. 💾"); }
+            return;
+          }
+          if (document.getElementById("serverCodeRow")) return;
+          var row = document.createElement("div");
+          row.id = "serverCodeRow";
+          row.style.cssText = "background:#fff7e6;border:1px solid #f0c36d;border-radius:10px;padding:10px;margin:8px 0;font-size:.9rem";
+          row.textContent = "💾 Chat aur yaadein hamesha ke liye save karne ke liye admin code daalo (ek baar — wahi jo Orders/Photos mein lagta hai):";
+          row.appendChild(document.createElement("br"));
+          var inp = document.createElement("input");
+          inp.type = "password"; inp.placeholder = "Admin code daalo";
+          inp.style.cssText = "padding:8px;border:1px solid #ccc;border-radius:8px;width:55%;margin-top:6px";
+          var sb = document.createElement("button");
+          sb.type = "button"; sb.className = "cb-dl"; sb.textContent = "Save karo";
+          sb.onclick = function () {
+            var v = inp.value.trim();
+            if (!v) return;
+            try { localStorage.setItem("fg-publish-code", v); } catch (e) {}
+            row.remove();
+            syncChatFromServer();
+            loadMemories();
+            if (!busy) { busy = true; replyLocal("Ho gaya! 💾 Ab se chat aur yaadein hamesha ke liye save hongi — page band karke dobara kholo to bhi sab milega."); }
+          };
+          row.appendChild(inp);
+          row.appendChild(sb);
+          messagesEl.insertBefore(row, messagesEl.firstChild);
+        }
+
+        document.getElementById("traySave").addEventListener("click", askServerCode);
+
+        /* ---------------- chat download ---------------- */
+
+        document.getElementById("trayDownload").addEventListener("click", function () {
+          trayEl.classList.remove("open");
+          plusBtn.classList.remove("open");
+          if (!history.length) {
+            if (!busy) { busy = true; replyLocal("Abhi chat khaali hai — pehle kuch baat karo, phir download kar lena. 😊"); }
+            return;
+          }
+          var lines = [aiName + " ke saath chat — " + new Date().toLocaleString("en-IN"), ""];
+          history.forEach(function (h) {
+            lines.push((h.role === "user" ? "Tum" : aiName) + ": " + h.content);
+            lines.push("");
+          });
+          var blob = new Blob([lines.join("\n")], { type: "text/plain;charset=utf-8" });
+          var url = URL.createObjectURL(blob);
+          var a = document.createElement("a");
+          a.href = url;
+          a.download = "free-ai-chat.txt";
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
+          if (!busy) {
+            busy = true;
+            replyLocal("Chat download ho gayi! ⬇️ **free-ai-chat.txt** file save ho gayi hai — usmein hamari poori baat-cheet hai.");
+          }
+        });
+
+        /* ---------------- send flow ---------------- */
+
+        /* ---------------- link check (suraksha jaanch) ----------------
+           Link ka naam dekh kar chetawaniyan + r.jina.ai se page padh kar AI ka
+           Hinglish faisla. Ye sirf andaza hai, saboot nahi — kabhi "pakka safe"
+           nahi kehta. Private/login wale link check ke liye kabhi mat bhejo. */
+        var LINK_SHORTENERS = ["bit.ly", "tinyurl.com", "goo.gl", "t.co", "ow.ly", "is.gd", "buff.ly", "shorturl.at", "rb.gy", "cutt.ly", "shrtco.de", "rebrand.ly", "tiny.cc", "s.id", "bl.ink"];
+        var LINK_BAD_TLDS = ["xyz", "top", "club", "online", "site", "fun", "buzz", "icu", "cyou", "work", "live", "click", "link", "monster", "quest", "sbs", "rest", "cam", "bar", "party", "trade", "webcam"];
+        var LINK_BRANDS = [
+          ["paytm", "paytm.com", "paytm.in"], ["sbi", "sbi.co.in", "onlinesbi.com", "sbi.bank.in"],
+          ["google", "google.com", "google.co.in", "google.in"], ["facebook", "facebook.com", "fb.com"],
+          ["instagram", "instagram.com"], ["whatsapp", "whatsapp.com", "wa.me"],
+          ["amazon", "amazon.in", "amazon.com"], ["flipkart", "flipkart.com"],
+          ["phonepe", "phonepe.com"], ["icici", "icicibank.com"], ["hdfc", "hdfcbank.com"],
+          ["axis", "axisbank.com"], ["apple", "apple.com"], ["microsoft", "microsoft.com"],
+          ["netflix", "netflix.com"], ["pnb", "pnb.co.in", "pnbindia.in"]
+        ];
+        var LINK_BAD_WORDS = ["login", "signin", "sign-in", "otp", "kyc", "verify", "verification", "reward", "prize", "winner", "bonus", "refund", "cashback", "lottery", "password", "confirm", "secure", "update", "account"];
+
+        function extractUrls(text) {
+          var found = [];
+          var re = /(https?:\/\/[^\s<>"')]+|www\.[^\s<>"')]+)/gi;
+          var m;
+          while ((m = re.exec(text)) !== null) {
+            var u = m[0].replace(/[.,;:!?)]+$/, "");
+            if (found.indexOf(u) === -1) found.push(u);
+            if (found.length >= 3) break;
+          }
+          return found;
+        }
+
+        function linkCheckWanted(text, urls) {
+          if (!urls.length) return false;
+          // Safety poochhi gayi ho to jaanch lo
+          if (/safe|surakshit|scam|fraud|dhokha|fake|nakli|nakali|check|jaanch|jaancho|khatra|bharosa|phishing|virus/i.test(text)) return true;
+          // Ya sirf link (aur 2-3 shabd) bheja ho to bhi jaanch lo — par code wale
+          // message mein link ho to nahi (wo coding follow-up hai, link check nahi)
+          if (/(code|html|website|webpage|script|masonry|grid)/i.test(text)) return false;
+          var rest = text;
+          urls.forEach(function (u) { rest = rest.split(u).join(" "); });
+          return rest.trim().split(/\s+/).filter(Boolean).length <= 3;
+        }
+
+        function checkLinkSafety(rawUrl) {
+          var url = (rawUrl || "").trim();
+          var withScheme = /^https?:\/\//i.test(url) ? url : "https://" + url;
+          var u;
+          try { u = new URL(withScheme); } catch (e) { return { ok: false, warnings: ["Link samajh nahi aaya — sahi link bhejo."] }; }
+          var host = (u.hostname || "").toLowerCase();
+          var hay = (host + (u.pathname || "") + (u.search || "")).toLowerCase();
+          var warnings = [];
+          if (u.protocol !== "https:") warnings.push("⚠️ https nahi hai — link surakshit connection se nahi khulta");
+          if (/^\d{1,3}(\.\d{1,3}){3}$/.test(host)) warnings.push("⚠️ Naam ki jagah seedha IP address hai — asli site aise nahi hoti");
+          if (LINK_SHORTENERS.indexOf(host.replace(/^www\./, "")) !== -1) warnings.push("⚠️ Chhota kiya hua link hai — asli pata chhupa hua hai");
+          var tld = host.split(".").pop();
+          if (LINK_BAD_TLDS.indexOf(tld) !== -1) warnings.push("⚠️ ." + tld + " domain aksar spam/scam mein use hota hai");
+          var brandHit = null;
+          LINK_BRANDS.forEach(function (b) {
+            var name = b[0];
+            if (host.indexOf(name) !== -1) {
+              var real = b.slice(1);
+              var isReal = real.some(function (d) { return host === d || host.endsWith("." + d); });
+              if (!isReal) brandHit = name;
+            }
+          });
+          if (brandHit) warnings.push("⚠️ " + brandHit + " jaisa naam hai, par asli " + brandHit + " ki site nahi lagti — nakli ho sakta hai");
+          LINK_BAD_WORDS.forEach(function (w) {
+            if (hay.indexOf(w) !== -1) warnings.push("⚠️ Link mein '" + w + "' shabd hai — login/OTP/inaam wale link aksar dhokha hote hain");
+          });
+          return { ok: true, host: host, warnings: warnings };
+        }
+
+        function doLinkCheck(userText, urls) {
+          addTyping();
+          var results = urls.map(function (raw) {
+            return { url: raw, check: checkLinkSafety(raw), pageText: "", pageOk: false };
+          });
+          var first = results.map(function (r) {
+            var lines = ["🔗 " + r.url];
+            if (!r.check.ok) lines.push(r.check.warnings[0]);
+            else if (!r.check.warnings.length) lines.push("✅ Naam dekh kar koi chetawani nahi mili.");
+            else r.check.warnings.forEach(function (w) { lines.push(w); });
+            return lines.join("\n");
+          }).join("\n\n");
+          function fetchPage(i) {
+            if (i >= results.length) return Promise.resolve();
+            var raw = results[i].url;
+            var target = /^https?:\/\//i.test(raw) ? raw : "https://" + raw;
+            var ctrl = (typeof AbortController !== "undefined") ? new AbortController() : null;
+            var timer = setTimeout(function () { if (ctrl) ctrl.abort(); }, 8000);
+            var fetchOpts = ctrl ? { signal: ctrl.signal } : {};
+            return fetch("https://r.jina.ai/" + target, fetchOpts)
+              .then(function (res) { clearTimeout(timer); if (!res.ok) throw new Error("http " + res.status); return res.text(); })
+              .then(function (t) {
+                var txt = (t || "").replace(/^Title:.*$/m, "").replace(/^URL Source:.*$/m, "").trim();
+                if (txt.length > 50) { results[i].pageText = txt.slice(0, 4000); results[i].pageOk = true; }
+              })
+              .catch(function () {})
+              .then(function () { return fetchPage(i + 1); });
+          }
+          fetchPage(0).then(function () {
+            var parts = results.map(function (r, idx) {
+              var s = "Link " + (idx + 1) + ": " + r.url + "\nChetawaniyan: " + (r.check.warnings.length ? r.check.warnings.join(" | ") : "koi nahi") + "\n";
+              s += r.pageOk ? "Page ka text (shuruaat):\n" + r.pageText : "Page khul nahi paya — sirf naam se andaza lagao.";
+              return s;
+            }).join("\n\n");
+            var prompt = "Tum ek link safety checker ho. Neeche diye gaye link(s) ke baare mein Hinglish mein CHHOTA aur seedha jawab do (har link ke liye 3-4 lines):\n" +
+              "1) Link kis cheez ka lagta hai (site/page kya hai)\n" +
+              "2) Khatra kya hai (agar chetawaniyan hain to unke hisab se)\n" +
+              "3) User ko kya karna chahiye (khole, na khole, password/OTP kabhi na de)\n" +
+              "Zaroori: kabhi 'pakka safe' ya '100% safe' mat kaho — ye sirf andaza hai, saboot nahi. Agar page nahi khula to saaf bata do ki sirf naam se andaza lagaya hai. Agar link private/login wala lagta hai to batao ki aise link check ke liye mat bhejo.\n\n" + parts;
+            return callModel([{ role: "user", content: prompt }], "openai", false, 30000)
+              .then(function (verdict) { return first + "\n\n" + verdict; })
+              .catch(function () {
+                var fb = first + "\n\n⚠️ AI se faisla nahi mil paya (free AI busy hai). Naam wali jaanch upar hai — " +
+                  (results.some(function (r) { return r.check.warnings.length; }) ?
+                    "chetawaniyan hain, isliye link par password/OTP kabhi mat daalna aur paise mat bhejna." :
+                    "naam mein koi chetawani nahi mili, phir bhi anjaan link par password/OTP mat daalna.");
+                return fb;
+              });
+          }).then(function (reply) {
+            removeTyping();
+            var row = addMessage("ai", reply);
+            pushHist({ role: "assistant", content: reply });
+            scrollToMessageTop(row);
+            busy = false;
+          });
+        }
+
+        /* ---------------- YouTube video link (title/description se) ----------------
+           Video ke andar ke scenes nahi — sirf page ka title/description padh kar
+           andaza. Page na khule (YouTube bot check) to imaandaari se mana karo,
+           andaza mat lagao. */
+        function isYouTubeUrl(u) {
+          var h = (u || "").replace(/^https?:\/\//i, "").replace(/^www\./i, "");
+          return /^(?:[a-z0-9-]+\.)*(youtube\.com|youtu\.be)\//i.test(h);
+        }
+
+        function videoLinkWanted(text) {
+          // Safety poochhi ho to video flow nahi, safety flow chalega
+          if (/safe|surakshit|scam|fraud|dhokha|fake|nakli|nakali|khatra|bharosa|phishing/i.test(text)) return false;
+          if (/video|scene|kya hai|kya ho raha|dikhao|samjhao|kis baare|kis cheez|kya dikh/i.test(text)) return true;
+          var rest = text.replace(/https?:\/\/\S+|www\.\S+/g, "").trim();
+          return rest.length <= 3;
+        }
+
+        function doVideoLinkCheck(userText, url) {
+          addTyping();
+          var target = /^https?:\/\//i.test(url) ? url : "https://" + url;
+          var ctrl = (typeof AbortController !== "undefined") ? new AbortController() : null;
+          var timer = setTimeout(function () { if (ctrl) ctrl.abort(); }, 10000);
+          var fetchOpts = ctrl ? { signal: ctrl.signal } : {};
+          fetch("https://r.jina.ai/" + target, fetchOpts)
+            .then(function (res) { clearTimeout(timer); if (!res.ok) throw new Error("http " + res.status); return res.text(); })
+            .then(function (t) {
+              var txt = (t || "").replace(/^Title:.*$/m, "").replace(/^URL Source:.*$/m, "").replace(/^Final URL:.*$/m, "").replace(/^Warning:.*$/gm, "").trim();
+              if (txt.length < 50 || /unusual traffic|not a robot|verify you are human/i.test(txt)) return null;
+              return txt.slice(0, 4000);
+            })
+            .catch(function () { return null; })
+            .then(function (pageText) {
+              if (!pageText) {
+                var msg = "🔗 " + url + "\n\nYe video ka page abhi khul nahi paya (YouTube ne bot check dikhaya) — isliye main is video ke baare mein kuch nahi bata sakta. Jhooth bol kar andaza lagana sahi nahi hoga.\n\nAgar video file tumhare phone mein hai to + menu mein **🎬 Video samjhao** se file bhej do, main dekh kar bata dunga.";
+                removeTyping();
+                var row = addMessage("ai", msg);
+                pushHist({ role: "assistant", content: msg });
+                scrollToMessageTop(row);
+                busy = false;
+                return null;
+              }
+              var prompt = "Neeche YouTube video ke page ka ASLI text hai. Sirf ISI text se jawab do — apni taraf se kuch mat jodo, koi title/description mat ghado, koi scene mat banao. Agar text mein title/description saaf na ho to imaandaari se bolo ki pata nahi chal raha. Hinglish mein CHHOTA jawab do (5-6 lines):\n1) Video kis baare mein hai — title aur description ke hisab se\n2) Channel/video ka naam agar text mein dikhe to\n3) Video mein kya-kya dikhne/sunne ko mil sakta hai (sirf description ke hisab se)\n\nPage ka text:\n" + pageText;
+              return callModel([{ role: "user", content: prompt }], "openai", false, 30000)
+                .then(function (verdict) { return "🔗 " + url + "\n\n📄 Page se padha gaya description:\n" + pageText.slice(0, 600) + "\n\n" + verdict + "\n\n⚠️ Ye sirf video ke title/description se andaza hai — andar ke scenes aur boli hui baat ismein nahi aati."; })
+                .catch(function () {
+                  return "🔗 " + url + "\n\n📄 Page se padha gaya description:\n" + pageText.slice(0, 600) + "\n\n⚠️ AI se summary nahi mil paya (free AI busy hai) — upar wala description hi page ka asli text hai.";
+                });
+            })
+            .then(function (reply) {
+              if (!reply) return;
+              removeTyping();
+              var row = addMessage("ai", reply);
+              pushHist({ role: "assistant", content: reply });
+              scrollToMessageTop(row);
+              busy = false;
+            });
+        }
+
+        // ---- Gmail (apni email dikhao — sirf admin code se, read-only) ----
+        function gmailWanted(text) {
+          if (!text) return false;
+          var low = String(text).toLowerCase();
+          // "email kaise bhejte hain" / "Gmail kya hota hai" jaise SAWAL list nahi kholte —
+          // wo AI ko jaate hain, jo step-by-step guide deta hai.
+          if (/kaise|kya hota|kya hai|kya chahiye|tarika|tareeka|steps|step by step|sikhao|samjhao|matlab kya/.test(low)) return false;
+          if (low.indexOf("email") >= 0 || low.indexOf("gmail") >= 0 || low.indexOf("inbox") >= 0 || low.indexOf("ईमेल") >= 0 || low.indexOf("मेल") >= 0) return true;
+          return /(^|[^a-z])mail([^a-z]|$)/.test(low);
+        }
+        function gmailQuery(text) {
+          var t = String(text || "");
+          var m = t.match(/from:\s*([^\s]+)/i);
+          if (m) return "from:" + m[1];
+          var s = t.match(/subject:\s*(.+)/i);
+          if (s) return "subject:" + s[1].trim().slice(0, 100);
+          if (/unread/i.test(t)) return "is:unread";
+          // "jawab dena baki hai" / "kaun se Gmail baki hain" = bina padhi emails
+          if (/jawab/i.test(t) && /baki/i.test(t)) return "is:unread";
+          if (/bina padhi|na padhi/i.test(t)) return "is:unread";
+          return "";
+        }
+        // ---- Gmail (har user apna Gmail jode — Google login, read + send) ----
+        // Token sirf browser ki memory mein rehta hai (localStorage mein nahi),
+        // mail seedha Google se aati hai — server par kuch save nahi hota.
+        // BHEJNA: sirf draft dikhakar + user ke "bhej do" ke baad hota hai.
+        var GMAIL_CLIENT_ID = "463015858598-mhp99at2ecutc0b81r24afica9c06p04.apps.googleusercontent.com";
+        var gmailToken = "";
+        var gmailTokenClient = null;
+        var gmailTokenCb = null;
+        var gmailTokenTimer = null;
+
+        // ---- Instagram (Meta app ka App ID milte hi yahan daal dunga) ----
+        var IG_APP_ID = "";
+        var igToken = "";
+        var igUserId = "";
+        var igUsername = "";
+        var igCaption = "";
+        var igPickTimer = null;
+
+        // ---- YouTube search + upload ----
+        var ytPickTimer = null;
+        var ytUploadTitle = "";
+        var YT_UPLOAD_MAX = 100 * 1024 * 1024; // 100 MB
+        function gmailHasToken() { return !!gmailToken; }
+        function updateGmailButton() {
+          var b = document.getElementById("trayGmail");
+          if (b) b.textContent = gmailToken ? "📧 Gmail juda ✓" : "📧 Gmail jodo";
+        }
+        function requestGmailToken(cb) {
+          if (!window.google || !window.google.accounts || !window.google.accounts.oauth2) { cb(null); return; }
+          try {
+            if (!gmailTokenClient) {
+              gmailTokenClient = window.google.accounts.oauth2.initTokenClient({
+                client_id: GMAIL_CLIENT_ID,
+                scope: "https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/gmail.send https://www.googleapis.com/auth/youtube.upload",
+                callback: function (resp) {
+                  var f = gmailTokenCb; gmailTokenCb = null;
+                  if (gmailTokenTimer) { clearTimeout(gmailTokenTimer); gmailTokenTimer = null; }
+                  if (resp && resp.access_token) { gmailToken = resp.access_token; updateGmailButton(); if (f) f(resp.access_token); }
+                  else if (f) f(null);
+                }
+              });
+            }
+            gmailTokenCb = cb;
+            // Safety: Google popup band kar diya ya callback kabhi na aaye to 60s mein
+            // khud fail karo — warna chat typing par atak jata hai aur send button band ho jata hai.
+            if (gmailTokenTimer) clearTimeout(gmailTokenTimer);
+            gmailTokenTimer = setTimeout(function () {
+              var f = gmailTokenCb; gmailTokenCb = null; gmailTokenTimer = null;
+              if (f) f(null);
+            }, (typeof window !== "undefined" && window.GMAIL_TOKEN_TIMEOUT_MS) || 60000);
+            gmailTokenClient.requestAccessToken({ prompt: "" });
+          } catch (e) { cb(null); }
+        }
+        function doGmailCheck(userText) {
+          addTyping();
+          if (!window.google || !window.google.accounts || !window.google.accounts.oauth2) {
+            removeTyping();
+            var msgG = "📧 Google login abhi load nahi hua — net check karke page dobara kholo, phir 'meri email dikhao' likho.";
+            var rowG = addMessage("ai", msgG);
+            pushHist({ role: "assistant", content: msgG });
+            scrollToMessageTop(rowG);
+            busy = false;
+            return;
+          }
+          var retried = false;
+          function fetchGmail() {
+            var ctrl = (typeof AbortController !== "undefined") ? new AbortController() : null;
+            var timer = setTimeout(function () { if (ctrl) ctrl.abort(); }, 12000);
+            var authHeaders = { Authorization: "Bearer " + gmailToken };
+            var fetchOpts = { headers: authHeaders };
+            if (ctrl) fetchOpts.signal = ctrl.signal;
+            var q = gmailQuery(userText);
+            fetch("https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=5" + (q ? "&q=" + encodeURIComponent(q) : ""), fetchOpts)
+              .then(function (res) {
+                if (res.status === 401 && !retried) {
+                  retried = true;
+                  gmailToken = "";
+                  updateGmailButton();
+                  throw { retryToken: true };
+                }
+                if (!res.ok) throw new Error("http " + res.status);
+                return res.json();
+              })
+              .then(function (ld) {
+                var msgs = (ld && Array.isArray(ld.messages)) ? ld.messages.slice(0, 5) : [];
+                if (!msgs.length) return [];
+                return Promise.all(msgs.map(function (m) {
+                  return fetch("https://gmail.googleapis.com/gmail/v1/users/me/messages/" + encodeURIComponent(m.id) + "?format=metadata&metadataHeaders=From&metadataHeaders=Subject&metadataHeaders=Date", { headers: authHeaders })
+                    .then(function (r) { if (!r.ok) return null; return r.json(); })
+                    .catch(function () { return null; });
+                }));
+              })
+              .then(function (details) {
+                clearTimeout(timer);
+                var emails = [];
+                (details || []).forEach(function (gd) {
+                  if (!gd) return;
+                  var hdrs = {};
+                  (gd.payload && Array.isArray(gd.payload.headers) ? gd.payload.headers : []).forEach(function (h) { hdrs[String(h.name).toLowerCase()] = h.value || ""; });
+                  emails.push({ id: gd.id || "", from: (hdrs.from || "").slice(0, 120), subject: (hdrs.subject || "(bina subject)").slice(0, 150), date: (hdrs.date || "").slice(0, 60), snippet: (gd.snippet || "").slice(0, 220) });
+                });
+                lastGmailEmails = emails;
+                removeTyping();
+                var msg = "";
+                if (!emails.length) {
+                  msg = "📧 Inbox mein koi email nahi mili.";
+                } else {
+                  msg = "📧 **Haal ki emails:**\n\n" + emails.map(function (e, i) {
+                    return (i + 1) + ". **" + (e.subject || "(bina subject)") + "**\n   " + (e.from || "") + (e.date ? " • " + e.date : "") + (e.snippet ? "\n   " + e.snippet : "");
+                  }).join("\n\n") + "\n\nPoori padhne ke liye likho: 'pehli email padho' (ya 2, 3, 4, 5 number wali).";
+                }
+                var row = addMessage("ai", msg);
+                pushHist({ role: "assistant", content: msg });
+                scrollToMessageTop(row);
+                busy = false;
+              })
+              .catch(function (err) {
+                clearTimeout(timer);
+                if (err && err.retryToken) {
+                  requestGmailToken(function (tok) {
+                    if (!tok) {
+                      removeTyping();
+                      var msg = "📧 Gmail jud nahi paya — Google popup mein Allow karna tha. Dobara 'meri email dikhao' likh kar try karo.";
+                      var row = addMessage("ai", msg);
+                      pushHist({ role: "assistant", content: msg });
+                      scrollToMessageTop(row);
+                      busy = false;
+                      return;
+                    }
+                    fetchGmail();
+                  });
+                  return;
+                }
+                removeTyping();
+                var msg = "📧 Gmail se abhi jud nahi paya — thodi der baad dobara try karo.";
+                var row = addMessage("ai", msg);
+                pushHist({ role: "assistant", content: msg });
+                scrollToMessageTop(row);
+                busy = false;
+              });
+          }
+          if (gmailHasToken()) { fetchGmail(); return; }
+          requestGmailToken(function (tok) {
+            if (!tok) {
+              removeTyping();
+              var msg = "📧 Gmail jud nahi paya — Google popup mein apna Gmail chun kar Allow karna tha. + menu mein **📧 Gmail jodo** dabakar dobara try karo.";
+              var row = addMessage("ai", msg);
+              pushHist({ role: "assistant", content: msg });
+              scrollToMessageTop(row);
+              busy = false;
+              return;
+            }
+            fetchGmail();
+          });
+        }
+
+        // ---- Gmail poori email padho (list ke baad: "pehli email padho" / "2 number wali") ----
+        var lastGmailEmails = [];
+        function gmailReadIndex(text) {
+          var low = String(text || "").toLowerCase();
+          var m = low.match(/([1-5])\s*(number|num|no\.?)?\s*(wali|wala)?\s*(email|mail)/);
+          if (m) return parseInt(m[1], 10) - 1;
+          if (/(pehli|pehla)\s*(email|mail|wali|wala)/.test(low)) return 0;
+          if (/(dusri|dusra)\s*(email|mail|wali|wala)/.test(low)) return 1;
+          if (/(teesri|teesra)\s*(email|mail|wali|wala)/.test(low)) return 2;
+          if (/(chauthi|chautha)\s*(email|mail|wali|wala)/.test(low)) return 3;
+          if (/(paanchvi|paanchva|panchvi|panchva)\s*(email|mail|wali|wala)/.test(low)) return 4;
+          return -1;
+        }
+        function gmailReadWanted(text) {
+          if (!text) return false;
+          var low = String(text).toLowerCase();
+          if (low.indexOf("email") < 0 && low.indexOf("mail") < 0) return false;
+          if (gmailReadIndex(text) >= 0 && /(padho|padh|kholo|poori|poora|pura|dikhao|batao|sunao)/.test(low)) return true;
+          if (/(poori|poora|pura)\s*(email|mail)/.test(low)) return true;
+          if (/(email|mail)\s*(padho|padh|kholo)/.test(low)) return true;
+          return false;
+        }
+        function gmailB64(data) {
+          try {
+            var b64 = String(data).replace(/-/g, "+").replace(/_/g, "/");
+            while (b64.length % 4) b64 += "=";
+            var bin = atob(b64);
+            var bytes = new Uint8Array(bin.length);
+            for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+            if (typeof TextDecoder !== "undefined") return new TextDecoder("utf-8").decode(bytes);
+            return bin;
+          } catch (e) { return ""; }
+        }
+        function gmailBodyText(payload) {
+          var plain = "", html = "";
+          function walk(p) {
+            if (!p) return;
+            if (p.mimeType === "text/plain" && p.body && p.body.data) plain = plain || gmailB64(p.body.data);
+            else if (p.mimeType === "text/html" && p.body && p.body.data) html = html || gmailB64(p.body.data);
+            if (Array.isArray(p.parts)) p.parts.forEach(walk);
+          }
+          walk(payload);
+          if (plain.trim()) return plain;
+          if (!html.trim()) return "";
+          var div = document.createElement("div");
+          div.innerHTML = html;
+          return (div.textContent || "").replace(/[ \t]+/g, " ").replace(/\n\s*\n+/g, "\n\n").trim();
+        }
+        function doGmailRead(userText) {
+          addTyping();
+          if (!lastGmailEmails.length) {
+            removeTyping();
+            var msg0 = "📧 Pehle 'meri email dikhao' likho — list aane ke baad 'pehli email padho' ya '2 number wali email padho' likhna.";
+            var row0 = addMessage("ai", msg0);
+            pushHist({ role: "assistant", content: msg0 });
+            scrollToMessageTop(row0);
+            busy = false;
+            return;
+          }
+          var idx = gmailReadIndex(userText);
+          if (idx < 0) idx = 0;
+          if (idx >= lastGmailEmails.length) idx = lastGmailEmails.length - 1;
+          var em = lastGmailEmails[idx];
+          if (!window.google || !window.google.accounts || !window.google.accounts.oauth2) {
+            removeTyping();
+            var msgG = "📧 Google login abhi load nahi hua — net check karke page dobara kholo, phir dobara try karo.";
+            var rowG = addMessage("ai", msgG);
+            pushHist({ role: "assistant", content: msgG });
+            scrollToMessageTop(rowG);
+            busy = false;
+            return;
+          }
+          var retried = false;
+          function fetchFull() {
+            var ctrl = (typeof AbortController !== "undefined") ? new AbortController() : null;
+            var timer = setTimeout(function () { if (ctrl) ctrl.abort(); }, 15000);
+            var fetchOpts = { headers: { Authorization: "Bearer " + gmailToken } };
+            if (ctrl) fetchOpts.signal = ctrl.signal;
+            fetch("https://gmail.googleapis.com/gmail/v1/users/me/messages/" + encodeURIComponent(em.id) + "?format=full", fetchOpts)
+              .then(function (res) {
+                if (res.status === 401 && !retried) {
+                  retried = true;
+                  gmailToken = "";
+                  updateGmailButton();
+                  throw { retryToken: true };
+                }
+                if (!res.ok) throw new Error("http " + res.status);
+                return res.json();
+              })
+              .then(function (gd) {
+                clearTimeout(timer);
+                var body = gmailBodyText(gd && gd.payload);
+                removeTyping();
+                var msg = "";
+                if (!body) {
+                  msg = "📧 **" + (em.subject || "(bina subject)") + "**\n\nIs email ka text nahi padh paya (sirf photo/attachment ho sakta hai). Poori dekhne ke liye Gmail app kholo.";
+                } else {
+                  msg = "📧 **" + (em.subject || "(bina subject)") + "**\n" + (em.from || "") + (em.date ? " • " + em.date : "") + "\n\n" + body.slice(0, 4000);
+                }
+                var row = addMessage("ai", msg);
+                pushHist({ role: "assistant", content: msg });
+                scrollToMessageTop(row);
+                busy = false;
+              })
+              .catch(function (err) {
+                clearTimeout(timer);
+                if (err && err.retryToken) {
+                  requestGmailToken(function (tok) {
+                    if (!tok) {
+                      removeTyping();
+                      var msg = "📧 Gmail jud nahi paya — Google popup mein Allow karna tha. Dobara 'pehli email padho' likh kar try karo.";
+                      var row = addMessage("ai", msg);
+                      pushHist({ role: "assistant", content: msg });
+                      scrollToMessageTop(row);
+                      busy = false;
+                      return;
+                    }
+                    fetchFull();
+                  });
+                  return;
+                }
+                removeTyping();
+                var msg = "📧 Poori email abhi khul nahi payi — thodi der baad dobara try karo.";
+                var row = addMessage("ai", msg);
+                pushHist({ role: "assistant", content: msg });
+                scrollToMessageTop(row);
+                busy = false;
+              });
+          }
+          if (gmailHasToken()) { fetchFull(); return; }
+          requestGmailToken(function (tok) {
+            if (!tok) {
+              removeTyping();
+              var msg = "📧 Gmail jud nahi paya — Google popup mein apna Gmail chun kar Allow karna tha. + menu mein **📧 Gmail jodo** dabakar dobara try karo.";
+              var row = addMessage("ai", msg);
+              pushHist({ role: "assistant", content: msg });
+              scrollToMessageTop(row);
+              busy = false;
+              return;
+            }
+            fetchFull();
+          });
+        }
+
+        // ---- Gmail email bhejo (step by step: kisko → subject → body → draft → "bhej do") ----
+        // Kuch bhi bina "bhej do" ke nahi jata. Draft sirf browser ki memory mein rehta hai.
+        var emailDraft = null;
+        function emailComposeWanted(text) {
+          if (!text) return false;
+          var low = String(text).toLowerCase();
+          return /(email|mail)\s*(bhej|send)/.test(low);
+        }
+        function emailDraftText(d) {
+          return "📧 **Email taiyaar hai:**\n\n**Kisko:** " + d.to + "\n**Subject:** " + (d.subject || "(khali)") + "\n**Likha hai:**\n" + (d.body || "(khali)") + "\n\nBhejne ke liye likho: **bhej do** — badalna ho to **badlo** likho, radd karne ke liye **rehne do**.";
+        }
+        function emailComposeStart(userText) {
+          // Ek line mein teeno ho to seedha draft: "email bhejo: to | subject | body"
+          var m = String(userText).match(/(?:email|mail)\s*(?:bhej|bhejo|send)\s*:?\s*(.+)$/i);
+          if (m) {
+            var parts = m[1].split("|").map(function (s) { return s.trim(); });
+            var em = (parts[0] || "").match(/[^\s@]+@[^\s@]+\.[^\s@]+/);
+            if (parts.length >= 3 && em) {
+              emailDraft = { to: em[0], subject: parts[1].slice(0, 200), body: parts.slice(2).join(" | ").slice(0, 4000), step: "confirm" };
+              replyLocal(emailDraftText(emailDraft));
+              return;
+            }
+          }
+          emailDraft = { step: "to" };
+          replyLocal("📧 Kisko email bhejna hai? Unka email likho (jaise rahul@gmail.com).");
+        }
+        function emailComposeStep(userText) {
+          var low = String(userText).toLowerCase().trim();
+          if (/^(rehne do|rehne|chhodo|cancel|ruk jao|rukjo|band karo)$/.test(low) || low.indexOf("rehne do") === 0) {
+            emailDraft = null;
+            replyLocal("Theek hai, email nahi bheja.");
+            return;
+          }
+          // Beech mein "email kaise bhejte hain" jaisa SAWAL aaye to draft chhodo aur
+          // sawal ka jawab normal tareeke se do (AI step-by-step guide deta hai).
+          if (/kaise|kya hota|kya hai|kya chahiye|tarika|tareeka|steps|step by step|sikhao|samjhao|matlab kya/.test(low)) {
+            emailDraft = null;
+            return "reroute";
+          }
+          if (emailDraft.step === "to") {
+            var em = String(userText).match(/[^\s@]+@[^\s@]+\.[^\s@]+/);
+            if (!em) {
+              // Draft ke beech mein padhne wala sawal aaye ("unread email dikhao" jaisa)
+              // to draft chhodo aur wahi karo — address ka error mat do.
+              if (gmailReadWanted(userText) && lastGmailEmails.length) { emailDraft = null; doGmailRead(userText); return; }
+              if (gmailWanted(userText)) { emailDraft = null; doGmailCheck(userText); return; }
+              replyLocal("Ye email address nahi lagta 😕 — sahi email likho (jaise rahul@gmail.com).");
+              return;
+            }
+            emailDraft.to = em[0];
+            emailDraft.step = "subject";
+            replyLocal("Subject kya likhun?");
+            return;
+          }
+          if (emailDraft.step === "subject") {
+            emailDraft.subject = String(userText).trim().slice(0, 200);
+            emailDraft.step = "body";
+            replyLocal("Email mein kya likhna hai?");
+            return;
+          }
+          if (emailDraft.step === "body") {
+            emailDraft.body = String(userText).trim().slice(0, 4000);
+            emailDraft.step = "confirm";
+            replyLocal(emailDraftText(emailDraft));
+            return;
+          }
+          if (emailDraft.step === "confirm") {
+            if (/(bhej do|bhejdo|send karo|haan bhej|bhej de)/.test(low)) {
+              var d = emailDraft;
+              emailDraft = null;
+              doSendEmail(d);
+              return;
+            }
+            if (/badlo|badal/.test(low)) {
+              emailDraft = { step: "to" };
+              replyLocal("Theek hai, dobara — kisko email bhejna hai?");
+              return;
+            }
+            replyLocal(emailDraftText(emailDraft));
+            return;
+          }
+        }
+        function emailRawB64(to, subject, body) {
+          var mime = "To: " + to + "\r\nSubject: " + subject + "\r\nContent-Type: text/plain; charset=utf-8\r\n\r\n" + body;
+          var bytes;
+          if (typeof TextEncoder !== "undefined") bytes = new TextEncoder().encode(mime);
+          else bytes = new Uint8Array(mime.split("").map(function (c) { return c.charCodeAt(0) & 255; }));
+          var bin = "";
+          var CH = 8192;
+          for (var i = 0; i < bytes.length; i += CH) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + CH));
+          return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+        }
+        function doSendEmail(d) {
+          addTyping();
+          if (!window.google || !window.google.accounts || !window.google.accounts.oauth2) {
+            removeTyping();
+            var msgG = "📧 Google login abhi load nahi hua — net check karke page dobara kholo, phir dobara try karo.";
+            var rowG = addMessage("ai", msgG);
+            pushHist({ role: "assistant", content: msgG });
+            scrollToMessageTop(rowG);
+            busy = false;
+            return;
+          }
+          var retried = false;
+          function fetchSend() {
+            var ctrl = (typeof AbortController !== "undefined") ? new AbortController() : null;
+            var timer = setTimeout(function () { if (ctrl) ctrl.abort(); }, 12000);
+            var fetchOpts = { method: "POST", headers: { Authorization: "Bearer " + gmailToken, "Content-Type": "application/json" }, body: JSON.stringify({ raw: emailRawB64(d.to, d.subject, d.body) }) };
+            if (ctrl) fetchOpts.signal = ctrl.signal;
+            fetch("https://gmail.googleapis.com/gmail/v1/users/me/messages/send", fetchOpts)
+              .then(function (res) {
+                if ((res.status === 401 || res.status === 403) && !retried) {
+                  retried = true;
+                  gmailToken = "";
+                  updateGmailButton();
+                  throw { retryToken: true };
+                }
+                if (!res.ok) throw new Error("http " + res.status);
+                return res.json();
+              })
+              .then(function () {
+                clearTimeout(timer);
+                removeTyping();
+                var msg = "✅ Email bhej diya — **" + d.to + "** ko.";
+                var row = addMessage("ai", msg);
+                pushHist({ role: "assistant", content: msg });
+                scrollToMessageTop(row);
+                busy = false;
+              })
+              .catch(function (err) {
+                clearTimeout(timer);
+                if (err && err.retryToken) {
+                  requestGmailToken(function (tok) {
+                    if (!tok) {
+                      removeTyping();
+                      var msg = "📧 Gmail jud nahi paya — Google popup mein Allow karna tha (bhejne ke liye nayi permission chahiye). Dobara 'email bhejo' likh kar try karo.";
+                      var row = addMessage("ai", msg);
+                      pushHist({ role: "assistant", content: msg });
+                      scrollToMessageTop(row);
+                      busy = false;
+                      return;
+                    }
+                    fetchSend();
+                  });
+                  return;
+                }
+                removeTyping();
+                var msg = "📧 Email abhi bhej nahi paya — thodi der baad dobara try karo.";
+                var row = addMessage("ai", msg);
+                pushHist({ role: "assistant", content: msg });
+                scrollToMessageTop(row);
+                busy = false;
+              });
+          }
+          if (gmailHasToken()) { fetchSend(); return; }
+          requestGmailToken(function (tok) {
+            if (!tok) {
+              removeTyping();
+              var msg = "📧 Gmail jud nahi paya — Google popup mein apna Gmail chun kar Allow karna tha. + menu mein **📧 Gmail jodo** dabakar dobara try karo.";
+              var row = addMessage("ai", msg);
+              pushHist({ role: "assistant", content: msg });
+              scrollToMessageTop(row);
+              busy = false;
+              return;
+            }
+            fetchSend();
+          });
+        }
+
+        // ---- "Mere liye email likho" — AI se email LIKHWAO (bhejna nahi, sirf likhna) ----
+        // "email bhejo" (send) se alag hai — ye sirf poora formal email likh kar deta hai.
+        function emailWriteWanted(text) {
+          if (!text) return false;
+          var low = String(text).toLowerCase();
+          return /(email|mail)\s*(likh do|likhna|likho|likh|bana do|banao|bana)/.test(low);
+        }
+        function emailWriteTopic(text) {
+          var t = String(text).replace(/(mere liye|mera|meri)?\s*(email|mail)\s*(likh do|likhna|likho|likh|bana do|banao|bana)\s*:?\s*/i, "").trim();
+          if (/^(hai|do|na|ke|mein|par)$/.test(t)) t = "";
+          return t;
+        }
+
+        // ---- Instagram jodo + photo post karo ----
+        function igRedirectUri() { try { return location.origin + "/"; } catch (e) { return "https://fashion-website-theta-taupe.vercel.app/"; } }
+        function igConnectWanted(text) {
+          if (!text) return false;
+          var low = String(text).toLowerCase();
+          // "instagram kaise jodte hain" jaisa SAWAL connect nahi karta — AI guide deta hai
+          if (/kaise|kya hota|kya hai|kya chahiye|tarika|tareeka|steps|step by step|sikhao|samjhao|matlab kya/.test(low)) return false;
+          return low.indexOf("instagram") >= 0 && /(jodo|jod|connect|login|link karo|lagao)/.test(low);
+        }
+        function igPostWanted(text) {
+          if (!text) return false;
+          var low = String(text).toLowerCase();
+          if (/kaise|kya hota|kya hai|kya chahiye|tarika|tareeka|steps|step by step|sikhao|samjhao|matlab kya/.test(low)) return false;
+          if (low.indexOf("instagram") < 0) return false;
+          return /(post|daalo|daal|bhejo|share|upload)/.test(low);
+        }
+        function updateIgButton() {
+          var b = document.getElementById("trayIg");
+          if (b) b.textContent = igToken ? "📸 Instagram juda ✓" : "📸 Instagram jodo";
+        }
+        function igConnect() {
+          var appId = (typeof window !== "undefined" && window.IG_APP_ID) || IG_APP_ID;
+          if (!appId) {
+            replyLocal("📸 Instagram jodne ke liye pehle Meta app banao — Instagram app mein apni ID ko Professional banao, phir developers.facebook.com par Business app banao aur mujhe uska Instagram App ID de do. Uske baad yahi button kaam karega.");
+            return;
+          }
+          try {
+            location.href = "https://www.instagram.com/oauth/authorize?client_id=" + encodeURIComponent(appId) + "&redirect_uri=" + encodeURIComponent(igRedirectUri()) + "&scope=instagram_business_basic,instagram_business_content_publish&response_type=code";
+          } catch (e) {
+            replyLocal("📸 Instagram login khol nahi paya — dobara try karo.");
+          }
+        }
+        function igExchangeCode(code) {
+          busy = true;
+          addTyping();
+          fetch("https://fashion-website-theta-taupe.vercel.app/api/freeai?fn=ig-exchange", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code: code, redirect_uri: igRedirectUri() }) })
+            .then(function (r) { return r.json().catch(function () { return null; }); })
+            .then(function (j) {
+              if (!j || !j.ok || !j.access_token) {
+                removeTyping();
+                var msg = "📸 Instagram jud nahi paya — " + ((j && j.error) ? j.error : "dobara try karo.");
+                var row = addMessage("ai", msg);
+                pushHist({ role: "assistant", content: msg });
+                scrollToMessageTop(row);
+                busy = false;
+                return;
+              }
+              igToken = j.access_token; igUserId = String(j.user_id || "");
+              return fetch("https://graph.instagram.com/me?fields=id,username&access_token=" + encodeURIComponent(igToken))
+                .then(function (r) { return r.json().catch(function () { return null; }); })
+                .catch(function () { return null; })
+                .then(function (me) {
+                  removeTyping();
+                  igUsername = (me && me.username) ? me.username : "";
+                  updateIgButton();
+                  var msg = "✅ Instagram jud gaya" + (igUsername ? " — @" + igUsername : "") + "! Ab 'instagram par post karo' likh kar photo post kar sakte ho.";
+                  var row = addMessage("ai", msg);
+                  pushHist({ role: "assistant", content: msg });
+                  scrollToMessageTop(row);
+                  busy = false;
+                });
+            })
+            .catch(function () {
+              removeTyping();
+              var msg = "📸 Instagram se jod nahi paya — thodi der baad dobara try karo.";
+              var row = addMessage("ai", msg);
+              pushHist({ role: "assistant", content: msg });
+              scrollToMessageTop(row);
+              busy = false;
+            });
+        }
+        function igPostStart(userText) {
+          if (!igToken || !igUserId) {
+            replyLocal("📸 Pehle Instagram jodo — + menu mein 📸 Instagram jodo dabao, phir post karna.");
+            return;
+          }
+          if (!getAdminCode()) {
+            replyLocal("📸 Photo post karne ke liye pehle admin code chahiye — + menu mein '💾 Chat hamesha save karo' dabakar code daalo, phir 'instagram par post karo' likho.");
+            return;
+          }
+          var cap = String(userText || "").replace(/instagram/gi, "").replace(/(par|pe|mein)?\s*(post|daalo|daal|bhejo|share|upload)\s*(karo|kar do)?/gi, "").trim().slice(0, 300);
+          igCaption = cap || "✨ Fashion Goals";
+          // Photo picker band kar diya to 60s mein chat khud chalu ho jaye (Gmail popup wala fix jaisa)
+          if (igPickTimer) clearTimeout(igPickTimer);
+          igPickTimer = setTimeout(function () { igPickTimer = null; busy = false; }, 60000);
+          document.getElementById("igPhotoInput").click();
+        }
+        function igPostPhoto(file) {
+          if (igPickTimer) { clearTimeout(igPickTimer); igPickTimer = null; }
+          addTyping();
+          var caption = igCaption;
+          downscalePhoto(file).then(function (img) {
+            var b64 = (img && img.data) || "";
+            if (!b64) { removeTyping(); replyLocal("📸 Photo padh nahi paya — dobara chuno."); return; }
+            if (b64.length > 1400000) { removeTyping(); replyLocal("📸 Photo bahut badi hai — chhoti photo chuno."); return; }
+            fetch("https://fashion-website-theta-taupe.vercel.app/api/photos", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code: getAdminCode(), data: b64, mime: "image/jpeg" }) })
+              .then(function (r) { return r.json().catch(function () { return null; }); })
+              .then(function (j) {
+                if (!j || !j.ok || !j.url) { removeTyping(); replyLocal("📸 Photo upload nahi hui — " + ((j && j.error) || "dobara try karo.")); busy = false; return; }
+                var imgUrl = String(j.url);
+                if (imgUrl.indexOf("http") !== 0) imgUrl = location.origin + imgUrl;
+                igPublish(imgUrl, caption);
+              })
+              .catch(function () { removeTyping(); replyLocal("📸 Photo upload nahi hui — dobara try karo."); busy = false; });
+          });
+        }
+        function igPublish(imgUrl, caption) {
+          fetch("https://graph.instagram.com/" + encodeURIComponent(igUserId) + "/media?image_url=" + encodeURIComponent(imgUrl) + "&caption=" + encodeURIComponent(caption) + "&access_token=" + encodeURIComponent(igToken), { method: "POST" })
+            .then(function (r) { return r.json().catch(function () { return null; }); })
+            .then(function (j) {
+              if (!j || !j.id) { removeTyping(); replyLocal("📸 Instagram ne photo nahi li — " + ((j && j.error && j.error.message) ? j.error.message : "dobara try karo.")); busy = false; return; }
+              igPollContainer(j.id, 0);
+            })
+            .catch(function () { removeTyping(); replyLocal("📸 Instagram se jod nahi paya — dobara try karo."); busy = false; });
+        }
+        function igPollContainer(cid, n) {
+          if (n > 12) { removeTyping(); replyLocal("📸 Instagram photo taiyaar nahi kar paya — thodi der baad dobara try karo."); busy = false; return; }
+          setTimeout(function () {
+            fetch("https://graph.instagram.com/" + encodeURIComponent(cid) + "?fields=status_code&access_token=" + encodeURIComponent(igToken))
+              .then(function (r) { return r.json().catch(function () { return null; }); })
+              .then(function (j) {
+                var st = j && j.status_code;
+                if (st === "FINISHED") {
+                  fetch("https://graph.instagram.com/" + encodeURIComponent(igUserId) + "/media_publish?creation_id=" + encodeURIComponent(cid) + "&access_token=" + encodeURIComponent(igToken), { method: "POST" })
+                    .then(function (r) { return r.json().catch(function () { return null; }); })
+                    .then(function (p) {
+                      removeTyping();
+                      var msg = (p && p.id) ? "✅ Instagram par post ho gaya! 🎉" : "📸 Publish nahi hua — " + ((p && p.error && p.error.message) ? p.error.message : "dobara try karo.");
+                      var row = addMessage("ai", msg);
+                      pushHist({ role: "assistant", content: msg });
+                      scrollToMessageTop(row);
+                      busy = false;
+                    })
+                    .catch(function () { removeTyping(); replyLocal("📸 Publish karte waqt connection toot gaya — dobara try karo."); busy = false; });
+                  return;
+                }
+                if (st === "ERROR") { removeTyping(); replyLocal("📸 Instagram ne photo reject kar di — dusri photo try karo."); busy = false; return; }
+                igPollContainer(cid, n + 1);
+              })
+              .catch(function () { igPollContainer(cid, n + 1); });
+          }, (typeof window !== "undefined" && window.IG_POLL_MS) || 5000);
+        }
+
+        // ---- YouTube search + upload (upload Public; sabko dikhegi) ----
+        function ytSearchWanted(text) {
+          if (!text) return false;
+          var low = String(text).toLowerCase();
+          // "youtube kaise chalate hain" jaisa SAWAL search nahi karta — AI guide deta hai
+          if (/kaise|kya hota|kya hai|kya chahiye|tarika|tareeka|steps|step by step|sikhao|samjhao|matlab kya/.test(low)) return false;
+          if (low.indexOf("youtube") < 0 && low.indexOf("youtu.be") < 0) return false;
+          return /(dhoondho|dhundo|khojo|search|dekho|dikhao|video|song|gaana|gana)/.test(low);
+        }
+        function ytUploadWanted(text) {
+          if (!text) return false;
+          var low = String(text).toLowerCase();
+          if (/kaise|kya hota|kya hai|kya chahiye|tarika|tareeka|steps|step by step|sikhao|samjhao|matlab kya/.test(low)) return false;
+          if (low.indexOf("youtube") < 0 && low.indexOf("youtu.be") < 0) return false;
+          return /(upload|chadhao|daalo|daal|post karo|bhejo)/.test(low);
+        }
+        function ytSearchQuery(userText) {
+          var q = String(userText || "").replace(/youtube|youtu\.be/gi, "").replace(/\b(par|pe|mein|me)\b\s*(dhoondho|dhundo|khojo|search|dekho|dikhao)\b/gi, "").replace(/\b(dhoondho|dhundo|khojo|search|dekho|dikhao)\b/gi, "").replace(/^\s*(par|pe|mein|me)\b\s*/gi, "").trim().replace(/\s+/g, " ").slice(0, 200);
+          return q;
+        }
+        function doYouTubeSearch(userText) {
+          var q = ytSearchQuery(userText);
+          if (!q) {
+            replyLocal("🎬 YouTube par kya dhoondhna hai? Jaise likho: youtube par dance video dhoondho");
+            return;
+          }
+          addTyping();
+          fetch("https://fashion-website-theta-taupe.vercel.app/api/freeai?fn=youtube", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ q: q }) })
+            .then(function (r) { return r.json().catch(function () { return null; }); })
+            .then(function (j) {
+              removeTyping();
+              if (!j || !j.ok) {
+                var msg = "🎬 YouTube search nahi hua — " + ((j && j.error) ? j.error : "dobara try karo.");
+                var row = addMessage("ai", msg);
+                pushHist({ role: "assistant", content: msg });
+                scrollToMessageTop(row);
+                busy = false;
+                return;
+              }
+              var list = (j.results || []).map(function (v, i) {
+                return (i + 1) + ". " + v.title + " — " + v.channel + "\n" + v.link;
+              }).join("\n\n");
+              var msg2 = list ? "🎬 YouTube par mile:\n\n" + list : "🎬 YouTube par '" + q + "' ke liye kuch nahi mila — dusre shabd try karo.";
+              var row2 = addMessage("ai", msg2);
+              pushHist({ role: "assistant", content: msg2 });
+              scrollToMessageTop(row2);
+              busy = false;
+            })
+            .catch(function () {
+              removeTyping();
+              var msg3 = "🎬 YouTube se jod nahi paya — thodi der baad dobara try karo.";
+              var row3 = addMessage("ai", msg3);
+              pushHist({ role: "assistant", content: msg3 });
+              scrollToMessageTop(row3);
+              busy = false;
+            });
+        }
+        function ytUploadStart(userText) {
+          if (!window.google || !window.google.accounts || !window.google.accounts.oauth2) {
+            replyLocal("📺 Google login abhi load nahi hua — net check karke page dobara kholo, phir 'youtube par video upload karo' likho.");
+            return;
+          }
+          var title = String(userText || "").replace(/youtube|youtu\.be/gi, "").replace(/\b(par|pe|mein|me)\b\s*(upload|chadhao|daalo|daal|post karo|bhejo)\s*(karo|kar do)?/gi, "").replace(/\b(upload|chadhao|daalo|daal|post karo|bhejo)\b/gi, "").trim().replace(/\s+/g, " ").slice(0, 100);
+          ytUploadTitle = title || "";
+          if (!gmailToken) {
+            // Login abhi chat se hi hoga: Google popup yahin khulega, Allow dabate hi
+            // video picker khud khul jayega — + menu mein jaane ki zaroorat nahi.
+            addTyping();
+            requestGmailToken(function (tok) {
+              removeTyping();
+              if (!tok) {
+                replyLocal("📺 Google login nahi mila — Allow nahi kiya to upload nahi hoga. Dobara 'youtube par video upload karo' likho, popup mein Allow dabao.");
+                return;
+              }
+              if (ytPickTimer) clearTimeout(ytPickTimer);
+              ytPickTimer = setTimeout(function () { ytPickTimer = null; busy = false; }, 60000);
+              replyLocal("📺 Video chuno — jo video upload karni hai, use chuno. Video **Public** upload hogi (sabko dikhegi).");
+              document.getElementById("ytVideoInput").click();
+            });
+            return;
+          }
+          // Video picker band kar diya to 60s mein chat khud chalu ho jaye (Gmail popup wala fix jaisa)
+          if (ytPickTimer) clearTimeout(ytPickTimer);
+          ytPickTimer = setTimeout(function () { ytPickTimer = null; busy = false; }, 60000);
+          replyLocal("📺 Video chuno — jo video upload karni hai, use chuno. Video **Public** upload hogi (sabko dikhegi).");
+          document.getElementById("ytVideoInput").click();
+        }
+        function ytUploadVideo(file) {
+          if (ytPickTimer) { clearTimeout(ytPickTimer); ytPickTimer = null; }
+          busy = true;
+          if (!/^video\//i.test(file.type) && !/\.(mp4|webm|mov)$/i.test(file.name)) {
+            replyLocal("📺 Ye video file nahi lagti 😕 — sirf **MP4 / WebM / MOV** video chalegi. + menu mein **📺 YouTube upload** se sahi video chuno.");
+            return;
+          }
+          if (file.size > YT_UPLOAD_MAX) {
+            replyLocal("📺 Video bahut badi hai (100 MB se zyada) — chhoti video chuno.");
+            return;
+          }
+          var title = ytUploadTitle || file.name.replace(/\.[^.]+$/, "").replace(/[_-]+/g, " ").trim().slice(0, 100) || "Free AI Chat video";
+          addTyping();
+          var retried = false;
+          function startSession() {
+            return fetch("https://www.googleapis.com/upload/youtube/v3/videos?uploadType=resumable&part=snippet,status", {
+              method: "POST",
+              headers: {
+                "Authorization": "Bearer " + gmailToken,
+                "Content-Type": "application/json; charset=UTF-8",
+                "X-Upload-Content-Type": file.type || "video/mp4",
+                "X-Upload-Content-Length": String(file.size)
+              },
+              body: JSON.stringify({ snippet: { title: title, description: "Uploaded via Free AI Chat" }, status: { privacyStatus: "public" } })
+            });
+          }
+          function doUpload() {
+            return startSession().then(function (r) {
+              if ((r.status === 401 || r.status === 403) && !retried) {
+                retried = true;
+                gmailToken = "";
+                updateGmailButton();
+                return new Promise(function (resolve) {
+                  requestGmailToken(function (tok) {
+                    if (!tok) { resolve(null); return; }
+                    doUpload().then(resolve, function () { resolve(null); });
+                  });
+                });
+              }
+              if (!r.ok) throw new Error("http " + r.status);
+              var loc = r.headers.get("Location") || r.headers.get("location");
+              if (!loc) throw new Error("no_upload_url");
+              return fetch(loc, { method: "PUT", headers: { "Content-Type": file.type || "video/mp4" }, body: file });
+            });
+          }
+          doUpload()
+            .then(function (r) {
+              if (!r) throw new Error("no_token");
+              if (!r.ok) throw new Error("http " + r.status);
+              return r.json();
+            })
+            .then(function (j) {
+              removeTyping();
+              var id = j && j.id ? String(j.id) : "";
+              var msg = id
+                ? "✅ YouTube par upload ho gaya (Public)! 🎉\nhttps://www.youtube.com/watch?v=" + id + "\n\nVideo ab sabko dikh rahi hai."
+                : "📺 Upload to ho gaya, par video ka link nahi mila — YouTube app mein apne channel par check karo.";
+              var row = addMessage("ai", msg);
+              pushHist({ role: "assistant", content: msg });
+              scrollToMessageTop(row);
+              busy = false;
+            })
+            .catch(function (err) {
+              removeTyping();
+              var em = (err && err.message) || "";
+              var msg;
+              if (em.indexOf("http 403") >= 0) msg = "📺 Google ne upload mana kiya (403) — is Gmail par YouTube channel nahi mila. YouTube app mein apna channel check karo, phir dobara try karo.";
+              else if (em.indexOf("http 401") >= 0) msg = "📺 Google login purana ho gaya (401) — + menu mein 📧 Gmail jodo dobara dabakar Allow karo, phir dobara try karo.";
+              else if (em === "no_upload_url") msg = "📺 Google se upload link nahi mila — browser ne link chhupa liya. Page reload karke dobara try karo.";
+              else if (em === "no_token") msg = "📺 Google login nahi mila — + menu mein 📧 Gmail jodo dobara dabakar Allow karo, phir dobara try karo.";
+              else if (em.indexOf("http ") === 0) msg = "📺 Google ne mana kiya (" + em + ") — dobara try karo.";
+              else msg = "📺 YouTube upload nahi hua (network: " + (em || "pata nahi") + ") — internet check karke dobara try karo.";
+              var row = addMessage("ai", msg);
+              pushHist({ role: "assistant", content: msg });
+              scrollToMessageTop(row);
+              busy = false;
+            });
+        }
+
+        function handleSend(text) {
+          var userText = (text != null ? text : inputEl.value).trim();
+          if (!userText || busy) return;
+          busy = true;
+          sendBtn.classList.remove("ready");
+          inputEl.value = "";
+          autoGrow();
+          stopListening();
+          trayEl.classList.remove("open");
+          plusBtn.classList.remove("open");
+
+          addMessage("user", userText);
+          scrollToBottom();
+          pushHist({ role: "user", content: userText });
+
+          // Gmail email bhejo — draft chal raha ho to har jawab yahin aata hai
+          if (emailDraft) {
+            // "reroute" mile to draft chhoda — neeche normal routing se sawal ka jawab do
+            if (emailComposeStep(userText) !== "reroute") return;
+          }
+          if (emailComposeWanted(userText)) {
+            emailComposeStart(userText);
+            return;
+          }
+
+          // App commands pehle — yaad rakhna + kharcha note (bina net ke bhi chalte hain)
+          var cmdReply = matchAppCommand(userText);
+          if (cmdReply !== null) {
+            replyLocal(cmdReply);
+            return;
+          }
+
+          // "Mere liye email likho" — AI se email likhwayo (bhejna nahi, sirf likhna)
+          // (Gmail list se pehle aata hai, warna "email" sun kar list khul jati;
+          //  AI ko seedha call karta hai — neeche wapas nahi jata, warna likha hua
+          //  prompt bhi "email" sun kar list khol deta.)
+          if (emailWriteWanted(userText)) {
+            var topic = emailWriteTopic(userText);
+            if (!topic) {
+              replyLocal("Kis baare mein email likhna hai? Aise likho: `mere liye email likho: boss ko chhutti ke liye`");
+              return;
+            }
+            var aiPrompt = "Mere liye is baare mein ek poora formal email likho (subject line + greeting + body + closing, sahi format mein): " + topic;
+            addTyping();
+            askFreeAI(aiPrompt)
+              .then(function (reply) {
+                removeTyping();
+                var row = addMessage("ai", reply);
+                attachLiveSources(row.querySelector(".bubble"), lastLiveSources, aiPrompt);
+                pushHist({ role: "assistant", content: reply });
+                setStatus(true, aiName + " online — bina API key");
+                scrollToMessageTop(row);
+                busy = false;
+              })
+              .catch(function () {
+                removeTyping();
+                var localFallback = tryLocalAnswer(aiPrompt);
+                var reply = localFallback !== null ? localFallback : offlineAnswer();
+                var row = addMessage("ai", reply);
+                pushHist({ role: "assistant", content: reply });
+                setStatus(false, aiName + " busy — basic mode");
+                scrollToMessageTop(row);
+                busy = false;
+              });
+            return;
+          }
+
+          // Photo banana — app khud banata hai
+          var pDesc = photoDesc(userText);
+          if (pDesc !== null) {
+            if (pDesc.length < 3) {
+              replyLocal("Zaroor, photo banata hoon! 🎨 Bas bata do kis cheez ki — aise likho:\n\n`photo banao: samundar kinare sunset`");
+              return;
+            }
+            doPhotoFlow(pDesc);
+            return;
+          }
+
+          // YouTube link — video kis baare mein hai (title/description se)
+          var ytUrls = extractUrls(userText).filter(isYouTubeUrl);
+          if (ytUrls.length && videoLinkWanted(userText)) {
+            doVideoLinkCheck(userText, ytUrls[0]);
+            return;
+          }
+
+          // Link check — message mein link ho aur safety poochhi gayi ho (ya sirf link bheja ho)
+          var linkUrls = extractUrls(userText);
+          if (linkUrls.length && linkCheckWanted(userText, linkUrls)) {
+            doLinkCheck(userText, linkUrls);
+            return;
+          }
+
+          // Gmail poori email padho — list ke baad number/pehli se
+          if (gmailReadWanted(userText)) {
+            doGmailRead(userText);
+            return;
+          }
+
+          // Gmail — apni email dikhao (sirf admin code se, read-only)
+          if (gmailWanted(userText)) {
+            doGmailCheck(userText);
+            return;
+          }
+
+          // Instagram jodo / photo post karo
+          if (igConnectWanted(userText)) {
+            igConnect();
+            return;
+          }
+          if (igPostWanted(userText)) {
+            igPostStart(userText);
+            return;
+          }
+
+          // YouTube upload — video channel par chadhao (Public); search se pehle, kyunki "upload karo" mein "video" bhi hota hai
+          if (ytUploadWanted(userText)) {
+            ytUploadStart(userText);
+            return;
+          }
+          // YouTube search — video dhoondho
+          if (ytSearchWanted(userText)) {
+            doYouTubeSearch(userText);
+            return;
+          }
+
+          // Pehle local turant jawab (hisab/time/date) — bina net ke bhi chalta hai
+          var local = tryLocalAnswer(userText);
+          if (local !== null) {
+            setTimeout(function () {
+              var row = addMessage("ai", local);
+              pushHist({ role: "assistant", content: local });
+              scrollToMessageTop(row);
+              busy = false;
+            }, 250);
+            return;
+          }
+
+          addTyping();
+          askFreeAI(userText)
+            .then(function (reply) {
+              removeTyping();
+              var row = addMessage("ai", reply);
+              attachLiveSources(row.querySelector(".bubble"), lastLiveSources, userText);
+              pushHist({ role: "assistant", content: reply });
+              setStatus(true, aiName + " online — bina API key");
+              scrollToMessageTop(row);
+              busy = false;
+            })
+            .catch(function () {
+              removeTyping();
+              var localFallback = tryLocalAnswer(userText);
+              var reply = localFallback !== null ? localFallback : offlineAnswer();
+              var row = addMessage("ai", reply);
+              pushHist({ role: "assistant", content: reply });
+              setStatus(false, aiName + " busy — basic mode");
+              scrollToMessageTop(row);
+              busy = false;
+            });
+        }
+
+        formEl.addEventListener("submit", function (e) {
+          e.preventDefault();
+          handleSend();
+        });
+
+        inputEl.addEventListener("keydown", function (e) {
+          if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            handleSend();
+          }
+        });
+
+        function autoGrow() {
+          inputEl.style.height = "auto";
+          inputEl.style.height = Math.min(inputEl.scrollHeight, 132) + "px";
+          sendBtn.classList.toggle("ready", inputEl.value.trim().length > 0);
+        }
+        inputEl.addEventListener("input", autoGrow);
+
+        plusBtn.addEventListener("click", function () {
+          var open = trayEl.classList.toggle("open");
+          plusBtn.classList.toggle("open", open);
+        });
+
+        trayEl.querySelectorAll("[data-q]").forEach(function (btn) {
+          btn.addEventListener("click", function () {
+            handleSend(btn.getAttribute("data-q"));
+          });
+        });
+
+        function startFresh(clearServer) {
+          if (clearServer && serverChatOn()) {
+            try { fetch("https://fashion-website-theta-taupe.vercel.app/api/freeai?fn=chat&action=clear", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code: getAdminCode() }) }).catch(function () {}); } catch (e) {}
+          }
+          if (!serverChatOn()) memories = [];
+          history = [];
+          messagesEl.innerHTML = "";
+          var welcome =
+            "Namaste Shiva! 😊 Main **" + aiName + "** hoon — bilkul Mera AI jaisa chat, par ye **bina API key** ke chalta hai, to Gemini wali daily limit khatm hone ki dikkat nahi.\n\nAb meri **coding aur strong** hai: poora chalta-hua code milega — aadha-adhura nahi. Website ya app ka code ek hi HTML file mein dunga, aur har code ke upar **Copy** aur **Download** button hoga — Download se seedha file save karke khol sakte ho. Apna purana code ya error paste karoge to galti bata kar poora sahi code dunga.\n\nEk saaf baat: free service kabhi-kabhi slow ho sakti hai — coding wale jawab mein 1 minute tak lag sakta hai. Basic jawab (hisab, time, date, joke) main bina net ke bhi turant de deta hoon.\n\nAb main aur bhi seekh gaya hoon:\n\n- 🖼️ **Photo banana** — likho: photo banao: pahadon par sunset\n- 👁️ **Code Preview** — HTML code ke upar Preview button se result turant dikhega\n- 🌐 **Live karo** — HTML website ke upar Live karo button se site seedha live karo (admin code ek baar daalo)\n- 🔍 **Live search** — aaj ka bhav, news, mausam poochho, taza jawab milega\n- 🔗 **Link check** — koi link bhejo, safe hai ya nahi bata doon\n- 🎬 **Video samjhao** — YouTube link bhejo ya + menu se video file bhejo, kya ho raha hai bata doon\n- 📷 **Photo samjhao** — + menu se photo bhejo, kya dikh raha hai bata doon\n- 📧 **Gmail** — apna Gmail jodo (+ menu mein 📧 Gmail jodo), phir 'meri email dikhao' likho — poori padhne ke liye 'pehli email padho' likho; bhejne ke liye 'email bhejo' likho\n- ✉️ **Email likhwana** — 'mere liye email likho: ...' likho, poora formal email likh dunga (sirf likhta hai, bhejta nahi)\n- 📸 **Instagram** — + menu mein 📸 Instagram jodo se apna Instagram jodo, phir 'instagram par post karo' likh kar photo post karo\n- 📺 **YouTube** — 'youtube par ... dhoondho' likho, video list + link dunga; + menu mein 📺 YouTube upload se video apne channel par Public upload karo (sabko dikhegi)\n- 📲 **App install** — + menu mein 📲 App install karo dabao (ya Chrome menu → 'Add to Home screen'), home screen par icon aa jayega\n- 💾 **Permanent save** — + menu mein 'Chat hamesha save karo' se chat aur yaadein hamesha ke liye save hongi (admin code ek baar daalo)\n- 🔊 **Bol kar sunana** — har jawab ke neeche Sunao button\n- 🧠 **Yaad rakhna** — 'yaad rakho: ...' likho, is chat mein yaad rakhunga\n- 🧰 **Tools** — + wale menu mein To-Do, Kharcha Tracker aur Quiz\n- 📄 **File padhna** — + wale menu se PDF ya text file bhejo, summary dunga\n- 🎤 **Bol kar likhna** — input ke paas mic dabao aur bol do\n- 🎨 **Naam / Rang** — + wale menu se mera naam aur rang badlo\n- ⬇️ **Chat download** — poori chat ek file mein save karo\n\nJo poochna hai likho — code, sawal, hisab, kuch bhi. Ya neeche ke button dabao:";
+          var row = addMessage("ai", welcome);
+          var chips = document.createElement("div");
+          chips.className = "chips";
+          [
+            ["💻 Calculator app ka code banao", "Ek sundar calculator app ka poora HTML code banao jo ek hi file mein chale"],
+            ["🖼️ Photo banao: pahadon par sunset", "Ek photo banao: pahadon par khoobsurat sunset aur ek chhota sa ghar"],
+            ["🧰 Tools kholo (To-Do, Kharcha, Quiz)", null],
+            ["🌐 Meri ek-page website ka code banao", "Ek one-page personal website ka poora HTML code banao jisme mera naam Shiva bade aksharon mein dikhe"],
+            ["Ek joke sunao", "Ek joke sunao"],
+            ["Tum kya-kya kar sakte ho?", "Tum kya-kya kar sakte ho?"]
+          ].forEach(function (pair) {
+            var c = document.createElement("button");
+            c.type = "button";
+            c.className = "chip";
+            c.textContent = pair[0];
+            c.addEventListener("click", function () {
+              if (pair[1]) handleSend(pair[1]);
+              else openToolsMenu();
+            });
+            chips.appendChild(c);
+          });
+          row.querySelector(".bubble").appendChild(chips);
+          setStatus(true, aiName + " ready — bina API key");
+          scrollToBottom();
+        }
+
+        newChatBtn.addEventListener("click", startFresh);
+        document.getElementById("trayClear").addEventListener("click", startFresh);
+
+        loadModels();
+        startFresh();
+        syncChatFromServer();
+        loadMemories();
+
+        // Instagram login se wapas aaye (?code=...) to token exchange karo
+        try {
+          var igCode = new URLSearchParams(location.search).get("code");
+          if (igCode) {
+            try { history.replaceState({}, "", location.pathname); } catch (e) {}
+            igExchangeCode(igCode);
+          }
+        } catch (e) {}
+      })();
+    </script>
+  </body>
+</html>

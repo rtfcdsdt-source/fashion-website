@@ -1,0 +1,37 @@
+{
+  "background_color": "#ffffff",
+  "description": "Bina API key ke AI chat \u2014 Mera AI jaisa, free",
+  "display": "standalone",
+  "icons": [
+    {
+      "src": "/free-ai-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/free-ai-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/free-ai-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/free-ai-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "name": "Free AI Chat",
+  "orientation": "portrait",
+  "scope": "/",
+  "short_name": "Free AI",
+  "start_url": "/",
+  "theme_color": "#2563eb"
+}

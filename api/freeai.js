@@ -492,7 +492,14 @@ async function handleYoutube(req, res) {
 }
 
 module.exports = async (req, res) => {
-  let fn = "";
+  // CORS: the standalone Free AI Chat app (own Vercel project / origin) calls
+  // this endpoint cross-origin. No cookies/credentials are used (the admin
+  // code travels in the POST body), so a permissive origin is safe here.
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  if (req.method === "OPTIONS") { res.status(200).end(); return; }
+    let fn = "";
   let action = "";
   let codeParam = "";
   try {
