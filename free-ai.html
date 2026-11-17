@@ -3689,30 +3689,6 @@
           if (!serverChatOn()) memories = [];
           history = [];
           messagesEl.innerHTML = "";
-          var welcome =
-            "Namaste Shiva! 😊 Main **" + aiName + "** hoon — bilkul Mera AI jaisa chat, par ye **bina API key** ke chalta hai, to Gemini wali daily limit khatm hone ki dikkat nahi.\n\nAb meri **coding aur strong** hai: poora chalta-hua code milega — aadha-adhura nahi. Website ya app ka code ek hi HTML file mein dunga, aur har code ke upar **Copy** aur **Download** button hoga — Download se seedha file save karke khol sakte ho. Apna purana code ya error paste karoge to galti bata kar poora sahi code dunga.\n\nEk saaf baat: free service kabhi-kabhi slow ho sakti hai — coding wale jawab mein 1 minute tak lag sakta hai. Basic jawab (hisab, time, date, joke) main bina net ke bhi turant de deta hoon.\n\nAb main aur bhi seekh gaya hoon:\n\n- 🖼️ **Photo banana** — likho: photo banao: pahadon par sunset\n- 👁️ **Code Preview** — HTML code ke upar Preview button se result turant dikhega\n- 🌐 **Live karo** — HTML website ke upar Live karo button se site seedha live karo (admin code ek baar daalo)\n- 🔍 **Live search** — aaj ka bhav, news, mausam poochho, taza jawab milega\n- 🔗 **Link check** — koi link bhejo, safe hai ya nahi bata doon\n- 🎬 **Video samjhao** — YouTube link bhejo ya + menu se video file bhejo, kya ho raha hai bata doon\n- 📷 **Photo samjhao** — + menu se photo bhejo, kya dikh raha hai bata doon\n- 📧 **Gmail** — apna Gmail jodo (+ menu mein 📧 Gmail jodo), phir 'meri email dikhao' likho — poori padhne ke liye 'pehli email padho' likho; bhejne ke liye 'email bhejo' likho\n- ✉️ **Email likhwana** — 'mere liye email likho: ...' likho, poora formal email likh dunga (sirf likhta hai, bhejta nahi)\n- 📸 **Instagram** — + menu mein 📸 Instagram jodo se apna Instagram jodo, phir 'instagram par post karo' likh kar photo post karo\n- 📺 **YouTube** — 'youtube par ... dhoondho' likho, video list + link dunga; + menu mein 📺 YouTube upload se video apne channel par Public upload karo (sabko dikhegi)\n- 📲 **App install** — + menu mein 📲 App install karo dabao (ya Chrome menu → 'Add to Home screen'), home screen par icon aa jayega\n- 💾 **Permanent save** — + menu mein 'Chat hamesha save karo' se chat aur yaadein hamesha ke liye save hongi (admin code ek baar daalo)\n- 🔊 **Bol kar sunana** — har jawab ke neeche Sunao button\n- 🧠 **Yaad rakhna** — 'yaad rakho: ...' likho, is chat mein yaad rakhunga\n- 🧰 **Tools** — + wale menu mein To-Do, Kharcha Tracker aur Quiz\n- 📄 **File padhna** — + wale menu se PDF ya text file bhejo, summary dunga\n- 🎤 **Bol kar likhna** — input ke paas mic dabao aur bol do\n- 🎨 **Naam / Rang** — + wale menu se mera naam aur rang badlo\n- ⬇️ **Chat download** — poori chat ek file mein save karo\n\nJo poochna hai likho — code, sawal, hisab, kuch bhi. Ya neeche ke button dabao:";
-          var row = addMessage("ai", welcome);
-          var chips = document.createElement("div");
-          chips.className = "chips";
-          [
-            ["💻 Calculator app ka code banao", "Ek sundar calculator app ka poora HTML code banao jo ek hi file mein chale"],
-            ["🖼️ Photo banao: pahadon par sunset", "Ek photo banao: pahadon par khoobsurat sunset aur ek chhota sa ghar"],
-            ["🧰 Tools kholo (To-Do, Kharcha, Quiz)", null],
-            ["🌐 Meri ek-page website ka code banao", "Ek one-page personal website ka poora HTML code banao jisme mera naam Shiva bade aksharon mein dikhe"],
-            ["Ek joke sunao", "Ek joke sunao"],
-            ["Tum kya-kya kar sakte ho?", "Tum kya-kya kar sakte ho?"]
-          ].forEach(function (pair) {
-            var c = document.createElement("button");
-            c.type = "button";
-            c.className = "chip";
-            c.textContent = pair[0];
-            c.addEventListener("click", function () {
-              if (pair[1]) handleSend(pair[1]);
-              else openToolsMenu();
-            });
-            chips.appendChild(c);
-          });
-          row.querySelector(".bubble").appendChild(chips);
           setStatus(true, aiName + " ready — bina API key");
           scrollToBottom();
         }
