@@ -3433,9 +3433,16 @@
               scrollToMessageTop(row);
               busy = false;
             })
-            .catch(function () {
+            .catch(function (err) {
               removeTyping();
-              var msg = "📺 YouTube upload nahi hua — dobara try karo. (Agar Google ne permission nahi di ho to + menu mein 📧 Gmail jodo dobara dabakar Allow karo.)";
+              var em = (err && err.message) || "";
+              var msg;
+              if (em.indexOf("http 403") >= 0) msg = "📺 Google ne upload mana kiya (403) — is Gmail par YouTube channel nahi mila. YouTube app mein apna channel check karo, phir dobara try karo.";
+              else if (em.indexOf("http 401") >= 0) msg = "📺 Google login purana ho gaya (401) — + menu mein 📧 Gmail jodo dobara dabakar Allow karo, phir dobara try karo.";
+              else if (em === "no_upload_url") msg = "📺 Google se upload link nahi mila — browser ne link chhupa liya. Page reload karke dobara try karo.";
+              else if (em === "no_token") msg = "📺 Google login nahi mila — + menu mein 📧 Gmail jodo dobara dabakar Allow karo, phir dobara try karo.";
+              else if (em.indexOf("http ") === 0) msg = "📺 Google ne mana kiya (" + em + ") — dobara try karo.";
+              else msg = "📺 YouTube upload nahi hua (network: " + (em || "pata nahi") + ") — internet check karke dobara try karo.";
               var row = addMessage("ai", msg);
               pushHist({ role: "assistant", content: msg });
               scrollToMessageTop(row);
