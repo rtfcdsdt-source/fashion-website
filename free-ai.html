@@ -1507,7 +1507,8 @@
           var hasVerb = /(banao|bana do|banana|chahiye|dikhao|generate|create|make|draw|bana\b)/.test(low);
           if (!hasNoun || !hasVerb) return null;
           // "photo gallery website ka code banao" jaisi coding request photo nahi hai — use AI par jaane do
-          if (/(code|html|website|webpage|web page|script)/.test(low)) return null;
+          // Code/site ko theek karne wali baat (grid, masonry, header, button...) bhi photo request nahi hai
+          if (/(code|html|website|webpage|web page|script|grid|masonry|header|column|button|layout|pill)/.test(low)) return null;
           var parts = raw.split(/[:：]/);
           if (parts.length > 1 && parts[1].trim().length > 2) return parts[1].trim();
           var d = " " + low + " ";
