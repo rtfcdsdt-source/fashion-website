@@ -662,7 +662,7 @@
           "(7) If the user asks a follow-up change to code you already gave, return the FULL updated code again, not only the diff. " +
           "(8) If the request is unclear, make the most sensible complete version instead of asking many questions. " +
           "For non-coding questions, answer normally and helpfully — study, business, videos and daily questions included. Use simple markdown (bold, lists, code blocks) when it helps." +
-          " APP FEATURES: this chat app itself can generate a photo when the user asks for one (e.g. 'photo banao: ...'), check any link the user sends for safety (it shows name-based warnings instantly, reads the page text through the free r.jina.ai reader when it can, then you give a short Hinglish verdict — what the link looks like, what the danger is, what to do; NEVER say 'pakka safe' or '100% safe', it is only an estimate; if the page cannot be read, judge by the name only and say so clearly; never ask the user to send private or login links for checking), describe a YouTube video from its title and description (it reads the video page text through the free r.jina.ai reader, then you summarise what the video is about from the title and description ONLY — you cannot see the scenes or hear the audio, so never invent scene details; if the page cannot be read, say so honestly and do not guess), understand a video FILE the user uploads from the + tray 'Video samjhao' button (the file goes to the server, which shows it to Gemini and returns a description of the scenes and the audio — max 2.5 MB, MP4/WebM/MOV), understand a PHOTO the user uploads from the + tray 'Photo samjhao' button (the file goes to the server, which shows it to Gemini and describes what is in it, or answers the user's question about it — max 2.5 MB, JPEG/PNG/WebP/GIF; if the user typed a question before choosing the photo, answer that question about the photo), show a live Preview of HTML code (Preview button above the code), publish an HTML website live with the 'Live karo' button above the code (asks for the admin code once, then gives a live link), answer live/current questions (price, news, weather, gold rate...) using the fresh Google search results the app attaches to your prompt, save the chat and remembered facts on the server forever when the admin code is set (the user enables it from 'Chat hamesha save karo' in the + tray), read any answer aloud (Sunao button under each answer), remember facts for this chat when the user says 'yaad rakho', read a PDF or text file the user attaches from the + tray (the app extracts the file's text and sends it to you — then summarize it and answer questions about it), accept voice dictation through the mic button, let the user rename you and change your theme colour in the + tray settings, download the whole chat as a file; the user can also install this chat as a phone app (the + tray 'App install karo' button appears when Chrome offers it, otherwise Chrome menu → 'Add to Home screen'); and it has To-do, Kharcha Tracker and Quiz tools in the + tray. It can also read the user's own Gmail inbox when asked (each user connects their own Gmail with Google login from the + tray 'Gmail jodo' button — read-only, only the latest emails, sender + subject + a short snippet, and read one email fully when asked ('pehli email padho' or '2 number wali email padho' after the list), and send an email when asked (step by step: who, subject, what to write — it shows the draft first and sends only after the user says 'bhej do'), and write a complete formal email for the user when asked ('mere liye email likho: ...' — subject + body, but it does NOT send it; sending needs a separate 'email bhejo'); the exact commands are 'email bhejo' to send, 'mere liye email likho: <topic>' to get a written email, 'meri email dikhao' or 'unread email dikhao' to list emails, 'pehli email padho' to read one fully — quote THESE commands in any how-to guide, never invent other command formats; the mail stays in the user's own account and nothing is saved on the server; if Gmail is not connected yet, say so plainly instead of guessing). It can also connect the user's own Instagram (Professional account only) when asked — the user connects it from the + tray 'Instagram jodo' button (Instagram login, token kept in memory only), and post a photo when asked ('instagram par post karo' — the app uploads the photo to the user's own site first for a public link, then publishes it through the Instagram API; caption is the text typed with the command). If Instagram is not connected yet, say so plainly and tell the user the Meta app setup is still needed. It can also search YouTube videos when asked ('youtube par ... dhoondho' — it asks the server, which searches YouTube and shows the top videos with links; if the YouTube key is not set up yet, say so plainly). It can also upload a video file to the user's own YouTube channel when asked ('youtube par video upload karo' — or just 'upload karo' / 'fir se upload karo' to upload again, the gallery opens straight away without the + tray; the user picks a video file from the + tray 'YouTube upload' button or the command; the app uploads it directly to YouTube as Public (sabko dikhegi) using the user's Google login token, max 100 MB, MP4/WebM/MOV; if Google login is not connected yet, say so plainly). The app handles those requests itself, so never claim you cannot make photos or remember things in this chat." +
+          " APP FEATURES: this chat app itself can generate a photo when the user asks for one (e.g. 'photo banao: ...'), check any link the user sends for safety (it shows name-based warnings instantly, reads the page text through the free r.jina.ai reader when it can, then you give a short Hinglish verdict — what the link looks like, what the danger is, what to do; NEVER say 'pakka safe' or '100% safe', it is only an estimate; if the page cannot be read, judge by the name only and say so clearly; never ask the user to send private or login links for checking), describe a YouTube video from its title and description (it reads the video page text through the free r.jina.ai reader, then you summarise what the video is about from the title and description ONLY — you cannot see the scenes or hear the audio, so never invent scene details; if the page cannot be read, say so honestly and do not guess), understand a video FILE the user uploads from the + tray 'Video samjhao' button (the file goes to the server, which shows it to Gemini and returns a description of the scenes and the audio — max 2.5 MB, MP4/WebM/MOV), understand a PHOTO the user uploads from the + tray 'Photo samjhao' button (the file goes to the server, which shows it to Gemini and describes what is in it, or answers the user's question about it — max 2.5 MB, JPEG/PNG/WebP/GIF; if the user typed a question before choosing the photo, answer that question about the photo), show a live Preview of HTML code (Preview button above the code), publish an HTML website live with the 'Live karo' button above the code (asks for the admin code once, then gives a live link), answer live/current questions (price, news, weather, gold rate...) using the fresh Google search results the app attaches to your prompt, save the chat and remembered facts on the server forever when the admin code is set (the user enables it from 'Chat hamesha save karo' in the + tray), read any answer aloud (Sunao button under each answer), remember facts for this chat when the user says 'yaad rakho', read a PDF or text file the user attaches from the + tray (the app extracts the file's text and sends it to you — then summarize it and answer questions about it), accept voice dictation through the mic button, let the user rename you and change your theme colour in the + tray settings, download the whole chat as a file; the user can also install this chat as a phone app (the + tray 'App install karo' button appears when Chrome offers it, otherwise Chrome menu → 'Add to Home screen'); and it has To-do, Kharcha Tracker and Quiz tools in the + tray. It can also read the user's own Gmail inbox when asked (each user connects their own Gmail with Google login from the + tray 'Gmail jodo' button — read-only, only the latest emails, sender + subject + a short snippet, and read one email fully when asked ('pehli email padho' or '2 number wali email padho' after the list), and send an email when asked (step by step: who, subject, what to write — it shows the draft first and sends only after the user says 'bhej do'), and write a complete formal email for the user when asked ('mere liye email likho: ...' — subject + body, but it does NOT send it; sending needs a separate 'email bhejo'); the exact commands are 'email bhejo' to send, 'mere liye email likho: <topic>' to get a written email, 'meri email dikhao' or 'unread email dikhao' to list emails, 'pehli email padho' to read one fully — quote THESE commands in any how-to guide, never invent other command formats; the mail stays in the user's own account and nothing is saved on the server; if Gmail is not connected yet, say so plainly instead of guessing). It can also connect the user's own Instagram (Professional account only) when asked — the user connects it from the + tray 'Instagram jodo' button (Instagram login, token kept in memory only), and post a photo when asked ('instagram par post karo' — the app uploads the photo to the user's own site first for a public link, then publishes it through the Instagram API; caption is the text typed with the command). If Instagram is not connected yet, say so plainly and tell the user the Meta app setup is still needed. It can also search YouTube videos when asked ('youtube par ... dhoondho' — it asks the server, which searches YouTube and shows the top videos with links; if the YouTube key is not set up yet, say so plainly). It can also upload a video file to the user's own YouTube channel when asked ('youtube par video upload karo' — or just 'upload karo' / 'fir se upload karo' to upload again, the gallery opens straight away without the + tray; the user picks a video file from the + tray 'YouTube upload' button or the command; after picking, the app remembers the video and can make a title, description, hashtags and SEO tags for it when asked ('iske liye title description hashtag SEO bana kar do' — it uses the video file's name; then it uploads with that title and description when the user says 'haan' or 'upload kar do'); the app uploads it directly to YouTube as Public (sabko dikhegi) using the user's Google login token, max 100 MB, MP4/WebM/MOV; if Google login is not connected yet, say so plainly). The app handles those requests itself, so never claim you cannot make photos or remember things in this chat." +
           " THINKING RULES: before answering, think step by step silently. For maths, logic and code, double-check your result before replying. Never invent facts, names, numbers or links - if you are not sure, say so honestly and give your best guess clearly marked as a guess. Answer exactly what was asked, with no filler.";
 
         var history = []; // {role: 'user'|'assistant', content: string}
@@ -2000,7 +2000,25 @@
         ytVideoInput.addEventListener("change", function () {
           var f = ytVideoInput.files && ytVideoInput.files[0];
           ytVideoInput.value = "";
-          if (f) ytUploadVideo(f);
+          if (!f) return;
+          if (ytPickTimer) { clearTimeout(ytPickTimer); ytPickTimer = null; }
+          if (!/^video\//i.test(f.type) && !/\.(mp4|webm|mov)$/i.test(f.name)) {
+            busy = true;
+            replyLocal("📺 Ye video file nahi lagti 😕 — sirf **MP4 / WebM / MOV** video chalegi. + menu mein **📺 YouTube upload** se sahi video chuno.");
+            return;
+          }
+          if (f.size > YT_UPLOAD_MAX) {
+            busy = true;
+            replyLocal("📺 Video bahut badi hai (100 MB se zyada) — chhoti video chuno.");
+            return;
+          }
+          // Video abhi upload NAHI hogi — chat use yaad rakhega; title/description
+          // banwana ho to "iske liye title description hashtag SEO bana kar do" likho,
+          // ya seedha "upload kar do" likho.
+          ytPendingFile = f;
+          ytPendingMeta = null;
+          var mb = (f.size / (1024 * 1024)).toFixed(1);
+          replyLocal("📹 Video chuni gayi: **" + f.name + "** (" + mb + " MB).\n\nAb 'iske liye title description hashtag SEO bana kar do' likho, ya seedha 'upload kar do' likho — video **Public** upload hogi (sabko dikhegi).");
         });
 
         function handlePhotoFile(file) {
@@ -2722,6 +2740,8 @@
         // ---- YouTube search + upload ----
         var ytPickTimer = null;
         var ytUploadTitle = "";
+        var ytPendingFile = null; // chuni hui video — upload se pehle chat yaad rakhta hai
+        var ytPendingMeta = null; // {title, description, hashtags, tags} — "iske liye title..." se bana
         var YT_UPLOAD_MAX = 100 * 1024 * 1024; // 100 MB
         function gmailHasToken() { return !!gmailToken; }
         function updateGmailButton() {
@@ -3348,6 +3368,71 @@
           if (low.indexOf("youtube") < 0 && low.indexOf("youtu.be") < 0) return false;
           return /(upload|chadhao|daalo|daal|post karo|bhejo)/.test(low);
         }
+        // ---- YouTube metadata: chuni hui video ke liye title/description/hashtag/SEO ----
+        function ytMetaWanted(text) {
+          if (!text) return false;
+          var low = String(text).toLowerCase();
+          if (/(photo|tasveer|image|instagram|email|mail)/.test(low)) return false;
+          if (!/(title|description|hashtag|seo)/.test(low)) return false;
+          if (/(iske liye|is video|is ke liye|iska|iski)/.test(low)) return true;
+          if (ytPendingFile && /(bana|banao|bana do|likh|likho|do)/.test(low)) return true;
+          if (ytPendingMeta && /(badlo|change|dobara|dubara|phir se|fir se)/.test(low)) return true;
+          return false;
+        }
+        function ytCleanName(name) {
+          var s = String(name || "").replace(/\.[^.]+$/, "")
+            .replace(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi, " ")
+            .replace(/\b[0-9a-f]{4,}\b/gi, " ")
+            .replace(/\b(media generation|original|video)\b/gi, " ")
+            .replace(/[_-]+/g, " ").replace(/\s+/g, " ").trim().replace(/\s+\d+$/, "");
+          return s;
+        }
+        function ytParseMeta(reply, base) {
+          var r = String(reply || "");
+          function grab(re) { var m = r.match(re); return m ? m[1].replace(/\*/g, "").trim() : ""; }
+          var title = grab(/title\s*:\s*(.+)/i);
+          var desc = grab(/description\s*:\s*([\s\S]*?)(?=\nhashtags\s*:|\nseo tags\s*:|$)/i);
+          var tagsLine = grab(/hashtags\s*:\s*(.+)/i);
+          var seoLine = grab(/seo tags\s*:\s*(.+)/i);
+          if (!title) title = base.replace(/\b\w/g, function (c) { return c.toUpperCase(); });
+          title = title.slice(0, 100);
+          if (!desc) desc = base + " — video dekho, like aur subscribe karo!";
+          var hashWords = (tagsLine.match(/#[\w\u0900-\u097F]+/g) || []);
+          if (!hashWords.length) {
+            hashWords = base.split(/\s+/).filter(function (w) { return w.length >= 3; }).slice(0, 8).map(function (w) { return "#" + w.charAt(0).toUpperCase() + w.slice(1); });
+          }
+          hashWords = hashWords.slice(0, 15);
+          var tags = (seoLine ? seoLine.split(/[,|\n]+/) : []).map(function (s) { return s.trim(); }).filter(function (s) { return s.length > 1; }).slice(0, 15);
+          if (!tags.length) tags = base.split(/\s+/).filter(function (w) { return w.length >= 3; }).slice(0, 10);
+          desc = desc.slice(0, 4000);
+          return { title: title, description: desc, hashtags: hashWords.join(" "), tags: tags };
+        }
+        function ytMakeMeta() {
+          if (!ytPendingFile) {
+            replyLocal("📹 Pehle video chuno — 'upload karo' likh kar video chuno, phir iske liye title, description, hashtag aur SEO bana dunga.");
+            return;
+          }
+          var base = ytCleanName(ytPendingFile.name) || "video";
+          var aiPrompt = "Is YouTube video ke liye title, description, hashtags aur SEO tags banao. Video file ka naam: '" + base + "'. Jawab isi format me do, har cheez apni line me:\nTitle: ...\nDescription: ... (2-3 lines, video ke baare me)\nHashtags: #... #...\nSEO tags: ..., ..., ...\nSirf Hinglish me jawab do.";
+          function showMeta(meta) {
+            ytPendingMeta = meta;
+            var msg = "🎬 Is video ke liye:\n\n**Title:** " + meta.title + "\n\n**Description:** " + meta.description + "\n\n**Hashtags:** " + meta.hashtags + "\n\n**SEO tags:** " + meta.tags.join(", ") + "\n\nUpload kar dun? 'Haan' likho ya 'upload kar do'.";
+            var row = addMessage("ai", msg);
+            pushHist({ role: "assistant", content: msg });
+            scrollToMessageTop(row);
+            busy = false;
+          }
+          addTyping();
+          askFreeAI(aiPrompt)
+            .then(function (reply) {
+              removeTyping();
+              showMeta(ytParseMeta(reply, base));
+            })
+            .catch(function () {
+              removeTyping();
+              showMeta(ytParseMeta("", base));
+            });
+        }
         function ytSearchQuery(userText) {
           var q = String(userText || "").replace(/youtube|youtu\.be/gi, "").replace(/\b(par|pe|mein|me)\b\s*(dhoondho|dhundo|khojo|search|dekho|dikhao)\b/gi, "").replace(/\b(dhoondho|dhundo|khojo|search|dekho|dikhao)\b/gi, "").replace(/^\s*(par|pe|mein|me)\b\s*/gi, "").trim().replace(/\s+/g, " ").slice(0, 200);
           return q;
@@ -3390,6 +3475,8 @@
             });
         }
         function ytUploadStart(userText) {
+          // Video pehle se chuni hui hai to dobara picker nahi khulta — wahi video upload hoti hai
+          if (ytPendingFile) { ytUploadVideo(ytPendingFile); return; }
           if (!window.google || !window.google.accounts || !window.google.accounts.oauth2) {
             replyLocal("📺 Google login abhi load nahi hua — net check karke page dobara kholo, phir 'youtube par video upload karo' likho.");
             return;
@@ -3430,7 +3517,12 @@
             replyLocal("📺 Video bahut badi hai (100 MB se zyada) — chhoti video chuno.");
             return;
           }
-          var title = ytUploadTitle || file.name.replace(/\.[^.]+$/, "").replace(/[_-]+/g, " ").trim().slice(0, 100) || "Free AI Chat video";
+          var meta = ytPendingMeta;
+          var title = (meta && meta.title) || ytUploadTitle || file.name.replace(/\.[^.]+$/, "").replace(/[_-]+/g, " ").trim().slice(0, 100) || "Free AI Chat video";
+          var description = meta ? ((meta.description || "") + (meta.hashtags ? "\n\n" + meta.hashtags : "")) : "Uploaded via Free AI Chat";
+          description = description.slice(0, 4500);
+          var snippet = { title: title, description: description };
+          if (meta && meta.tags && meta.tags.length) snippet.tags = meta.tags;
           addTyping();
           var retried = false;
           function startSession() {
@@ -3442,7 +3534,7 @@
                 "X-Upload-Content-Type": file.type || "video/mp4",
                 "X-Upload-Content-Length": String(file.size)
               },
-              body: JSON.stringify({ snippet: { title: title, description: "Uploaded via Free AI Chat" }, status: { privacyStatus: "public" } })
+              body: JSON.stringify({ snippet: snippet, status: { privacyStatus: "public" } })
             });
           }
           function doUpload() {
@@ -3479,6 +3571,7 @@
               var row = addMessage("ai", msg);
               pushHist({ role: "assistant", content: msg });
               scrollToMessageTop(row);
+              ytPendingFile = null; ytPendingMeta = null;
               busy = false;
             })
             .catch(function (err) {
@@ -3491,6 +3584,7 @@
               else if (em === "no_token") msg = "📺 Google login nahi mila — + menu mein 📧 Gmail jodo dobara dabakar Allow karo, phir dobara try karo.";
               else if (em.indexOf("http ") === 0) msg = "📺 Google ne mana kiya (" + em + ") — dobara try karo.";
               else msg = "📺 YouTube upload nahi hua (network: " + (em || "pata nahi") + ") — internet check karke dobara try karo.";
+              if (ytPendingFile) msg += "\n\nVideo abhi bhi chuni hui hai — dobara 'upload kar do' likho.";
               var row = addMessage("ai", msg);
               pushHist({ role: "assistant", content: msg });
               scrollToMessageTop(row);
@@ -3609,6 +3703,22 @@
           }
           if (igPostWanted(userText)) {
             igPostStart(userText);
+            return;
+          }
+
+          // Pending YouTube video: metadata banao / rehne do / haan = upload
+          var ytLow = userText.toLowerCase().trim();
+          if (ytPendingFile && /^(rehne do|chhodo|cancel|ruk jao|mat karo|nahi)\b/.test(ytLow)) {
+            ytPendingFile = null; ytPendingMeta = null;
+            replyLocal("Theek hai, video upload nahi hui.");
+            return;
+          }
+          if (ytMetaWanted(userText)) {
+            ytMakeMeta();
+            return;
+          }
+          if (ytPendingMeta && /^(haan|ha|han|yes|kar do|theek hai|ok|upload kar do)$/.test(ytLow)) {
+            ytUploadVideo(ytPendingFile);
             return;
           }
 
