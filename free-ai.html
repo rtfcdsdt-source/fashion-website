@@ -3362,7 +3362,20 @@
           var title = String(userText || "").replace(/youtube|youtu\.be/gi, "").replace(/\b(par|pe|mein|me)\b\s*(upload|chadhao|daalo|daal|post karo|bhejo)\s*(karo|kar do)?/gi, "").replace(/\b(upload|chadhao|daalo|daal|post karo|bhejo)\b/gi, "").trim().replace(/\s+/g, " ").slice(0, 100);
           ytUploadTitle = title || "";
           if (!gmailToken) {
-            replyLocal("📺 YouTube upload ke liye pehle Google login chahiye — + menu mein 📧 Gmail jodo dabakar apna Gmail chun kar Allow karo, phir 'youtube par video upload karo' likho.");
+            // Login abhi chat se hi hoga: Google popup yahin khulega, Allow dabate hi
+            // video picker khud khul jayega — + menu mein jaane ki zaroorat nahi.
+            addTyping();
+            requestGmailToken(function (tok) {
+              removeTyping();
+              if (!tok) {
+                replyLocal("📺 Google login nahi mila — Allow nahi kiya to upload nahi hoga. Dobara 'youtube par video upload karo' likho, popup mein Allow dabao.");
+                return;
+              }
+              if (ytPickTimer) clearTimeout(ytPickTimer);
+              ytPickTimer = setTimeout(function () { ytPickTimer = null; busy = false; }, 60000);
+              replyLocal("📺 Video chuno — jo video upload karni hai, use chuno. Video **Public** upload hogi (sabko dikhegi).");
+              document.getElementById("ytVideoInput").click();
+            });
             return;
           }
           // Video picker band kar diya to 60s mein chat khud chalu ho jaye (Gmail popup wala fix jaisa)
