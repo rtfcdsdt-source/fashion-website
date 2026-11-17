@@ -1,7 +1,7 @@
 // api/freeai.js — Free AI Chat ka EK HI server endpoint.
 // Vercel Hobby plan mein max 12 Serverless Functions hote hain — isliye Free AI Chat
-// ke paanch kaam (live search + permanent chat + permanent memory + video samajh + photo samajh)
-// ek hi file mein hain.
+// ke chhah kaam (live search + permanent chat + permanent memory + video samajh + photo samajh
+// + Instagram token exchange) ek hi file mein hain.
 // Route ?fn= se:
 //   POST /api/freeai?fn=search {q} → {ok, results: [{title, snippet, link}]} (Serper Google Search)
 //   GET  /api/freeai?fn=chat&code=... → chat load karo (admin only)
@@ -12,7 +12,8 @@
 //   POST /api/freeai?fn=memory&action=clear {code} → yaadein delete karo (admin only).
 //   POST /api/freeai?fn=video {video: {mimeType, data}} → {ok, text} (Gemini video samajh, no admin code)
 //   POST /api/freeai?fn=photo {image: {mimeType, data}, question?} → {ok, text} (Gemini photo samajh, no admin code)
-// Env: SERPER_API_KEY (search) + DATABASE_URL (ya POSTGRES_URL / NEON_DATABASE_URL) + REELS_ADMIN_CODE + GEMINI_API_KEY (video + photo).
+//   POST /api/freeai?fn=ig-exchange {code, redirect_uri} → {ok, access_token, user_id, expires_in} (Instagram Login token, no admin code)
+// Env: SERPER_API_KEY (search) + DATABASE_URL (ya POSTGRES_URL / NEON_DATABASE_URL) + REELS_ADMIN_CODE + GEMINI_API_KEY (video + photo) + IG_APP_ID + IG_APP_SECRET (Instagram exchange).
 // Storage: Neon Postgres over its raw HTTP /sql endpoint (no npm packages).
 // Chat limit: max 100 messages, har message max 4000 chars, total max ~200,000 chars.
 // Memory limit: max 30 yaadein, har yaad max 500 chars, total max ~50,000 chars.
@@ -428,6 +429,43 @@ async function handlePhoto(req, res) {
   return send(res, 200, { ok: true, text: text });
 }
 
+// POST /api/freeai?fn=ig-exchange {code, redirect_uri} → {ok, access_token, user_id, expires_in}.
+// Instagram Login: OAuth code → short token (api.instagram.com) → 60-day long token (graph.instagram.com).
+// App secret server par hi rehta hai, page mein kabhi nahi jata. No admin code (per-user flow).
+async function handleIgExchange(req, res) {
+  if (req.method !== "POST") { res.setHeader("Allow", "POST"); return send(res, 405, { ok: false, error: "Sirf POST chalega." }); }
+  const appId = (process.env.IG_APP_ID || "").trim();
+  const appSecret = (process.env.IG_APP_SECRET || "").trim();
+  if (!appId || !appSecret) return send(res, 503, { ok: false, error: "Instagram abhi set nahi hua hai — Meta app ka App ID aur Secret Vercel mein daalna baki hai." });
+  const body = await readBody(req);
+  const code = (body && typeof body.code === "string") ? body.code.trim() : "";
+  const redirectUri = (body && typeof body.redirect_uri === "string") ? body.redirect_uri.trim().slice(0, 500) : "";
+  if (!code || !redirectUri) return send(res, 400, { ok: false, error: "Login code nahi mila. Dobara Instagram jodo dabao." });
+  let shortTok = null, userId = "";
+  try {
+    const r1 = await fetch("https://api.instagram.com/oauth/access_token", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({ client_id: appId, client_secret: appSecret, grant_type: "authorization_code", redirect_uri: redirectUri, code: code }),
+      signal: AbortSignal.timeout(9000)
+    });
+    const j1 = await r1.json().catch(function () { return null; });
+    if (!r1.ok || !j1 || !j1.access_token) return send(res, 502, { ok: false, error: "Instagram se token nahi mila — code galat ya expire ho gaya. Dobara jodo dabao." });
+    shortTok = j1.access_token; userId = String(j1.user_id || "");
+  } catch (e) {
+    return send(res, 504, { ok: false, error: "Instagram se jod nahi paya. Thodi der baad dobara try karo." });
+  }
+  try {
+    const url2 = "https://graph.instagram.com/access_token?grant_type=ig_exchange_token&client_secret=" + encodeURIComponent(appSecret) + "&access_token=" + encodeURIComponent(shortTok);
+    const r2 = await fetch(url2, { signal: AbortSignal.timeout(9000) });
+    const j2 = await r2.json().catch(function () { return null; });
+    if (!r2.ok || !j2 || !j2.access_token) return send(res, 200, { ok: true, access_token: shortTok, user_id: userId, expires_in: 3600, short_lived: true });
+    return send(res, 200, { ok: true, access_token: j2.access_token, user_id: userId, expires_in: (j2.expires_in || 5184000), short_lived: false });
+  } catch (e) {
+    return send(res, 200, { ok: true, access_token: shortTok, user_id: userId, expires_in: 3600, short_lived: true });
+  }
+}
+
 module.exports = async (req, res) => {
   let fn = "";
   let action = "";
@@ -444,5 +482,6 @@ module.exports = async (req, res) => {
   if (fn === "memory") return handleMemory(req, res, action, codeParam);
   if (fn === "video") return handleVideo(req, res);
   if (fn === "photo") return handlePhoto(req, res);
+  if (fn === "ig-exchange") return handleIgExchange(req, res);
   send(res, 400, { ok: false, error: "bad_fn" });
 };

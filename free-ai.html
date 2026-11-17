@@ -587,6 +587,8 @@
         <button class="chip" type="button" id="trayVideo">🎬 Video samjhao</button>
         <button class="chip" type="button" id="trayPhoto">📷 Photo samjhao</button>
         <button class="chip" type="button" id="trayGmail">📧 Gmail jodo</button>
+        <button class="chip" type="button" id="trayIg">📸 Instagram jodo</button>
+        <button class="chip" type="button" id="trayIgPost">📸 Instagram post</button>
         <button class="chip" type="button" id="traySettings">🎨 Naam / Rang</button>
         <button class="chip" type="button" id="trayBrain">🧠 Dimaag</button>
         <button class="chip" type="button" id="trayDownload">⬇️ Chat download</button>
@@ -607,6 +609,7 @@
       <input type="file" id="fileInput" accept=".pdf,.txt,.md,.csv,.json,.log,text/plain,application/pdf" hidden />
       <input type="file" id="videoInput" accept="video/mp4,video/webm,video/quicktime" hidden />
       <input type="file" id="photoInput" accept="image/jpeg,image/png,image/webp,image/gif" hidden />
+      <input type="file" id="igPhotoInput" accept="image/jpeg,image/png" hidden />
 
       <div class="composer-wrap">
         <form class="composer" id="composerForm">
@@ -654,7 +657,7 @@
           "(7) If the user asks a follow-up change to code you already gave, return the FULL updated code again, not only the diff. " +
           "(8) If the request is unclear, make the most sensible complete version instead of asking many questions. " +
           "For non-coding questions, answer normally and helpfully — study, business, videos and daily questions included. Use simple markdown (bold, lists, code blocks) when it helps." +
-          " APP FEATURES: this chat app itself can generate a photo when the user asks for one (e.g. 'photo banao: ...'), check any link the user sends for safety (it shows name-based warnings instantly, reads the page text through the free r.jina.ai reader when it can, then you give a short Hinglish verdict — what the link looks like, what the danger is, what to do; NEVER say 'pakka safe' or '100% safe', it is only an estimate; if the page cannot be read, judge by the name only and say so clearly; never ask the user to send private or login links for checking), describe a YouTube video from its title and description (it reads the video page text through the free r.jina.ai reader, then you summarise what the video is about from the title and description ONLY — you cannot see the scenes or hear the audio, so never invent scene details; if the page cannot be read, say so honestly and do not guess), understand a video FILE the user uploads from the + tray 'Video samjhao' button (the file goes to the server, which shows it to Gemini and returns a description of the scenes and the audio — max 2.5 MB, MP4/WebM/MOV), understand a PHOTO the user uploads from the + tray 'Photo samjhao' button (the file goes to the server, which shows it to Gemini and describes what is in it, or answers the user's question about it — max 2.5 MB, JPEG/PNG/WebP/GIF; if the user typed a question before choosing the photo, answer that question about the photo), show a live Preview of HTML code (Preview button above the code), publish an HTML website live with the 'Live karo' button above the code (asks for the admin code once, then gives a live link), answer live/current questions (price, news, weather, gold rate...) using the fresh Google search results the app attaches to your prompt, save the chat and remembered facts on the server forever when the admin code is set (the user enables it from 'Chat hamesha save karo' in the + tray), read any answer aloud (Sunao button under each answer), remember facts for this chat when the user says 'yaad rakho', read a PDF or text file the user attaches from the + tray (the app extracts the file's text and sends it to you — then summarize it and answer questions about it), accept voice dictation through the mic button, let the user rename you and change your theme colour in the + tray settings, download the whole chat as a file, and it has To-do, Kharcha Tracker and Quiz tools in the + tray. It can also read the user's own Gmail inbox when asked (each user connects their own Gmail with Google login from the + tray 'Gmail jodo' button — read-only, only the latest emails, sender + subject + a short snippet, and read one email fully when asked ('pehli email padho' or '2 number wali email padho' after the list), and send an email when asked (step by step: who, subject, what to write — it shows the draft first and sends only after the user says 'bhej do'), and write a complete formal email for the user when asked ('mere liye email likho: ...' — subject + body, but it does NOT send it; sending needs a separate 'email bhejo'); the exact commands are 'email bhejo' to send, 'mere liye email likho: <topic>' to get a written email, 'meri email dikhao' or 'unread email dikhao' to list emails, 'pehli email padho' to read one fully — quote THESE commands in any how-to guide, never invent other command formats; the mail stays in the user's own account and nothing is saved on the server; if Gmail is not connected yet, say so plainly instead of guessing). The app handles those requests itself, so never claim you cannot make photos or remember things in this chat." +
+          " APP FEATURES: this chat app itself can generate a photo when the user asks for one (e.g. 'photo banao: ...'), check any link the user sends for safety (it shows name-based warnings instantly, reads the page text through the free r.jina.ai reader when it can, then you give a short Hinglish verdict — what the link looks like, what the danger is, what to do; NEVER say 'pakka safe' or '100% safe', it is only an estimate; if the page cannot be read, judge by the name only and say so clearly; never ask the user to send private or login links for checking), describe a YouTube video from its title and description (it reads the video page text through the free r.jina.ai reader, then you summarise what the video is about from the title and description ONLY — you cannot see the scenes or hear the audio, so never invent scene details; if the page cannot be read, say so honestly and do not guess), understand a video FILE the user uploads from the + tray 'Video samjhao' button (the file goes to the server, which shows it to Gemini and returns a description of the scenes and the audio — max 2.5 MB, MP4/WebM/MOV), understand a PHOTO the user uploads from the + tray 'Photo samjhao' button (the file goes to the server, which shows it to Gemini and describes what is in it, or answers the user's question about it — max 2.5 MB, JPEG/PNG/WebP/GIF; if the user typed a question before choosing the photo, answer that question about the photo), show a live Preview of HTML code (Preview button above the code), publish an HTML website live with the 'Live karo' button above the code (asks for the admin code once, then gives a live link), answer live/current questions (price, news, weather, gold rate...) using the fresh Google search results the app attaches to your prompt, save the chat and remembered facts on the server forever when the admin code is set (the user enables it from 'Chat hamesha save karo' in the + tray), read any answer aloud (Sunao button under each answer), remember facts for this chat when the user says 'yaad rakho', read a PDF or text file the user attaches from the + tray (the app extracts the file's text and sends it to you — then summarize it and answer questions about it), accept voice dictation through the mic button, let the user rename you and change your theme colour in the + tray settings, download the whole chat as a file, and it has To-do, Kharcha Tracker and Quiz tools in the + tray. It can also read the user's own Gmail inbox when asked (each user connects their own Gmail with Google login from the + tray 'Gmail jodo' button — read-only, only the latest emails, sender + subject + a short snippet, and read one email fully when asked ('pehli email padho' or '2 number wali email padho' after the list), and send an email when asked (step by step: who, subject, what to write — it shows the draft first and sends only after the user says 'bhej do'), and write a complete formal email for the user when asked ('mere liye email likho: ...' — subject + body, but it does NOT send it; sending needs a separate 'email bhejo'); the exact commands are 'email bhejo' to send, 'mere liye email likho: <topic>' to get a written email, 'meri email dikhao' or 'unread email dikhao' to list emails, 'pehli email padho' to read one fully — quote THESE commands in any how-to guide, never invent other command formats; the mail stays in the user's own account and nothing is saved on the server; if Gmail is not connected yet, say so plainly instead of guessing). It can also connect the user's own Instagram (Professional account only) when asked — the user connects it from the + tray 'Instagram jodo' button (Instagram login, token kept in memory only), and post a photo when asked ('instagram par post karo' — the app uploads the photo to the user's own site first for a public link, then publishes it through the Instagram API; caption is the text typed with the command). If Instagram is not connected yet, say so plainly and tell the user the Meta app setup is still needed. The app handles those requests itself, so never claim you cannot make photos or remember things in this chat." +
           " THINKING RULES: before answering, think step by step silently. For maths, logic and code, double-check your result before replying. Never invent facts, names, numbers or links - if you are not sure, say so honestly and give your best guess clearly marked as a guess. Answer exactly what was asked, with no filler.";
 
         var history = []; // {role: 'user'|'assistant', content: string}
@@ -1072,7 +1075,7 @@
             return "Main **" + aiName + "** hoon — Mera AI jaisa hi chat assistant, par ye bina kisi API key ke chalta hai. Sawal poochho, hisab karwao, code likhwao — koshish poori karunga! 💪";
           }
           if (/(kya kya kar sakte|kya kar sakte|tum kya kar|help|madad|features|kaam karte ho)/.test(low)) {
-            return "Main ye sab kar sakta hoon:\n\n- **Coding (strong)** — poora chalta-hua code: website, app, game, script — ek hi file mein, Download button ke saath\n- **Code Preview** — HTML code ke upar Preview button dabao, result turant chal kar dikhega\n- **Live karo** — HTML website ke upar Live karo button se site seedha live karo\n- **Live search** — aaj ka bhav, news, mausam poochho, taza jawab milega\n- **Link check** — koi link bhejo ('yeh link safe hai kya?'), naam + page padh kar bata doon — kabhi 'pakka safe' nahi kehta\n- **Video link** — YouTube link bhejo ('ye video kya hai?'), title/description se bata doon (scenes nahi dikhte)\n- **Video samjhao** — + menu mein **🎬 Video samjhao** se video file bhejo (2.5 MB tak), dekh kar + sun kar bata doon\n- **Photo samjhao** — + menu mein **📷 Photo samjhao** se photo bhejo (2.5 MB tak), kya dikh raha hai bata doon\n- **Gmail** — apna Gmail + menu mein 📧 Gmail jodo se jodo, phir 'meri email dikhao' likho — haal ki emails dikha doon; poori padhne ke liye 'pehli email padho' likho; bhejne ke liye 'email bhejo' likho\n- **Email likhwana** — likho `mere liye email likho: boss ko chhutti ke liye`, poora formal email likh dunga (ye sirf likhta hai, bhejta nahi — bhejne ke liye 'email bhejo' likho)\n- **Permanent save** — + menu mein 'Chat hamesha save karo' se chat aur yaadein hamesha ke liye save hongi\n- **Bug fix** — apna code ya error paste karo, main galti bata kar poora sahi code dunga\n- **Photo banana** — likho `photo banao: pahadon par sunset`, photo ban jayegi\n- **File padhna** — + wale menu mein **📄 File padho** se PDF ya text file bhejo, main padh kar summary dunga aur sawalon ke jawab bhi\n- **Bol kar likhna** — type karne ki jagah input ke paas 🎤 mic dabao aur bol do\n- **Bol kar sunana** — har jawab ke neeche 🔊 Sunao button hai\n- **Yaad rakhna** — `yaad rakho: ...` likho, is chat mein yaad rakhunga\n- **Naam / Rang badalna** — + wale menu mein **🎨 Naam / Rang** se mera naam aur rang apni pasand ka karo\n- **Chat download** — + wale menu mein **⬇️ Chat download** se poori chat file mein save karo\n- **Tools** — + wale menu mein To-Do list, Kharcha Tracker (chart ke saath) aur Quiz\n- **Sawal-jawab** — koi bhi topic, Hindi / Hinglish / English\n- **Hisab** — jaise `125 ka 15%` ya `45 * 8 + 20`; kharcha note karne ke liye `kharcha 200 khana`\n- **Time / date** — turant bata deta hoon\n\nBas likh kar bhejo!";
+            return "Main ye sab kar sakta hoon:\n\n- **Coding (strong)** — poora chalta-hua code: website, app, game, script — ek hi file mein, Download button ke saath\n- **Code Preview** — HTML code ke upar Preview button dabao, result turant chal kar dikhega\n- **Live karo** — HTML website ke upar Live karo button se site seedha live karo\n- **Live search** — aaj ka bhav, news, mausam poochho, taza jawab milega\n- **Link check** — koi link bhejo ('yeh link safe hai kya?'), naam + page padh kar bata doon — kabhi 'pakka safe' nahi kehta\n- **Video link** — YouTube link bhejo ('ye video kya hai?'), title/description se bata doon (scenes nahi dikhte)\n- **Video samjhao** — + menu mein **🎬 Video samjhao** se video file bhejo (2.5 MB tak), dekh kar + sun kar bata doon\n- **Photo samjhao** — + menu mein **📷 Photo samjhao** se photo bhejo (2.5 MB tak), kya dikh raha hai bata doon\n- **Gmail** — apna Gmail + menu mein 📧 Gmail jodo se jodo, phir 'meri email dikhao' likho — haal ki emails dikha doon; poori padhne ke liye 'pehli email padho' likho; bhejne ke liye 'email bhejo' likho\n- **Email likhwana** — likho `mere liye email likho: boss ko chhutti ke liye`, poora formal email likh dunga (ye sirf likhta hai, bhejta nahi — bhejne ke liye 'email bhejo' likho)\n- **Instagram** — + menu mein 📸 Instagram jodo se apna Instagram jodo (Professional account chahiye), phir 'instagram par post karo' likh kar photo post karo\n- **Permanent save** — + menu mein 'Chat hamesha save karo' se chat aur yaadein hamesha ke liye save hongi\n- **Bug fix** — apna code ya error paste karo, main galti bata kar poora sahi code dunga\n- **Photo banana** — likho `photo banao: pahadon par sunset`, photo ban jayegi\n- **File padhna** — + wale menu mein **📄 File padho** se PDF ya text file bhejo, main padh kar summary dunga aur sawalon ke jawab bhi\n- **Bol kar likhna** — type karne ki jagah input ke paas 🎤 mic dabao aur bol do\n- **Bol kar sunana** — har jawab ke neeche 🔊 Sunao button hai\n- **Yaad rakhna** — `yaad rakho: ...` likho, is chat mein yaad rakhunga\n- **Naam / Rang badalna** — + wale menu mein **🎨 Naam / Rang** se mera naam aur rang apni pasand ka karo\n- **Chat download** — + wale menu mein **⬇️ Chat download** se poori chat file mein save karo\n- **Tools** — + wale menu mein To-Do list, Kharcha Tracker (chart ke saath) aur Quiz\n- **Sawal-jawab** — koi bhi topic, Hindi / Hinglish / English\n- **Hisab** — jaise `125 ka 15%` ya `45 * 8 + 20`; kharcha note karne ke liye `kharcha 200 khana`\n- **Time / date** — turant bata deta hoon\n\nBas likh kar bhejo!";
           }
           if (/(thank|dhanyavad|shukriya|thanks)/.test(low)) {
             return "Koi baat nahi! 😊 Aur kuch chahiye to bas likh do.";
@@ -1932,6 +1935,27 @@
           if (f) handlePhotoFile(f);
         });
 
+        var igPhotoInput = document.getElementById("igPhotoInput");
+        document.getElementById("trayIg").addEventListener("click", function () {
+          trayEl.classList.remove("open");
+          plusBtn.classList.remove("open");
+          igConnect();
+        });
+        document.getElementById("trayIgPost").addEventListener("click", function () {
+          trayEl.classList.remove("open");
+          plusBtn.classList.remove("open");
+          if (busy) return;
+          busy = true;
+          addMessage("user", "instagram par post karo");
+          pushHist({ role: "user", content: "instagram par post karo" });
+          igPostStart("instagram par post karo");
+        });
+        igPhotoInput.addEventListener("change", function () {
+          var f = igPhotoInput.files && igPhotoInput.files[0];
+          igPhotoInput.value = "";
+          if (f) igPostPhoto(f);
+        });
+
         function handlePhotoFile(file) {
           if (busy) return;
           var okType = /^image\/(jpeg|png|webp|gif)$/i.test(file.type) || /\.(jpe?g|png|webp|gif)$/i.test(file.name);
@@ -2639,6 +2663,14 @@
         var gmailTokenClient = null;
         var gmailTokenCb = null;
         var gmailTokenTimer = null;
+
+        // ---- Instagram (Meta app ka App ID milte hi yahan daal dunga) ----
+        var IG_APP_ID = "";
+        var igToken = "";
+        var igUserId = "";
+        var igUsername = "";
+        var igCaption = "";
+        var igPickTimer = null;
         function gmailHasToken() { return !!gmailToken; }
         function updateGmailButton() {
           var b = document.getElementById("trayGmail");
@@ -3099,6 +3131,149 @@
           return t;
         }
 
+        // ---- Instagram jodo + photo post karo ----
+        function igRedirectUri() { try { return location.origin + "/free-ai"; } catch (e) { return "https://fashion-website-theta-taupe.vercel.app/free-ai"; } }
+        function igConnectWanted(text) {
+          if (!text) return false;
+          var low = String(text).toLowerCase();
+          // "instagram kaise jodte hain" jaisa SAWAL connect nahi karta — AI guide deta hai
+          if (/kaise|kya hota|kya hai|kya chahiye|tarika|tareeka|steps|step by step|sikhao|samjhao|matlab kya/.test(low)) return false;
+          return low.indexOf("instagram") >= 0 && /(jodo|jod|connect|login|link karo|lagao)/.test(low);
+        }
+        function igPostWanted(text) {
+          if (!text) return false;
+          var low = String(text).toLowerCase();
+          if (/kaise|kya hota|kya hai|kya chahiye|tarika|tareeka|steps|step by step|sikhao|samjhao|matlab kya/.test(low)) return false;
+          if (low.indexOf("instagram") < 0) return false;
+          return /(post|daalo|daal|bhejo|share|upload)/.test(low);
+        }
+        function updateIgButton() {
+          var b = document.getElementById("trayIg");
+          if (b) b.textContent = igToken ? "📸 Instagram juda ✓" : "📸 Instagram jodo";
+        }
+        function igConnect() {
+          var appId = (typeof window !== "undefined" && window.IG_APP_ID) || IG_APP_ID;
+          if (!appId) {
+            replyLocal("📸 Instagram jodne ke liye pehle Meta app banao — Instagram app mein apni ID ko Professional banao, phir developers.facebook.com par Business app banao aur mujhe uska Instagram App ID de do. Uske baad yahi button kaam karega.");
+            return;
+          }
+          try {
+            location.href = "https://www.instagram.com/oauth/authorize?client_id=" + encodeURIComponent(appId) + "&redirect_uri=" + encodeURIComponent(igRedirectUri()) + "&scope=instagram_business_basic,instagram_business_content_publish&response_type=code";
+          } catch (e) {
+            replyLocal("📸 Instagram login khol nahi paya — dobara try karo.");
+          }
+        }
+        function igExchangeCode(code) {
+          busy = true;
+          addTyping();
+          fetch("/api/freeai?fn=ig-exchange", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code: code, redirect_uri: igRedirectUri() }) })
+            .then(function (r) { return r.json().catch(function () { return null; }); })
+            .then(function (j) {
+              if (!j || !j.ok || !j.access_token) {
+                removeTyping();
+                var msg = "📸 Instagram jud nahi paya — " + ((j && j.error) ? j.error : "dobara try karo.");
+                var row = addMessage("ai", msg);
+                pushHist({ role: "assistant", content: msg });
+                scrollToMessageTop(row);
+                busy = false;
+                return;
+              }
+              igToken = j.access_token; igUserId = String(j.user_id || "");
+              return fetch("https://graph.instagram.com/me?fields=id,username&access_token=" + encodeURIComponent(igToken))
+                .then(function (r) { return r.json().catch(function () { return null; }); })
+                .catch(function () { return null; })
+                .then(function (me) {
+                  removeTyping();
+                  igUsername = (me && me.username) ? me.username : "";
+                  updateIgButton();
+                  var msg = "✅ Instagram jud gaya" + (igUsername ? " — @" + igUsername : "") + "! Ab 'instagram par post karo' likh kar photo post kar sakte ho.";
+                  var row = addMessage("ai", msg);
+                  pushHist({ role: "assistant", content: msg });
+                  scrollToMessageTop(row);
+                  busy = false;
+                });
+            })
+            .catch(function () {
+              removeTyping();
+              var msg = "📸 Instagram se jod nahi paya — thodi der baad dobara try karo.";
+              var row = addMessage("ai", msg);
+              pushHist({ role: "assistant", content: msg });
+              scrollToMessageTop(row);
+              busy = false;
+            });
+        }
+        function igPostStart(userText) {
+          if (!igToken || !igUserId) {
+            replyLocal("📸 Pehle Instagram jodo — + menu mein 📸 Instagram jodo dabao, phir post karna.");
+            return;
+          }
+          if (!getAdminCode()) {
+            replyLocal("📸 Photo post karne ke liye pehle admin code chahiye — + menu mein '💾 Chat hamesha save karo' dabakar code daalo, phir 'instagram par post karo' likho.");
+            return;
+          }
+          var cap = String(userText || "").replace(/instagram/gi, "").replace(/(par|pe|mein)?\s*(post|daalo|daal|bhejo|share|upload)\s*(karo|kar do)?/gi, "").trim().slice(0, 300);
+          igCaption = cap || "✨ Fashion Goals";
+          // Photo picker band kar diya to 60s mein chat khud chalu ho jaye (Gmail popup wala fix jaisa)
+          if (igPickTimer) clearTimeout(igPickTimer);
+          igPickTimer = setTimeout(function () { igPickTimer = null; busy = false; }, 60000);
+          document.getElementById("igPhotoInput").click();
+        }
+        function igPostPhoto(file) {
+          if (igPickTimer) { clearTimeout(igPickTimer); igPickTimer = null; }
+          addTyping();
+          var caption = igCaption;
+          downscalePhoto(file).then(function (img) {
+            var b64 = (img && img.data) || "";
+            if (!b64) { removeTyping(); replyLocal("📸 Photo padh nahi paya — dobara chuno."); return; }
+            if (b64.length > 1400000) { removeTyping(); replyLocal("📸 Photo bahut badi hai — chhoti photo chuno."); return; }
+            fetch("/api/photos", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code: getAdminCode(), data: b64, mime: "image/jpeg" }) })
+              .then(function (r) { return r.json().catch(function () { return null; }); })
+              .then(function (j) {
+                if (!j || !j.ok || !j.url) { removeTyping(); replyLocal("📸 Photo upload nahi hui — " + ((j && j.error) || "dobara try karo.")); busy = false; return; }
+                var imgUrl = String(j.url);
+                if (imgUrl.indexOf("http") !== 0) imgUrl = location.origin + imgUrl;
+                igPublish(imgUrl, caption);
+              })
+              .catch(function () { removeTyping(); replyLocal("📸 Photo upload nahi hui — dobara try karo."); busy = false; });
+          });
+        }
+        function igPublish(imgUrl, caption) {
+          fetch("https://graph.instagram.com/" + encodeURIComponent(igUserId) + "/media?image_url=" + encodeURIComponent(imgUrl) + "&caption=" + encodeURIComponent(caption) + "&access_token=" + encodeURIComponent(igToken), { method: "POST" })
+            .then(function (r) { return r.json().catch(function () { return null; }); })
+            .then(function (j) {
+              if (!j || !j.id) { removeTyping(); replyLocal("📸 Instagram ne photo nahi li — " + ((j && j.error && j.error.message) ? j.error.message : "dobara try karo.")); busy = false; return; }
+              igPollContainer(j.id, 0);
+            })
+            .catch(function () { removeTyping(); replyLocal("📸 Instagram se jod nahi paya — dobara try karo."); busy = false; });
+        }
+        function igPollContainer(cid, n) {
+          if (n > 12) { removeTyping(); replyLocal("📸 Instagram photo taiyaar nahi kar paya — thodi der baad dobara try karo."); busy = false; return; }
+          setTimeout(function () {
+            fetch("https://graph.instagram.com/" + encodeURIComponent(cid) + "?fields=status_code&access_token=" + encodeURIComponent(igToken))
+              .then(function (r) { return r.json().catch(function () { return null; }); })
+              .then(function (j) {
+                var st = j && j.status_code;
+                if (st === "FINISHED") {
+                  fetch("https://graph.instagram.com/" + encodeURIComponent(igUserId) + "/media_publish?creation_id=" + encodeURIComponent(cid) + "&access_token=" + encodeURIComponent(igToken), { method: "POST" })
+                    .then(function (r) { return r.json().catch(function () { return null; }); })
+                    .then(function (p) {
+                      removeTyping();
+                      var msg = (p && p.id) ? "✅ Instagram par post ho gaya! 🎉" : "📸 Publish nahi hua — " + ((p && p.error && p.error.message) ? p.error.message : "dobara try karo.");
+                      var row = addMessage("ai", msg);
+                      pushHist({ role: "assistant", content: msg });
+                      scrollToMessageTop(row);
+                      busy = false;
+                    })
+                    .catch(function () { removeTyping(); replyLocal("📸 Publish karte waqt connection toot gaya — dobara try karo."); busy = false; });
+                  return;
+                }
+                if (st === "ERROR") { removeTyping(); replyLocal("📸 Instagram ne photo reject kar di — dusri photo try karo."); busy = false; return; }
+                igPollContainer(cid, n + 1);
+              })
+              .catch(function () { igPollContainer(cid, n + 1); });
+          }, (typeof window !== "undefined" && window.IG_POLL_MS) || 5000);
+        }
+
         function handleSend(text) {
           var userText = (text != null ? text : inputEl.value).trim();
           if (!userText || busy) return;
@@ -3203,6 +3378,16 @@
             return;
           }
 
+          // Instagram jodo / photo post karo
+          if (igConnectWanted(userText)) {
+            igConnect();
+            return;
+          }
+          if (igPostWanted(userText)) {
+            igPostStart(userText);
+            return;
+          }
+
           // Pehle local turant jawab (hisab/time/date) — bina net ke bhi chalta hai
           var local = tryLocalAnswer(userText);
           if (local !== null) {
@@ -3276,7 +3461,7 @@
           history = [];
           messagesEl.innerHTML = "";
           var welcome =
-            "Namaste Shiva! 😊 Main **" + aiName + "** hoon — bilkul Mera AI jaisa chat, par ye **bina API key** ke chalta hai, to Gemini wali daily limit khatm hone ki dikkat nahi.\n\nAb meri **coding aur strong** hai: poora chalta-hua code milega — aadha-adhura nahi. Website ya app ka code ek hi HTML file mein dunga, aur har code ke upar **Copy** aur **Download** button hoga — Download se seedha file save karke khol sakte ho. Apna purana code ya error paste karoge to galti bata kar poora sahi code dunga.\n\nEk saaf baat: free service kabhi-kabhi slow ho sakti hai — coding wale jawab mein 1 minute tak lag sakta hai. Basic jawab (hisab, time, date, joke) main bina net ke bhi turant de deta hoon.\n\nAb main aur bhi seekh gaya hoon:\n\n- 🖼️ **Photo banana** — likho: photo banao: pahadon par sunset\n- 👁️ **Code Preview** — HTML code ke upar Preview button se result turant dikhega\n- 🌐 **Live karo** — HTML website ke upar Live karo button se site seedha live karo (admin code ek baar daalo)\n- 🔍 **Live search** — aaj ka bhav, news, mausam poochho, taza jawab milega\n- 🔗 **Link check** — koi link bhejo, safe hai ya nahi bata doon\n- 🎬 **Video samjhao** — YouTube link bhejo ya + menu se video file bhejo, kya ho raha hai bata doon\n- 📷 **Photo samjhao** — + menu se photo bhejo, kya dikh raha hai bata doon\n- 📧 **Gmail** — apna Gmail jodo (+ menu mein 📧 Gmail jodo), phir 'meri email dikhao' likho — poori padhne ke liye 'pehli email padho' likho; bhejne ke liye 'email bhejo' likho\n- ✉️ **Email likhwana** — 'mere liye email likho: ...' likho, poora formal email likh dunga (sirf likhta hai, bhejta nahi)\n- 💾 **Permanent save** — + menu mein 'Chat hamesha save karo' se chat aur yaadein hamesha ke liye save hongi (admin code ek baar daalo)\n- 🔊 **Bol kar sunana** — har jawab ke neeche Sunao button\n- 🧠 **Yaad rakhna** — 'yaad rakho: ...' likho, is chat mein yaad rakhunga\n- 🧰 **Tools** — + wale menu mein To-Do, Kharcha Tracker aur Quiz\n- 📄 **File padhna** — + wale menu se PDF ya text file bhejo, summary dunga\n- 🎤 **Bol kar likhna** — input ke paas mic dabao aur bol do\n- 🎨 **Naam / Rang** — + wale menu se mera naam aur rang badlo\n- ⬇️ **Chat download** — poori chat ek file mein save karo\n\nJo poochna hai likho — code, sawal, hisab, kuch bhi. Ya neeche ke button dabao:";
+            "Namaste Shiva! 😊 Main **" + aiName + "** hoon — bilkul Mera AI jaisa chat, par ye **bina API key** ke chalta hai, to Gemini wali daily limit khatm hone ki dikkat nahi.\n\nAb meri **coding aur strong** hai: poora chalta-hua code milega — aadha-adhura nahi. Website ya app ka code ek hi HTML file mein dunga, aur har code ke upar **Copy** aur **Download** button hoga — Download se seedha file save karke khol sakte ho. Apna purana code ya error paste karoge to galti bata kar poora sahi code dunga.\n\nEk saaf baat: free service kabhi-kabhi slow ho sakti hai — coding wale jawab mein 1 minute tak lag sakta hai. Basic jawab (hisab, time, date, joke) main bina net ke bhi turant de deta hoon.\n\nAb main aur bhi seekh gaya hoon:\n\n- 🖼️ **Photo banana** — likho: photo banao: pahadon par sunset\n- 👁️ **Code Preview** — HTML code ke upar Preview button se result turant dikhega\n- 🌐 **Live karo** — HTML website ke upar Live karo button se site seedha live karo (admin code ek baar daalo)\n- 🔍 **Live search** — aaj ka bhav, news, mausam poochho, taza jawab milega\n- 🔗 **Link check** — koi link bhejo, safe hai ya nahi bata doon\n- 🎬 **Video samjhao** — YouTube link bhejo ya + menu se video file bhejo, kya ho raha hai bata doon\n- 📷 **Photo samjhao** — + menu se photo bhejo, kya dikh raha hai bata doon\n- 📧 **Gmail** — apna Gmail jodo (+ menu mein 📧 Gmail jodo), phir 'meri email dikhao' likho — poori padhne ke liye 'pehli email padho' likho; bhejne ke liye 'email bhejo' likho\n- ✉️ **Email likhwana** — 'mere liye email likho: ...' likho, poora formal email likh dunga (sirf likhta hai, bhejta nahi)\n- 📸 **Instagram** — + menu mein 📸 Instagram jodo se apna Instagram jodo, phir 'instagram par post karo' likh kar photo post karo\n- 💾 **Permanent save** — + menu mein 'Chat hamesha save karo' se chat aur yaadein hamesha ke liye save hongi (admin code ek baar daalo)\n- 🔊 **Bol kar sunana** — har jawab ke neeche Sunao button\n- 🧠 **Yaad rakhna** — 'yaad rakho: ...' likho, is chat mein yaad rakhunga\n- 🧰 **Tools** — + wale menu mein To-Do, Kharcha Tracker aur Quiz\n- 📄 **File padhna** — + wale menu se PDF ya text file bhejo, summary dunga\n- 🎤 **Bol kar likhna** — input ke paas mic dabao aur bol do\n- 🎨 **Naam / Rang** — + wale menu se mera naam aur rang badlo\n- ⬇️ **Chat download** — poori chat ek file mein save karo\n\nJo poochna hai likho — code, sawal, hisab, kuch bhi. Ya neeche ke button dabao:";
           var row = addMessage("ai", welcome);
           var chips = document.createElement("div");
           chips.className = "chips";
@@ -3310,6 +3495,15 @@
         startFresh();
         syncChatFromServer();
         loadMemories();
+
+        // Instagram login se wapas aaye (?code=...) to token exchange karo
+        try {
+          var igCode = new URLSearchParams(location.search).get("code");
+          if (igCode) {
+            try { history.replaceState({}, "", location.pathname); } catch (e) {}
+            igExchangeCode(igCode);
+          }
+        } catch (e) {}
       })();
     </script>
   </body>
