@@ -2017,6 +2017,8 @@
           // ya seedha "upload kar do" likho.
           ytPendingFile = f;
           ytPendingMeta = null;
+          ytPendingName = f.name;
+          try { localStorage.setItem("yt-pending-name", f.name); } catch (e) {}
           var mb = (f.size / (1024 * 1024)).toFixed(1);
           replyLocal("📹 Video chuni gayi: **" + f.name + "** (" + mb + " MB).\n\nAb 'iske liye title description hashtag SEO bana kar do' likho, ya seedha 'upload kar do' likho — video **Public** upload hogi (sabko dikhegi).");
         });
@@ -2742,6 +2744,8 @@
         var ytUploadTitle = "";
         var ytPendingFile = null; // chuni hui video — upload se pehle chat yaad rakhta hai
         var ytPendingMeta = null; // {title, description, hashtags, tags} — "iske liye title..." se bana
+        var ytPendingName = ""; // chuni video ka naam — page reload par bhi yaad rehta hai (file nahi, sirf naam)
+        try { ytPendingName = localStorage.getItem("yt-pending-name") || ""; } catch (e) {}
         var YT_UPLOAD_MAX = 100 * 1024 * 1024; // 100 MB
         function gmailHasToken() { return !!gmailToken; }
         function updateGmailButton() {
@@ -3375,16 +3379,19 @@
           if (/(photo|tasveer|image|instagram|email|mail)/.test(low)) return false;
           if (!/(title|description|hashtag|seo)/.test(low)) return false;
           if (/(iske liye|is video|is ke liye|iska|iski)/.test(low)) return true;
-          if (ytPendingFile && /(bana|banao|bana do|likh|likho|do)/.test(low)) return true;
+          if ((ytPendingFile || ytPendingName) && /(bana|banao|bana do|likh|likho|do)/.test(low)) return true;
           if (ytPendingMeta && /(badlo|change|dobara|dubara|phir se|fir se)/.test(low)) return true;
           return false;
         }
         function ytCleanName(name) {
           var s = String(name || "").replace(/\.[^.]+$/, "")
             .replace(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi, " ")
-            .replace(/\b[0-9a-f]{4,}\b/gi, " ")
+            // hex wale tukde (c30c1e4a, ef5d) — saal (2024) nahi, usme a-f akshar nahi hota
+            .replace(/\b(?=[0-9a-f]{4,}\b)[0-9a-f]*[a-f][0-9a-f]*\b/gi, " ")
+            // 4+ anko wale tukde (4787) — saal (19xx/20xx) nahi
+            .replace(/\b(?!(?:19|20)\d\d\b)\d{4,}\b/g, " ")
             .replace(/\b(media generation|original|video)\b/gi, " ")
-            .replace(/[_-]+/g, " ").replace(/\s+/g, " ").trim().replace(/\s+\d+$/, "");
+            .replace(/[_-]+/g, " ").replace(/\s+/g, " ").trim().replace(/\s+\d{1,2}$/, "");
           return s;
         }
         function ytParseMeta(reply, base) {
@@ -3396,27 +3403,42 @@
           var seoLine = grab(/seo tags\s*:\s*(.+)/i);
           if (!title) title = base.replace(/\b\w/g, function (c) { return c.toUpperCase(); });
           title = title.slice(0, 100);
+          // Description: agar "Description:" line nahi mili to reply ke pehle asli paragraph se lo
+          // (AI kabhi-kabhi format tod kar free-form likh deta hai)
+          if (!desc) {
+            var paras = r.split(/\n\s*\n/).map(function (s) { return s.replace(/[*#>`]/g, "").trim(); })
+              .filter(function (s) { return s.length > 20 && !/^(how to use|subscribe|like, comment|hashtags)/i.test(s); });
+            desc = paras.length ? paras[0] : "";
+          }
+          // "How to use" ke baad ka hissa description nahi hai
+          desc = desc.split(/how to use/i)[0].trim();
           if (!desc) desc = base + " — video dekho, like aur subscribe karo!";
           var hashWords = (tagsLine.match(/#[\w\u0900-\u097F]+/g) || []);
+          // "Hashtags & SEO Tags:" jaise heading ke neeche wale #words bhi pakdo
+          if (!hashWords.length) hashWords = (r.match(/#[\w\u0900-\u097F]+/g) || []).slice(0, 15);
           if (!hashWords.length) {
             hashWords = base.split(/\s+/).filter(function (w) { return w.length >= 3; }).slice(0, 8).map(function (w) { return "#" + w.charAt(0).toUpperCase() + w.slice(1); });
           }
           hashWords = hashWords.slice(0, 15);
-          var tags = (seoLine ? seoLine.split(/[,|\n]+/) : []).map(function (s) { return s.trim(); }).filter(function (s) { return s.length > 1; }).slice(0, 15);
+          var tags = (seoLine ? seoLine.split(/[,|\n]+/) : []).map(function (s) { return s.replace(/[#*`]/g, "").trim(); }).filter(function (s) { return s.length > 1 && s.length <= 30; }).slice(0, 15);
+          if (!tags.length) tags = hashWords.map(function (h) { return h.replace(/^#/, ""); });
           if (!tags.length) tags = base.split(/\s+/).filter(function (w) { return w.length >= 3; }).slice(0, 10);
           desc = desc.slice(0, 4000);
           return { title: title, description: desc, hashtags: hashWords.join(" "), tags: tags };
         }
         function ytMakeMeta() {
-          if (!ytPendingFile) {
+          // File ho to uska naam, warna reload ke baad bhi yaad rakha hua naam
+          var fileName = ytPendingFile ? ytPendingFile.name : (ytPendingName || "");
+          if (!fileName) {
             replyLocal("📹 Pehle video chuno — 'upload karo' likh kar video chuno, phir iske liye title, description, hashtag aur SEO bana dunga.");
             return;
           }
-          var base = ytCleanName(ytPendingFile.name) || "video";
-          var aiPrompt = "Is YouTube video ke liye title, description, hashtags aur SEO tags banao. Video file ka naam: '" + base + "'. Jawab isi format me do, har cheez apni line me:\nTitle: ...\nDescription: ... (2-3 lines, video ke baare me)\nHashtags: #... #...\nSEO tags: ..., ..., ...\nSirf Hinglish me jawab do.";
+          var base = ytCleanName(fileName) || "video";
+          var aiPrompt = "Is YouTube video ke liye title, description, hashtags aur SEO tags banao. Video file ka naam: '" + base + "'. Sirf ye 4 cheezein likho, aur kuch mat likho — no 'How to use', no Subscribe/Like lines, no extra headings. Har cheez apni line me:\nTitle: ...\nDescription: ... (2-3 lines, video ke baare me)\nHashtags: #... #...\nSEO tags: ..., ..., ...\nSirf Hinglish me jawab do.";
           function showMeta(meta) {
             ytPendingMeta = meta;
-            var msg = "🎬 Is video ke liye:\n\n**Title:** " + meta.title + "\n\n**Description:** " + meta.description + "\n\n**Hashtags:** " + meta.hashtags + "\n\n**SEO tags:** " + meta.tags.join(", ") + "\n\nUpload kar dun? 'Haan' likho ya 'upload kar do'.";
+            var msg = "🎬 Is video ke liye (" + fileName + "):\n\n**Title:** " + meta.title + "\n\n**Description:** " + meta.description + "\n\n**Hashtags:** " + meta.hashtags + "\n\n**SEO tags:** " + meta.tags.join(", ") + "\n\nUpload kar dun? 'Haan' likho ya 'upload kar do'.";
+            if (!ytPendingFile) msg += "\n\n⚠️ Upload ke liye video dobara chunni padegi — page reload hone par file yaad nahi rehti, sirf naam yaad rehta hai.";
             var row = addMessage("ai", msg);
             pushHist({ role: "assistant", content: msg });
             scrollToMessageTop(row);
@@ -3572,6 +3594,8 @@
               pushHist({ role: "assistant", content: msg });
               scrollToMessageTop(row);
               ytPendingFile = null; ytPendingMeta = null;
+              ytPendingName = "";
+              try { localStorage.removeItem("yt-pending-name"); } catch (e) {}
               busy = false;
             })
             .catch(function (err) {
@@ -3708,8 +3732,10 @@
 
           // Pending YouTube video: metadata banao / rehne do / haan = upload
           var ytLow = userText.toLowerCase().trim();
-          if (ytPendingFile && /^(rehne do|chhodo|cancel|ruk jao|mat karo|nahi)\b/.test(ytLow)) {
+          if ((ytPendingFile || ytPendingName) && /^(rehne do|chhodo|cancel|ruk jao|mat karo|nahi)\b/.test(ytLow)) {
             ytPendingFile = null; ytPendingMeta = null;
+            ytPendingName = "";
+            try { localStorage.removeItem("yt-pending-name"); } catch (e) {}
             replyLocal("Theek hai, video upload nahi hui.");
             return;
           }
@@ -3718,6 +3744,10 @@
             return;
           }
           if (ytPendingMeta && /^(haan|ha|han|yes|kar do|theek hai|ok|upload kar do)$/.test(ytLow)) {
+            if (!ytPendingFile) {
+              replyLocal("Video dobara chuno — upload ke liye file chahiye (sirf naam yaad hai, file nahi).");
+              return;
+            }
             ytUploadVideo(ytPendingFile);
             return;
           }
