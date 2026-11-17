@@ -673,12 +673,12 @@
           serverChatTimer = setTimeout(function () {
             try {
               var msgs = history.slice(-100).map(function (h) { return { role: h.role, text: h.content }; });
-              fetch("/api/freeai-chat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code: getAdminCode(), messages: msgs }) }).catch(function () {});
+              fetch("/api/freeai?fn=chat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code: getAdminCode(), messages: msgs }) }).catch(function () {});
             } catch (e) {}
           }, 800);
         }
         function loadServerHist() {
-          return fetch("/api/freeai-chat?code=" + encodeURIComponent(getAdminCode()))
+          return fetch("/api/freeai?fn=chat&code=" + encodeURIComponent(getAdminCode()))
             .then(function (r) { return r.json().catch(function () { return {}; }); })
             .then(function (d) {
               if (!d || !d.ok || !Array.isArray(d.messages)) return null;
@@ -701,7 +701,7 @@
         }
         function loadMemories() {
           if (!serverChatOn()) return;
-          fetch("/api/freeai-memory?code=" + encodeURIComponent(getAdminCode()))
+          fetch("/api/freeai?fn=memory&code=" + encodeURIComponent(getAdminCode()))
             .then(function (r) { return r.json().catch(function () { return {}; }); })
             .then(function (d) {
               if (d && d.ok && Array.isArray(d.memories)) {
@@ -716,7 +716,7 @@
         }
         function saveMemories() {
           if (!serverChatOn()) return;
-          try { fetch("/api/freeai-memory", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code: getAdminCode(), memories: memories }) }).catch(function () {}); } catch (e) {}
+          try { fetch("/api/freeai?fn=memory", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code: getAdminCode(), memories: memories }) }).catch(function () {}); } catch (e) {}
         }
         var memories = []; // 'yaad rakho' wali baatein — sirf is chat ke liye (page band = khatm)
         var todos = [];    // To-Do tool ka data — in-memory
@@ -1164,7 +1164,7 @@
         function searchLive(query) {
           var controller = new AbortController();
           var timer = setTimeout(function () { controller.abort(); }, 4000);
-          return fetch("/api/freeai-search", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ q: query }), signal: controller.signal })
+          return fetch("/api/freeai?fn=search", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ q: query }), signal: controller.signal })
             .then(function (r) { clearTimeout(timer); return r.json().catch(function () { return {}; }); })
             .then(function (d) { return (d && d.ok && Array.isArray(d.results)) ? d.results : []; })
             .catch(function () { clearTimeout(timer); return []; });
@@ -2319,7 +2319,7 @@
 
         function startFresh(clearServer) {
           if (clearServer && serverChatOn()) {
-            try { fetch("/api/freeai-chat?action=clear", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code: getAdminCode() }) }).catch(function () {}); } catch (e) {}
+            try { fetch("/api/freeai?fn=chat&action=clear", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code: getAdminCode() }) }).catch(function () {}); } catch (e) {}
           }
           if (!serverChatOn()) memories = [];
           history = [];
