@@ -2465,11 +2465,11 @@
                 busy = false;
                 return null;
               }
-              var prompt = "Neeche ek YouTube video ke page ka text hai (title/description). Isse Hinglish mein CHHOTA jawab do (5-6 lines):\n1) Video kis baare mein hai — title aur description ke hisab se\n2) Channel/video ka naam agar dikhe to\n3) Video mein kya-kya dikhne/sunne ko mil sakta hai (sirf description ke hisab se)\nZaroori: ye sirf title/description se andaza hai — video ke andar ke scenes aur boli hui baat ismein nahi aati, isliye jo page mein nahi likha wo mat ghado. Agar description mein kuch saaf na ho to imaandaari se bolo ki pata nahi chal raha.\n\nPage ka text:\n" + pageText;
+              var prompt = "Neeche YouTube video ke page ka ASLI text hai. Sirf ISI text se jawab do — apni taraf se kuch mat jodo, koi title/description mat ghado, koi scene mat banao. Agar text mein title/description saaf na ho to imaandaari se bolo ki pata nahi chal raha. Hinglish mein CHHOTA jawab do (5-6 lines):\n1) Video kis baare mein hai — title aur description ke hisab se\n2) Channel/video ka naam agar text mein dikhe to\n3) Video mein kya-kya dikhne/sunne ko mil sakta hai (sirf description ke hisab se)\n\nPage ka text:\n" + pageText;
               return callModel([{ role: "user", content: prompt }], "openai", false, 30000)
-                .then(function (verdict) { return "🔗 " + url + "\n\n" + verdict + "\n\n⚠️ Ye sirf video ke title/description se andaza hai — andar ke scenes aur boli hui baat ismein nahi aati."; })
+                .then(function (verdict) { return "🔗 " + url + "\n\n📄 Page se padha gaya description:\n" + pageText.slice(0, 600) + "\n\n" + verdict + "\n\n⚠️ Ye sirf video ke title/description se andaza hai — andar ke scenes aur boli hui baat ismein nahi aati."; })
                 .catch(function () {
-                  return "🔗 " + url + "\n\nVideo ka page padh liya, par AI se jawab nahi mil paya (free AI busy hai). Thodi der baad dobara try karo.";
+                  return "🔗 " + url + "\n\n📄 Page se padha gaya description:\n" + pageText.slice(0, 600) + "\n\n⚠️ AI se summary nahi mil paya (free AI busy hai) — upar wala description hi page ka asli text hai.";
                 });
             })
             .then(function (reply) {
