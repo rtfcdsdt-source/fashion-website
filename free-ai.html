@@ -1,0 +1,2125 @@
+<!doctype html>
+<html lang="hi">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="icon" href="data:," />
+    <title>Free AI Chat</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #ffffff;
+        --bar-bg: #ffffff;
+        --bar-border: #e8e8e8;
+        --user-bubble: #b7dcfb;
+        --user-text: #10222e;
+        --ai-bubble: #f1f1f1;
+        --ai-text: #1c1c1e;
+        --composer-bg: #f1f1f1;
+        --composer-text: #1c1c1e;
+        --placeholder: #8a8a8e;
+        --send-bg: #5b93f5;
+        --send-bg-off: #c9d9f6;
+        --copy-bg: #ffffff;
+        --copy-border: #dcdcdc;
+        --copy-text: #333333;
+        --chip-bg: #ffffff;
+        --chip-border: #d7e6f7;
+        --chip-text: #2b6cb0;
+        --code-bg: #e7e7e7;
+        --code-block-bg: #1e2430;
+        --code-block-text: #e8edf5;
+        --dot: #b9b9bd;
+        --status-ok: #2fae5f;
+        --status-warn: #e08a00;
+        --status-text: #6d6d72;
+        --tray-bg: #ffffff;
+        --shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        --scrim: rgba(15, 20, 28, 0.55);
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          color-scheme: dark;
+          --bg: #121417;
+          --bar-bg: #121417;
+          --bar-border: #26292e;
+          --user-bubble: #2f5b82;
+          --user-text: #eef6fd;
+          --ai-bubble: #22262b;
+          --ai-text: #eceef1;
+          --composer-bg: #22262b;
+          --composer-text: #eceef1;
+          --placeholder: #8e959e;
+          --send-bg: #5b93f5;
+          --send-bg-off: #33465f;
+          --copy-bg: #2c3138;
+          --copy-border: #3a4048;
+          --copy-text: #d7dbe0;
+          --chip-bg: #1b1f24;
+          --chip-border: #33506e;
+          --chip-text: #9cc8f5;
+          --code-bg: #33383f;
+          --code-block-bg: #0c0f14;
+          --code-block-text: #e8edf5;
+          --dot: #5a6068;
+          --status-text: #9aa1a9;
+          --tray-bg: #1b1f24;
+        }
+      }
+      * { box-sizing: border-box; }
+      html, body { height: 100%; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        font-family: "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+      .app {
+        display: flex;
+        flex-direction: column;
+        height: 100dvh;
+        max-width: 860px;
+        margin: 0 auto;
+      }
+
+      /* ---------- top status bar ---------- */
+      .topbar {
+        flex: 0 0 auto;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 14px;
+        background: var(--bar-bg);
+        border-bottom: 1px solid var(--bar-border);
+      }
+      .status-dot {
+        width: 9px; height: 9px; border-radius: 50%;
+        background: var(--status-ok);
+        flex: 0 0 auto;
+      }
+      .status-dot.warn { background: var(--status-warn); }
+      .status-text {
+        font-size: 13.5px;
+        color: var(--status-text);
+        flex: 1 1 auto;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .newchat-btn {
+        flex: 0 0 auto;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        min-height: 36px;
+        padding: 6px 12px;
+        border: 1px solid var(--chip-border);
+        background: var(--chip-bg);
+        color: var(--chip-text);
+        border-radius: 999px;
+        font-size: 13.5px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      .newchat-btn:active { transform: scale(0.97); }
+
+      /* ---------- messages ---------- */
+      .messages {
+        flex: 1 1 auto;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        padding: 14px 12px 10px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        scroll-behavior: smooth;
+      }
+      .row { display: flex; width: 100%; }
+      .row.user { justify-content: flex-end; }
+      .row.ai { justify-content: flex-start; }
+      .bubble {
+        max-width: 88%;
+        padding: 12px 16px;
+        font-size: 16.5px;
+        line-height: 1.5;
+        overflow-wrap: anywhere;
+        box-shadow: var(--shadow);
+      }
+      @media (min-width: 640px) { .bubble { max-width: 76%; } }
+      .row.user .bubble {
+        background: var(--user-bubble);
+        color: var(--user-text);
+        border-radius: 24px;
+      }
+      .row.ai .bubble {
+        background: var(--ai-bubble);
+        color: var(--ai-text);
+        border-radius: 24px;
+      }
+      .bubble p { margin: 0 0 10px; }
+      .bubble p:last-child { margin-bottom: 0; }
+      .bubble ul, .bubble ol { margin: 4px 0 10px; padding-left: 22px; }
+      .bubble li { margin: 2px 0; }
+      .bubble code {
+        background: var(--code-bg);
+        padding: 1px 6px;
+        border-radius: 6px;
+        font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+        font-size: 0.88em;
+      }
+      .codeblock {
+        background: var(--code-block-bg);
+        color: var(--code-block-text);
+        border-radius: 14px;
+        padding: 12px 14px;
+        margin: 8px 0 10px;
+        overflow-x: auto;
+      }
+      .codeblock pre {
+        margin: 0;
+        font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+        font-size: 13.5px;
+        line-height: 1.55;
+        white-space: pre;
+      }
+      .codeblock .cb-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        margin-bottom: 6px;
+      }
+      .cb-lang {
+        font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+        font-size: 12px;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: #9fb4cc;
+      }
+      .cb-actions { display: flex; gap: 6px; flex: 0 0 auto; }
+      .cb-copy, .cb-dl {
+        min-height: 32px;
+        border: 1px solid rgba(255,255,255,0.25);
+        background: rgba(255,255,255,0.08);
+        color: #e8edf5;
+        border-radius: 8px;
+        font-size: 12.5px;
+        padding: 4px 10px;
+        cursor: pointer;
+      }
+      .cb-copy:active, .cb-dl:active { transform: scale(0.95); }
+      .copy-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        min-height: 34px;
+        margin-top: 10px;
+        padding: 5px 12px;
+        background: var(--copy-bg);
+        border: 1px solid var(--copy-border);
+        color: var(--copy-text);
+        border-radius: 999px;
+        font-size: 13.5px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      .copy-btn svg { width: 15px; height: 15px; flex: 0 0 auto; }
+      .copy-btn:active { transform: scale(0.96); }
+
+      /* typing indicator */
+      .typing { display: inline-flex; gap: 5px; align-items: center; padding: 4px 2px; }
+      .typing span {
+        width: 8px; height: 8px; border-radius: 50%;
+        background: var(--dot);
+        animation: blink 1.2s infinite;
+      }
+      .typing span:nth-child(2) { animation-delay: 0.2s; }
+      .typing span:nth-child(3) { animation-delay: 0.4s; }
+      @keyframes blink {
+        0%, 80%, 100% { opacity: 0.25; transform: translateY(0); }
+        40% { opacity: 1; transform: translateY(-2px); }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .typing span { animation: none; opacity: 0.6; }
+        .messages { scroll-behavior: auto; }
+      }
+
+      /* suggestion chips (empty state) */
+      .chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        padding: 2px 2px 4px;
+      }
+      .chip {
+        min-height: 38px;
+        padding: 8px 14px;
+        border-radius: 999px;
+        border: 1px solid var(--chip-border);
+        background: var(--chip-bg);
+        color: var(--chip-text);
+        font-size: 14.5px;
+        font-weight: 600;
+        cursor: pointer;
+        text-align: left;
+      }
+      .chip:active { transform: scale(0.97); }
+
+      /* ---------- quick action tray ---------- */
+      .tray {
+        flex: 0 0 auto;
+        display: none;
+        flex-wrap: wrap;
+        gap: 8px;
+        padding: 10px 12px 2px;
+        background: var(--tray-bg);
+      }
+      .tray.open { display: flex; }
+
+      /* ---------- overlay sheet (preview + tools) ---------- */
+      .overlay {
+        position: fixed; inset: 0;
+        background: var(--scrim);
+        z-index: 50;
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+      }
+      .overlay[hidden] { display: none; }
+      .sheet {
+        background: var(--bg);
+        width: 100%;
+        max-height: 92dvh;
+        display: flex;
+        flex-direction: column;
+        border-radius: 20px 20px 0 0;
+        overflow: hidden;
+      }
+      @media (min-width: 640px) {
+        .overlay { align-items: center; }
+        .sheet { width: min(680px, 94vw); max-height: 88dvh; border-radius: 20px; }
+      }
+      .overlay.full .sheet {
+        width: 100%; max-width: none;
+        height: 100dvh; max-height: 100dvh;
+        border-radius: 0;
+      }
+      .sheet-head {
+        flex: 0 0 auto;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 12px 16px;
+        border-bottom: 1px solid var(--bar-border);
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--ai-text);
+      }
+      .sheet-close {
+        width: 38px; height: 38px;
+        border: none; border-radius: 50%;
+        background: var(--ai-bubble);
+        color: var(--ai-text);
+        font-size: 17px;
+        cursor: pointer;
+        flex: 0 0 auto;
+      }
+      .sheet-body {
+        flex: 1 1 auto;
+        overflow-y: auto;
+        padding: 16px;
+        color: var(--ai-text);
+      }
+      .overlay.full .sheet-body { padding: 0; overflow: hidden; }
+      .sheet-body iframe {
+        width: 100%; height: 100%;
+        border: none;
+        background: #ffffff;
+        display: block;
+      }
+      .tool-menu-btn {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        width: 100%;
+        text-align: left;
+        padding: 14px;
+        margin-bottom: 10px;
+        border: 1px solid var(--bar-border);
+        background: var(--ai-bubble);
+        color: var(--ai-text);
+        border-radius: 14px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      .tool-menu-btn small {
+        display: block;
+        font-weight: 400;
+        font-size: 13.5px;
+        color: var(--status-text);
+        margin-top: 2px;
+      }
+      .tool-back {
+        min-height: 34px;
+        padding: 6px 12px;
+        margin-bottom: 14px;
+        border: 1px solid var(--chip-border);
+        background: var(--chip-bg);
+        color: var(--chip-text);
+        border-radius: 999px;
+        font-size: 13.5px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      .tool-row { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+      .tool-input {
+        flex: 1 1 120px;
+        min-height: 46px;
+        border: 1px solid var(--bar-border);
+        background: var(--composer-bg);
+        color: var(--composer-text);
+        border-radius: 12px;
+        padding: 10px 12px;
+        font: inherit;
+        font-size: 16px;
+      }
+      .tool-add {
+        min-height: 46px;
+        padding: 10px 18px;
+        border: none;
+        border-radius: 12px;
+        background: var(--send-bg);
+        color: #ffffff;
+        font-size: 15.5px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+      .tool-add:active, .tool-menu-btn:active, .tool-back:active { transform: scale(0.98); }
+      .todo-item, .kh-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 12px;
+        border: 1px solid var(--bar-border);
+        border-radius: 12px;
+        margin-bottom: 8px;
+        background: var(--bg);
+      }
+      .todo-item .t-text { flex: 1 1 auto; font-size: 15.5px; cursor: pointer; }
+      .todo-item.done .t-text { text-decoration: line-through; opacity: 0.55; }
+      .kh-item .k-note { flex: 1 1 auto; font-size: 15.5px; }
+      .kh-item .k-amt { font-weight: 700; font-size: 15.5px; }
+      .item-del {
+        border: none;
+        background: transparent;
+        color: var(--placeholder);
+        font-size: 18px;
+        cursor: pointer;
+        padding: 4px 8px;
+        flex: 0 0 auto;
+      }
+      .tool-total { font-size: 16px; font-weight: 700; margin: 4px 0 12px; }
+      .tool-empty { color: var(--status-text); font-size: 15px; padding: 8px 0 14px; }
+      .chart-wrap { margin: 6px 0 14px; color: var(--ai-text); }
+      .quiz-q { font-size: 17px; font-weight: 700; margin-bottom: 12px; line-height: 1.45; }
+      .quiz-opt {
+        display: block;
+        width: 100%;
+        text-align: left;
+        padding: 12px 14px;
+        margin-bottom: 8px;
+        border: 1px solid var(--bar-border);
+        background: var(--bg);
+        color: var(--ai-text);
+        border-radius: 12px;
+        font-size: 15.5px;
+        cursor: pointer;
+      }
+      .quiz-opt.right { border-color: var(--status-ok); background: rgba(47, 174, 95, 0.12); font-weight: 700; }
+      .quiz-opt.wrong { border-color: #d64545; background: rgba(214, 69, 69, 0.10); }
+      .quiz-opt:disabled { cursor: default; }
+
+      /* photo in chat */
+      .chat-photo { width: 100%; max-width: 420px; border-radius: 14px; display: block; }
+      .photo-cap { font-size: 13.5px; color: var(--status-text); margin-top: 8px; line-height: 1.45; }
+      .photo-loading { font-size: 15px; padding: 6px 2px; }
+
+      /* ---------- naam / rang themes ---------- */
+      :root[data-theme="green"] { --send-bg: #2f9e5f; --send-bg-off: #c4e3d0; --chip-text: #1e7a46; --chip-border: #bfe0cd; }
+      :root[data-theme="orange"] { --send-bg: #e8710a; --send-bg-off: #f6ddc6; --chip-text: #b35408; --chip-border: #f2d7ba; }
+      :root[data-theme="pink"] { --send-bg: #d6336c; --send-bg-off: #f3ccd9; --chip-text: #b02a5a; --chip-border: #f0c3d3; }
+      :root[data-theme="purple"] { --send-bg: #7c5cd6; --send-bg-off: #ddd2f7; --chip-text: #5f43b8; --chip-border: #d8ccf5; }
+      @media (prefers-color-scheme: dark) {
+        :root[data-theme="green"] { --send-bg-off: #274a36; --chip-text: #7fd6a4; --chip-border: #2c5c40; }
+        :root[data-theme="orange"] { --send-bg-off: #54381c; --chip-text: #f5b27a; --chip-border: #6b4520; }
+        :root[data-theme="pink"] { --send-bg-off: #55283c; --chip-text: #f2a0bd; --chip-border: #63304a; }
+        :root[data-theme="purple"] { --send-bg-off: #3a3160; --chip-text: #bda9f2; --chip-border: #4a3d75; }
+      }
+
+      /* ---------- mic (bol kar likhna) ---------- */
+      .mic-btn {
+        flex: 0 0 auto;
+        width: 44px; height: 44px;
+        border: none;
+        background: transparent;
+        color: var(--placeholder);
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .mic-btn svg { width: 22px; height: 22px; }
+      .mic-btn.rec { color: #e0483e; animation: micPulse 1.1s ease-in-out infinite; }
+      @keyframes micPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+      @media (prefers-reduced-motion: reduce) { .mic-btn.rec { animation: none; } }
+
+      /* ---------- settings (naam / rang) ---------- */
+      .set-label { font-size: 13.5px; font-weight: 700; color: var(--status-text); margin: 16px 0 8px; }
+      .set-label:first-child { margin-top: 0; }
+      .swatches { display: flex; gap: 10px; flex-wrap: wrap; }
+      .swatch {
+        display: flex; flex-direction: column; align-items: center; gap: 6px;
+        border: none; background: transparent; cursor: pointer;
+        color: var(--ai-text); font-size: 12.5px; padding: 4px;
+      }
+      .swatch .dotc { width: 40px; height: 40px; border-radius: 50%; border: 3px solid transparent; }
+      .swatch.sel .dotc { border-color: var(--ai-text); }
+      .swatch:active { transform: scale(0.95); }
+      .set-apply { width: 100%; margin-top: 18px; }
+
+      /* ---------- composer ---------- */
+      .composer-wrap {
+        flex: 0 0 auto;
+        padding: 8px 12px calc(10px + env(safe-area-inset-bottom));
+        background: var(--bg);
+      }
+      .composer {
+        display: flex;
+        align-items: flex-end;
+        gap: 8px;
+      }
+      .input-pill {
+        flex: 1 1 auto;
+        display: flex;
+        align-items: flex-end;
+        background: var(--composer-bg);
+        border-radius: 28px;
+        padding: 6px 8px 6px 6px;
+        min-height: 56px;
+      }
+      .plus-btn {
+        flex: 0 0 auto;
+        width: 44px; height: 44px;
+        border: none;
+        background: transparent;
+        color: var(--placeholder);
+        font-size: 26px;
+        line-height: 1;
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .plus-btn.open { transform: rotate(45deg); }
+      .plus-btn { transition: transform 0.15s ease; }
+      #input {
+        flex: 1 1 auto;
+        border: none;
+        outline: none;
+        background: transparent;
+        color: var(--composer-text);
+        font: inherit;
+        font-size: 16.5px;
+        line-height: 1.4;
+        resize: none;
+        max-height: 132px;
+        padding: 10px 4px;
+      }
+      #input::placeholder { color: var(--placeholder); }
+      .send-btn {
+        flex: 0 0 auto;
+        width: 52px; height: 52px;
+        border: none;
+        border-radius: 50%;
+        background: var(--send-bg-off);
+        color: #ffffff;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.15s ease, transform 0.1s ease;
+      }
+      .send-btn.ready { background: var(--send-bg); }
+      .send-btn:active { transform: scale(0.94); }
+      .send-btn svg { width: 24px; height: 24px; margin-left: 2px; }
+      .send-btn:disabled { cursor: default; }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <div class="topbar">
+        <span class="status-dot" id="statusDot"></span>
+        <span class="status-text" id="statusText">Free AI ready — bina API key</span>
+        <button class="newchat-btn" id="newChatBtn" type="button" aria-label="Nayi chat shuru karo">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+          Nayi chat
+        </button>
+      </div>
+
+      <div class="messages" id="messages" aria-live="polite"></div>
+
+      <div class="tray" id="tray">
+        <button class="chip" type="button" data-q="Ek mazedaar joke sunao">😄 Joke sunao</button>
+        <button class="chip" type="button" data-q="Abhi time kya ho raha hai?">🕐 Time kya hai</button>
+        <button class="chip" type="button" data-q="Aaj ki date aur din batao">📅 Aaj ki date</button>
+        <button class="chip" type="button" data-q="125 ka 15% kitna hota hai?">🧮 Hisab karo</button>
+        <button class="chip" type="button" data-q="Ek calculator app ka poora HTML code banao jo ek hi file mein chale">💻 Calculator ka code banao</button>
+        <button class="chip" type="button" data-q="Tum kya-kya kar sakte ho?">❓ Kya kar sakte ho</button>
+        <button class="chip" type="button" data-q="Ek photo banao: pahadon mein khoobsurat sunset">🖼️ Photo banao</button>
+        <button class="chip" type="button" id="trayTools">🧰 Tools</button>
+        <button class="chip" type="button" data-q="Tumhe kya yaad hai?">🧠 Kya yaad hai</button>
+        <button class="chip" type="button" id="trayFile">📄 File padho</button>
+        <button class="chip" type="button" id="traySettings">🎨 Naam / Rang</button>
+        <button class="chip" type="button" id="trayBrain">🧠 Dimaag</button>
+        <button class="chip" type="button" id="trayDownload">⬇️ Chat download</button>
+        <button class="chip" type="button" id="trayClear">🧹 Chat saaf karo</button>
+      </div>
+
+      <div class="overlay" id="overlay" hidden>
+        <div class="sheet" id="sheet" role="dialog" aria-modal="true">
+          <div class="sheet-head">
+            <span id="sheetTitle">Preview</span>
+            <button class="sheet-close" id="sheetClose" type="button" aria-label="Band karo">✕</button>
+          </div>
+          <div class="sheet-body" id="sheetBody"></div>
+        </div>
+      </div>
+
+      <input type="file" id="fileInput" accept=".pdf,.txt,.md,.csv,.json,.log,text/plain,application/pdf" hidden />
+
+      <div class="composer-wrap">
+        <form class="composer" id="composerForm">
+          <div class="input-pill">
+            <button class="plus-btn" id="plusBtn" type="button" aria-label="Quick options kholo">+</button>
+            <textarea id="input" rows="1" placeholder="Yahan likho..." autocomplete="off"></textarea>
+            <button class="mic-btn" id="micBtn" type="button" aria-label="Bol kar likho">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><path d="M12 19v3"/></svg>
+            </button>
+          </div>
+          <button class="send-btn" id="sendBtn" type="submit" aria-label="Bhejo">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3.4 20.4l17.8-7.5c.8-.35.8-1.45 0-1.8L3.4 3.6c-.66-.29-1.39.2-1.39.91L2 9.12c0 .5.37.93.87.99L17 12 2.87 13.88c-.5.07-.87.5-.87 1l.01 4.61c0 .72.73 1.2 1.39.91z"/></svg>
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script>
+      (function () {
+        "use strict";
+
+        var messagesEl = document.getElementById("messages");
+        var inputEl = document.getElementById("input");
+        var formEl = document.getElementById("composerForm");
+        var sendBtn = document.getElementById("sendBtn");
+        var plusBtn = document.getElementById("plusBtn");
+        var trayEl = document.getElementById("tray");
+        var statusDot = document.getElementById("statusDot");
+        var statusText = document.getElementById("statusText");
+        var newChatBtn = document.getElementById("newChatBtn");
+
+        var SYSTEM_PROMPT =
+          "You are a friendly AI assistant in a chat app, and an expert senior software developer. The user's name is Shiva and he usually writes in Hinglish (Hindi written in Roman script, mixed with English). " +
+          "Reply in the same language and style as the user's message: if he writes Hinglish, reply in Hinglish; if English, reply in English; if Hindi in Devanagari, reply in Devanagari. " +
+          "Be helpful, warm and natural, like a smart friend. Keep answers as short as the question needs — simple questions get short answers. " +
+          "CODING RULES — follow these strictly whenever the user asks for code, a website, an app, a script, a fix or an explanation of code: " +
+          "(1) Always give COMPLETE, working, ready-to-run code — never partial snippets, never '...' placeholders, never 'baaki code khud likh lo'. " +
+          "(2) For a web page or web app, default to ONE single self-contained HTML file with the CSS inside a <style> tag and the JavaScript inside a <script> tag at the end of the body, so Shiva can save it as one .html file and open it directly. Mention multiple files only when truly necessary. " +
+          "(3) Put every code block in a fenced markdown block WITH the language name, like ```html, ```javascript, ```python or ```css. " +
+          "(4) The code must be mobile-friendly (responsive, works on a phone screen) and use clean modern code with no external dependency unless it is genuinely needed. " +
+          "(5) After the code, add a SHORT explanation in simple Hinglish: what the code does and how to run or use it, in 2-5 short lines or bullet points. Do not write a long essay. " +
+          "(6) If the user pastes code or an error, find the bug, explain the mistake in one or two simple lines, and then give the FULL corrected code — not just the changed lines. " +
+          "(7) If the user asks a follow-up change to code you already gave, return the FULL updated code again, not only the diff. " +
+          "(8) If the request is unclear, make the most sensible complete version instead of asking many questions. " +
+          "For non-coding questions, answer normally and helpfully — study, business, videos and daily questions included. Use simple markdown (bold, lists, code blocks) when it helps." +
+          " APP FEATURES: this chat app itself can generate a photo when the user asks for one (e.g. 'photo banao: ...'), show a live Preview of HTML code (Preview button above the code), read any answer aloud (Sunao button under each answer), remember facts for this chat when the user says 'yaad rakho', read a PDF or text file the user attaches from the + tray (the app extracts the file's text and sends it to you — then summarize it and answer questions about it), accept voice dictation through the mic button, let the user rename you and change your theme colour in the + tray settings, download the whole chat as a file, and it has To-do, Kharcha Tracker and Quiz tools in the + tray. The app handles those requests itself, so never claim you cannot make photos or remember things in this chat." +
+          " THINKING RULES: before answering, think step by step silently. For maths, logic and code, double-check your result before replying. Never invent facts, names, numbers or links - if you are not sure, say so honestly and give your best guess clearly marked as a guess. Answer exactly what was asked, with no filler.";
+
+        var history = []; // {role: 'user'|'assistant', content: string} — in-memory only
+        var busy = false;
+        var memories = []; // 'yaad rakho' wali baatein — sirf is chat ke liye (page band = khatm)
+        var todos = [];    // To-Do tool ka data — in-memory
+        var kharchas = []; // Kharcha tool ka data — {amount, note}, in-memory
+        var aiName = "Free AI"; // Settings se badla ja sakta hai — sirf is session ke liye
+
+        /* ---------------- rendering ---------------- */
+
+        function escapeHtml(s) {
+          return s
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;");
+        }
+
+        var LANG_EXT = {
+          html: "html", htm: "html", css: "css", javascript: "js", js: "js",
+          typescript: "ts", ts: "ts", python: "py", py: "py", java: "java",
+          c: "c", cpp: "cpp", "c++": "cpp", csharp: "cs", "c#": "cs",
+          php: "php", sql: "sql", json: "json", xml: "xml", bash: "sh",
+          sh: "sh", shell: "sh", text: "txt", txt: "txt"
+        };
+
+        // Small, safe markdown: code blocks, inline code, bold, lists, paragraphs.
+        function renderMarkdown(text) {
+          var blocks = [];
+          var work = text.replace(/```([\w+#-]*)\n?([\s\S]*?)```/g, function (m, lang, code) {
+            blocks.push({ lang: (lang || "").toLowerCase(), code: code.replace(/\n$/, "") });
+            return "\u0001" + (blocks.length - 1) + "\u0001";
+          });
+          var html = escapeHtml(work);
+          html = html.replace(/`([^`\n]+)`/g, "<code>$1</code>");
+          html = html.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+          var lines = html.split("\n");
+          var out = [];
+          var listType = null;
+          function closeList() {
+            if (listType) { out.push(listType === "ul" ? "</ul>" : "</ol>"); listType = null; }
+          }
+          lines.forEach(function (line) {
+            var trimmed = line.trim();
+            var blockMatch = trimmed.match(/^\u0001(\d+)\u0001$/);
+            if (blockMatch) {
+              closeList();
+              var blk = blocks[parseInt(blockMatch[1], 10)] || { lang: "", code: "" };
+              var label = blk.lang ? escapeHtml(blk.lang) : "code";
+              out.push(
+                '<div class="codeblock"><div class="cb-head"><span class="cb-lang">' + label + '</span>' +
+                '<span class="cb-actions"><button type="button" class="cb-dl">Download</button>' +
+                '<button type="button" class="cb-copy">Copy</button></span></div><pre>' +
+                escapeHtml(blk.code) + "</pre></div>"
+              );
+              return;
+            }
+            var ul = trimmed.match(/^[-*•]\s+(.*)$/);
+            var ol = trimmed.match(/^\d+[.)]\s+(.*)$/);
+            if (ul) {
+              if (listType !== "ul") { closeList(); out.push("<ul>"); listType = "ul"; }
+              out.push("<li>" + ul[1] + "</li>");
+              return;
+            }
+            if (ol) {
+              if (listType !== "ol") { closeList(); out.push("<ol>"); listType = "ol"; }
+              out.push("<li>" + ol[1] + "</li>");
+              return;
+            }
+            closeList();
+            if (trimmed === "") return;
+            out.push("<p>" + trimmed + "</p>");
+          });
+          closeList();
+          return out.join("");
+        }
+
+        var CLIPBOARD_SVG =
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
+
+        function addMessage(role, text) {
+          var row = document.createElement("div");
+          row.className = "row " + (role === "user" ? "user" : "ai");
+          var bubble = document.createElement("div");
+          bubble.className = "bubble";
+          if (role === "user") {
+            bubble.textContent = text;
+          } else {
+            bubble.innerHTML = renderMarkdown(text);
+            var copyBtn = document.createElement("button");
+            copyBtn.type = "button";
+            copyBtn.className = "copy-btn";
+            copyBtn.innerHTML = CLIPBOARD_SVG + "<span>Copy</span>";
+            copyBtn.addEventListener("click", function () {
+              copyText(text, copyBtn);
+            });
+            bubble.appendChild(copyBtn);
+            if ("speechSynthesis" in window) {
+              var speakBtn = document.createElement("button");
+              speakBtn.type = "button";
+              speakBtn.className = "copy-btn speak-btn";
+              speakBtn.style.marginLeft = "8px";
+              speakBtn.innerHTML = "🔊 <span>Sunao</span>";
+              speakBtn.addEventListener("click", function () { speakText(text, speakBtn); });
+              bubble.appendChild(speakBtn);
+            }
+            bubble.querySelectorAll(".cb-copy").forEach(function (btn) {
+              btn.addEventListener("click", function () {
+                var pre = btn.closest(".codeblock").querySelector("pre");
+                copyText(pre ? pre.textContent : "", btn);
+              });
+            });
+            bubble.querySelectorAll(".cb-dl").forEach(function (btn) {
+              btn.addEventListener("click", function () {
+                var block = btn.closest(".codeblock");
+                var pre = block.querySelector("pre");
+                var langEl = block.querySelector(".cb-lang");
+                downloadCode(pre ? pre.textContent : "", langEl ? langEl.textContent : "", btn);
+              });
+            });
+            // HTML code par Preview button — result turant dekhne ke liye
+            bubble.querySelectorAll(".codeblock").forEach(function (block) {
+              var langEl2 = block.querySelector(".cb-lang");
+              var pre2 = block.querySelector("pre");
+              var lang2 = langEl2 ? langEl2.textContent.toLowerCase() : "";
+              var code2 = pre2 ? pre2.textContent : "";
+              if (lang2 === "html" || lang2 === "htm" || /<!doctype html|<html[\s>]/i.test(code2)) {
+                var pv = document.createElement("button");
+                pv.type = "button";
+                pv.className = "cb-dl";
+                pv.textContent = "👁 Preview";
+                var actions = block.querySelector(".cb-actions");
+                actions.insertBefore(pv, actions.firstChild);
+                pv.addEventListener("click", function () { openPreview(code2); });
+              }
+            });
+          }
+          row.appendChild(bubble);
+          messagesEl.appendChild(row);
+          return row;
+        }
+
+        function addTyping() {
+          var row = document.createElement("div");
+          row.className = "row ai";
+          row.id = "typingRow";
+          var bubble = document.createElement("div");
+          bubble.className = "bubble";
+          bubble.innerHTML = '<div class="typing"><span></span><span></span><span></span></div>';
+          row.appendChild(bubble);
+          messagesEl.appendChild(row);
+          scrollToBottom();
+          return row;
+        }
+
+        function removeTyping() {
+          var t = document.getElementById("typingRow");
+          if (t) t.remove();
+        }
+
+        function copyText(text, btn) {
+          function done() {
+            if (!btn) return;
+            var label = btn.querySelector("span") || btn;
+            var old = label.textContent;
+            label.textContent = "Copy ho gaya";
+            setTimeout(function () { label.textContent = old; }, 1600);
+          }
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(done, function () { legacyCopy(text); done(); });
+          } else {
+            legacyCopy(text);
+            done();
+          }
+        }
+        function legacyCopy(text) {
+          var ta = document.createElement("textarea");
+          ta.value = text;
+          ta.style.position = "fixed";
+          ta.style.opacity = "0";
+          document.body.appendChild(ta);
+          ta.select();
+          try { document.execCommand("copy"); } catch (e) {}
+          ta.remove();
+        }
+
+        // Code ko seedha file bana kar download — save karke turant khola ja sakta hai.
+        function downloadCode(code, lang, btn) {
+          var ext = LANG_EXT[(lang || "").toLowerCase()] || "txt";
+          var blob = new Blob([code], { type: "text/plain;charset=utf-8" });
+          var url = URL.createObjectURL(blob);
+          var a = document.createElement("a");
+          a.href = url;
+          a.download = "code." + ext;
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
+          if (btn) {
+            var old = btn.textContent;
+            btn.textContent = "Ho gaya ✓";
+            setTimeout(function () { btn.textContent = old; }, 1600);
+          }
+        }
+
+        /* ---------------- scrolling ----------------
+           User ki do baatein (Mera AI wali fixes):
+           1) Jawab aane par screen jawab ke SHURU par jaye, end par nahi.
+           2) Keyboard sirf user ke tap par khule — is liye code kabhi
+              input.focus() nahi bulata. */
+
+        function scrollToBottom() {
+          messagesEl.scrollTop = messagesEl.scrollHeight;
+        }
+        function scrollToMessageTop(row) {
+          requestAnimationFrame(function () {
+            var top = row.offsetTop - 10;
+            messagesEl.scrollTo({ top: top, behavior: "smooth" });
+          });
+        }
+
+        /* ---------------- status ---------------- */
+        function setStatus(ok, text) {
+          statusDot.classList.toggle("warn", !ok);
+          statusText.textContent = text;
+        }
+
+        /* ---------------- local brain (fallback + turant jawab) ---------------- */
+
+        // Safe arithmetic parser — no eval. Supports + - * / % ^ ( ) and decimals.
+        function evalMath(expr) {
+          var s = expr.replace(/,/g, "").replace(/\s+/g, "");
+          if (!/^[-+0-9.+\-*/%^()]+$/.test(s) || s.length > 80) return null;
+          var pos = 0;
+          function peek() { return s[pos]; }
+          function parseExpr() {
+            var v = parseTerm();
+            while (peek() === "+" || peek() === "-") {
+              var op = s[pos++];
+              var r = parseTerm();
+              v = op === "+" ? v + r : v - r;
+            }
+            return v;
+          }
+          function parseTerm() {
+            var v = parseFactor();
+            while (peek() === "*" || peek() === "/" || peek() === "%") {
+              var op = s[pos++];
+              var r = parseFactor();
+              if (op === "*") v = v * r;
+              else if (op === "/") { if (r === 0) throw new Error("div0"); v = v / r; }
+              else v = v % r;
+            }
+            return v;
+          }
+          function parseFactor() {
+            var base = parseUnary();
+            if (peek() === "^") { pos++; var exp = parseFactor(); return Math.pow(base, exp); }
+            return base;
+          }
+          function parseUnary() {
+            if (peek() === "-") { pos++; return -parseUnary(); }
+            if (peek() === "+") { pos++; return parseUnary(); }
+            return parseAtom();
+          }
+          function parseAtom() {
+            if (peek() === "(") {
+              pos++;
+              var v = parseExpr();
+              if (peek() !== ")") throw new Error("paren");
+              pos++;
+              return v;
+            }
+            var m = s.slice(pos).match(/^\d*\.?\d+/);
+            if (!m) throw new Error("num");
+            pos += m[0].length;
+            return parseFloat(m[0]);
+          }
+          try {
+            var result = parseExpr();
+            if (pos !== s.length || !isFinite(result)) return null;
+            return Math.round(result * 1e10) / 1e10;
+          } catch (e) {
+            return null;
+          }
+        }
+
+        function tryLocalAnswer(raw) {
+          var q = raw.trim();
+          var low = q.toLowerCase();
+
+          // --- hisab (calculator) ---
+          var pct = low.match(/([\d.,]+)\s*(?:ka|of|%)\s*([\d.,]+)\s*%/) || low.match(/([\d.,]+)\s*%\s*(?:of|ka)\s*([\d.,]+)/);
+          var pctSimple = low.match(/([\d.,]+)\s*%\s*(?:of|ka)\s*([\d.,]+)/);
+          var percentOf = null;
+          if (pctSimple) percentOf = { p: parseFloat(pctSimple[1]), n: parseFloat(pctSimple[2]) };
+          else {
+            var m2 = low.match(/([\d.,]+)\s+ka\s+([\d.,]+)\s*%/);
+            if (m2) percentOf = { p: parseFloat(m2[2]), n: parseFloat(m2[1]) };
+          }
+          if (percentOf && isFinite(percentOf.p) && isFinite(percentOf.n)) {
+            var val = (percentOf.p / 100) * percentOf.n;
+            val = Math.round(val * 1e10) / 1e10;
+            return percentOf.n + " ka " + percentOf.p + "% = **" + val + "**";
+          }
+          var cleaned = low
+            .replace(/kitna hota hai|kitna hai|kitne hote hain|calculate|hisab karo|hisab|batao|barabar|please|plz/g, "")
+            .replace(/[=?]/g, "")
+            .replace(/x/g, "*")
+            .trim();
+          if (/^[-+0-9][0-9.+\-*/%^() ]*$/.test(cleaned) && /[+\-*/%^]/.test(cleaned)) {
+            var r = evalMath(cleaned);
+            if (r !== null) return cleaned.replace(/\*/g, " × ").replace(/\//g, " ÷ ") + " = **" + r + "**";
+          }
+
+          // --- time / date / din ---
+          var now = new Date();
+          if (/(time|samay|baj)/.test(low) && /(kya|hai|ho raha|now|current)/.test(low)) {
+            var t = now.toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit", hour12: true });
+            return "Abhi time hai **" + t + "** ⏰";
+          }
+          if (/(aaj).*(date|din|tarikh|day)|(?:date|tarikh)\s*(kya|hai|batao)/.test(low)) {
+            var dstr = now.toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+            return "Aaj hai **" + dstr + "** 📅";
+          }
+
+          // --- pehchan / salaam ---
+          if (/^(hi|hii+|hello|hey|namaste|namaskar|hola|hy)\b/.test(low) && low.length < 25) {
+            return "Namaste! 😊 Main " + aiName + " hoon. Batao, aaj kis cheez mein madad karun — sawal, hisab, code, ya kuch aur?";
+          }
+          if (/(tum kaun ho|tumhara naam|who are you|your name|aap kaun)/.test(low)) {
+            return "Main **" + aiName + "** hoon — Mera AI jaisa hi chat assistant, par ye bina kisi API key ke chalta hai. Sawal poochho, hisab karwao, code likhwao — koshish poori karunga! 💪";
+          }
+          if (/(kya kya kar sakte|kya kar sakte|tum kya kar|help|madad|features|kaam karte ho)/.test(low)) {
+            return "Main ye sab kar sakta hoon:\n\n- **Coding (strong)** — poora chalta-hua code: website, app, game, script — ek hi file mein, Download button ke saath\n- **Code Preview** — HTML code ke upar Preview button dabao, result turant chal kar dikhega\n- **Bug fix** — apna code ya error paste karo, main galti bata kar poora sahi code dunga\n- **Photo banana** — likho `photo banao: pahadon par sunset`, photo ban jayegi\n- **File padhna** — + wale menu mein **📄 File padho** se PDF ya text file bhejo, main padh kar summary dunga aur sawalon ke jawab bhi\n- **Bol kar likhna** — type karne ki jagah input ke paas 🎤 mic dabao aur bol do\n- **Bol kar sunana** — har jawab ke neeche 🔊 Sunao button hai\n- **Yaad rakhna** — `yaad rakho: ...` likho, is chat mein yaad rakhunga\n- **Naam / Rang badalna** — + wale menu mein **🎨 Naam / Rang** se mera naam aur rang apni pasand ka karo\n- **Chat download** — + wale menu mein **⬇️ Chat download** se poori chat file mein save karo\n- **Tools** — + wale menu mein To-Do list, Kharcha Tracker (chart ke saath) aur Quiz\n- **Sawal-jawab** — koi bhi topic, Hindi / Hinglish / English\n- **Hisab** — jaise `125 ka 15%` ya `45 * 8 + 20`; kharcha note karne ke liye `kharcha 200 khana`\n- **Time / date** — turant bata deta hoon\n\nBas likh kar bhejo!";
+          }
+          if (/(thank|dhanyavad|shukriya|thanks)/.test(low)) {
+            return "Koi baat nahi! 😊 Aur kuch chahiye to bas likh do.";
+          }
+          if (/^(bye|alvida|goodbye|good night|shubh ratri)\b/.test(low)) {
+            return "Alvida! 👋 Jab zaroorat ho, wapas aa jana — main yahin hoon.";
+          }
+          if (/(joke|hasao|funny)/.test(low)) {
+            var jokes = [
+              "Teacher: Batao, 'kal' kise kehte hain?\nStudent: Sir, jis din homework karna hota hai! 😄",
+              "Ek aadmi doctor se: Doctor sahab, mujhe bhoolne ki bimari hai.\nDoctor: Kab se hai?\nAadmi: Kab se kya? 😅",
+              "Pati: Aaj khana bahut tasty hai!\nPatni: Haan, aaj maine hotel se mangwaya hai. 😂",
+              "Student: Sir, main exam mein fail ho gaya.\nTeacher: Kyun?\nStudent: Kyunki sawaal hi aise the jo mujhe nahi aate the! 🤣"
+            ];
+            return jokes[Math.floor(Math.random() * jokes.length)];
+          }
+          return null;
+        }
+
+        function offlineAnswer() {
+          return "Abhi free AI se jawab nahi aa paya — do baar try kiya, shayad net slow hai ya free service busy hai. 😕\n\nApna sawal dobara bhej do — aksar dusri baar mein jawab aa jata hai, khaaskar coding wale sawalon par thoda time lagta hai. Tab tak main basic cheezein turant de sakta hoon — **hisab** (`45 * 8 + 20`), **time**, **date**, ya **joke** likh kar dekho.";
+        }
+
+        /* ---------------- free AI (bina API key) ---------------- */
+
+        var chosenModel = "auto"; // "auto" ya koi model ka naam
+        var deepMode = false;     // true = jawab ko dobara check karke sudharo
+        var modelList = [];       // Pollinations se mili free models ki list
+        var PREFERRED = ["openai-large", "gemini-large", "deepseek", "claude", "gemini", "mistral", "llama", "openai"];
+
+        function loadModels() {
+          return fetch("https://text.pollinations.ai/models")
+            .then(function (r) { return r.json(); })
+            .then(function (arr) {
+              var names = [];
+              (Array.isArray(arr) ? arr : []).forEach(function (m) {
+                var n = typeof m === "string" ? m : (m && m.name);
+                var isText = typeof m === "string" || !m.output_modalities || m.output_modalities.indexOf("text") !== -1;
+                var isAudio = /audio|tts|whisper/i.test(n || "");
+                if (n && isText && !isAudio && names.indexOf(n) === -1) names.push(n);
+              });
+              modelList = names;
+            })
+            .catch(function () { /* list na mili to auto mode "openai" par chalega */ });
+        }
+
+        function looksLikeCode(t) {
+          return /\b(code|html|css|javascript|python|script|website|app|function|bug|error)\b/i.test(t) || /```/.test(t);
+        }
+
+        function modelChain(userText) {
+          var chain = [];
+          function add(m) { if (m && chain.indexOf(m) === -1) chain.push(m); }
+          if (chosenModel !== "auto") add(chosenModel);
+          else {
+            if (looksLikeCode(userText)) {
+              modelList.forEach(function (m) { if (/coder/i.test(m)) add(m); });
+            }
+            PREFERRED.forEach(function (p) {
+              modelList.forEach(function (m) { if (m === p) add(m); });
+            });
+          }
+          chain = chain.slice(0, 3);
+          add("openai"); // aakhri bharosemand fallback
+          return chain;
+        }
+
+        function callModel(msgs, model, jsonMode, timeoutMs) {
+          var controller = new AbortController();
+          var timer = setTimeout(function () { controller.abort(); }, timeoutMs);
+          var payload = { messages: msgs, model: model };
+          if (jsonMode) payload.jsonMode = true;
+          return fetch("https://text.pollinations.ai/", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+            signal: controller.signal
+          })
+            .then(function (res) {
+              clearTimeout(timer);
+              if (!res.ok) throw new Error("http " + res.status);
+              return res.text();
+            })
+            .then(function (txt) {
+              var clean = extractReply(txt);
+              if (!clean) throw new Error("empty");
+              return clean;
+            })
+            .catch(function (err) {
+              clearTimeout(timer);
+              throw err;
+            });
+        }
+
+        function askFreeAI(userText) {
+          var msgs = [{ role: "system", content: buildSystemPrompt() }];
+          history.slice(-20).forEach(function (h) { msgs.push(h); });
+          msgs.push({ role: "user", content: userText });
+
+          var chain = modelChain(userText);
+          var used = chain[0];
+          var i = 0;
+          function next() {
+            if (i >= chain.length) {
+              // sab plain mode fail — aakhri koshish JSON mode se
+              return callModel(msgs, "openai", true, 60000);
+            }
+            var m = chain[i++];
+            var isLast = i >= chain.length;
+            used = m;
+            return callModel(msgs, m, false, isLast ? 60000 : 30000).catch(next);
+          }
+
+          return next().then(function (draft) {
+            if (!deepMode || draft.length < 40) return draft;
+            var review = msgs.concat([
+              { role: "assistant", content: draft },
+              { role: "user", content: "Is jawab ko dhyan se check karo: kya koi galti, adhura hissa, galat hisab ya adhura code hai? Agar hai to use theek karke POORA final jawab do. Agar sab sahi hai to wahi jawab dobara do. Check ke baare mein kuch mat likho, sirf final jawab do. Same language aur style rakho." }
+            ]);
+            return callModel(review, used, false, 45000).catch(function () { return draft; });
+          });
+        }
+
+        // Jawab kabhi plain text aata hai, kabhi OpenAI-style JSON, aur JSON mode mein
+        // model apni marzi ka JSON deta hai ({"answer": ...} jaisa) — teeno sambhalo.
+        function extractReply(txt) {
+          var t = (txt || "").trim();
+          if (!t) return "";
+          if (t.charAt(0) === "{") {
+            try {
+              var data = JSON.parse(t);
+              if (data && data.choices && data.choices[0] && data.choices[0].message) {
+                return (data.choices[0].message.content || "").trim();
+              }
+              if (data && typeof data.content === "string") return data.content.trim();
+              var picked = pickFromJson(data);
+              if (picked) return picked;
+              return ""; // JSON mila par andar jawab nahi — retry trigger hoga
+            } catch (e) { /* plain text hi samjho */ }
+          }
+          return t;
+        }
+
+        function pickFromJson(data) {
+          if (!data || typeof data !== "object") return "";
+          var parts = [];
+          ["answer", "response", "reply", "text", "message", "explanation", "description"].forEach(function (k) {
+            if (typeof data[k] === "string" && data[k].trim()) parts.push(data[k].trim());
+          });
+          if (typeof data.code === "string" && data.code.trim()) {
+            var lang = typeof data.language === "string" ? data.language.toLowerCase() : "";
+            if (!LANG_EXT[lang]) lang = "";
+            parts.push("```" + lang + "\n" + data.code.replace(/\n$/, "") + "\n```");
+          }
+          // Kabhi code language wale key mein aata hai: {"html": "...", "css": "..."}
+          Object.keys(data).forEach(function (k) {
+            var lk = k.toLowerCase();
+            if (LANG_EXT[lk] && typeof data[k] === "string" && data[k].trim()) {
+              parts.push("```" + lk + "\n" + data[k].replace(/\n$/, "") + "\n```");
+            }
+          });
+          if (!parts.length) {
+            for (var k in data) {
+              if (typeof data[k] === "string" && data[k].trim().length > 1) parts.push(data[k].trim());
+            }
+          }
+          return parts.join("\n\n");
+        }
+
+        /* ---------------- system prompt + yaad (memory) ---------------- */
+
+        function buildSystemPrompt() {
+          var s = "Your name in this app is " + aiName + ". " + SYSTEM_PROMPT;
+          if (memories.length) {
+            s += " Facts the user asked you to remember in this chat (use them naturally when relevant): " + memories.join("; ") + ".";
+          }
+          return s;
+        }
+
+        function fmtNum(n) {
+          return (Math.round(n * 100) / 100).toLocaleString("en-IN");
+        }
+        function totalKharcha() {
+          return kharchas.reduce(function (sum, k) { return sum + k.amount; }, 0);
+        }
+
+        /* ---------------- overlay (preview + tools) ---------------- */
+
+        var overlayEl = document.getElementById("overlay");
+        var sheetTitle = document.getElementById("sheetTitle");
+        var sheetBody = document.getElementById("sheetBody");
+
+        function openOverlay(title, full) {
+          sheetTitle.textContent = title;
+          sheetBody.innerHTML = "";
+          overlayEl.classList.toggle("full", !!full);
+          overlayEl.hidden = false;
+          return sheetBody;
+        }
+        function closeOverlay() {
+          overlayEl.hidden = true;
+          sheetBody.innerHTML = "";
+        }
+        document.getElementById("sheetClose").addEventListener("click", closeOverlay);
+        overlayEl.addEventListener("click", function (e) {
+          if (e.target === overlayEl) closeOverlay();
+        });
+
+        // HTML code ka live result — sandboxed iframe mein, bina page chhode.
+        function openPreview(code) {
+          var body = openOverlay("👁️ Preview", true);
+          var frame = document.createElement("iframe");
+          frame.setAttribute("sandbox", "allow-scripts allow-modals");
+          frame.title = "Code preview";
+          frame.srcdoc = code;
+          body.appendChild(frame);
+        }
+
+        /* ---------------- bol kar sunana (speak) ---------------- */
+
+        var speaking = false;
+        function resetSpeakLabels() {
+          document.querySelectorAll(".speak-btn span").forEach(function (s) { s.textContent = "Sunao"; });
+        }
+        function speakText(text, btn) {
+          if (!("speechSynthesis" in window)) return;
+          if (speaking) {
+            speechSynthesis.cancel();
+            speaking = false;
+            resetSpeakLabels();
+            return;
+          }
+          var clean = text
+            .replace(/```[\s\S]*?```/g, " Code upar diya hai, dekh lo. ")
+            .replace(/`([^`]*)`/g, "$1")
+            .replace(/\*\*([^*]+)\*\*/g, "$1")
+            .replace(/[#>*_~]/g, " ")
+            .replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2190}-\u{21FF}\u{FE0F}]/gu, "")
+            .replace(/\s+/g, " ")
+            .trim();
+          if (!clean) return;
+          if (clean.length > 900) clean = clean.slice(0, 900);
+          var u = new SpeechSynthesisUtterance(clean);
+          u.lang = /[\u0900-\u097F]/.test(text) ? "hi-IN" : "en-IN";
+          speaking = true;
+          var label = btn.querySelector("span");
+          if (label) label.textContent = "Roko";
+          u.onend = u.onerror = function () {
+            speaking = false;
+            resetSpeakLabels();
+          };
+          speechSynthesis.cancel();
+          speechSynthesis.speak(u);
+        }
+
+        /* ---------------- local reply helper ---------------- */
+
+        function replyLocal(text) {
+          setTimeout(function () {
+            var row = addMessage("ai", text);
+            history.push({ role: "assistant", content: text });
+            scrollToMessageTop(row);
+            busy = false;
+          }, 250);
+        }
+
+        /* ---------------- app commands: yaad + kharcha ----------------
+           Ye commands bina net ke, app ke andar hi chalte hain. */
+
+        function matchAppCommand(raw) {
+          var low = raw.toLowerCase();
+
+          // sab bhool jao
+          if (/bhool jao|bhool ja\b|sab bhool|yaad saaf|yaad clear/.test(low)) {
+            if (!memories.length) return "Abhi maine kuch yaad hi nahi rakha hai — bhoolne ko kuch hai hi nahi! 😄";
+            memories = [];
+            return "Theek hai, sab bhool gaya! 🧹 Ab is chat mein kuch bhi yaad nahi hai.";
+          }
+
+          // yaad rakho: ...
+          var save = raw.match(/yaad\s*(?:rakho|kar lo|karlo|rakh lo)[:\-]?\s*(.+)/i);
+          if (save && save[1].trim().length > 1) {
+            var fact = save[1].trim().replace(/[。.]+$/, "");
+            memories.push(fact);
+            return "Yaad kar liya! 🧠\n\n**" + fact + "**\n\nYe baat main is poori chat mein yaad rakhunga. Aur kuch yaad karwana ho to bas 'yaad rakho:' likh kar bhej do.";
+          }
+
+          // kya yaad hai
+          if (/kya yaad hai|kya-kya yaad|kya kya yaad|tumhe kya yaad|yaad hai kya/.test(low)) {
+            if (!memories.length) {
+              return "Abhi tak tumne kuch yaad karne ko nahi kaha. Kuch yaad karwana ho to aise likho:\n\n`yaad rakho: meri pasand ki chai bina cheeni wali hai`";
+            }
+            var list = memories.map(function (m, i) { return (i + 1) + ". " + m; }).join("\n");
+            return "Mujhe is chat mein ye baatein yaad hain: 🧠\n\n" + list + "\n\nSab bhulwana ho to likho: **sab bhool jao**";
+          }
+
+          // kharcha add: "kharcha 200 khana" ya "200 kharcha khana"
+          var kh = raw.match(/kharcha?\s+(?:rs\.?|₹)?\s*(\d+(?:\.\d+)?)\s*(.*)/i) ||
+                   raw.match(/(?:rs\.?|₹)?\s*(\d+(?:\.\d+)?)\s*(?:ka\s+)?kharcha?\s*(?:hua\s*)?(.*)/i);
+          if (kh && parseFloat(kh[1]) > 0 && !/kitna|total|dikhao|hisaab|hisab/.test(low)) {
+            var amt = parseFloat(kh[1]);
+            var note = (kh[2] || "").trim() || "Kharcha";
+            kharchas.push({ amount: amt, note: note });
+            return "Note kar liya! 💰\n\n**₹" + fmtNum(amt) + "** — " + note + "\n\nAb tak ka kul kharcha: **₹" + fmtNum(totalKharcha()) + "**\nPoora hisaab aur chart dekhna ho to + wale menu ke **Tools** mein Kharcha Tracker kholo.";
+          }
+
+          // kharcha summary
+          if (/kharcha?/.test(low) && /kitna|total|dikhao|hisaab|hisab/.test(low)) {
+            if (!kharchas.length) return "Abhi koi kharcha note nahi hai. Jab kharcha ho to aise likho: `kharcha 200 khana` — main note kar lunga. 💰";
+            return "Ab tak ka kul kharcha hai **₹" + fmtNum(totalKharcha()) + "** (" + kharchas.length + " kharche). Poora hisaab + chart + wale menu ke Tools mein Kharcha Tracker mein hai. 💰";
+          }
+
+          return null;
+        }
+
+        /* ---------------- photo banana ----------------
+           Free image service (bina key) — pehle Hinglish description ko
+           English prompt mein badlo, phir photo banao. */
+
+        function photoDesc(raw) {
+          var low = raw.toLowerCase();
+          var hasNoun = /(photo|image|tasveer|picture|pic\b|wallpaper)/.test(low);
+          var hasVerb = /(banao|bana do|banana|chahiye|dikhao|generate|create|make|draw|bana\b)/.test(low);
+          if (!hasNoun || !hasVerb) return null;
+          // "photo gallery website ka code banao" jaisi coding request photo nahi hai — use AI par jaane do
+          if (/(code|html|website|webpage|web page|script)/.test(low)) return null;
+          var parts = raw.split(/[:：]/);
+          if (parts.length > 1 && parts[1].trim().length > 2) return parts[1].trim();
+          var d = " " + low + " ";
+          d = d.replace(/\b(please|plz|mere liye|meri|mera|mujhe|zara|bhai|sundar)\b/g, " ");
+          d = d.replace(/\b(photo|image|tasveer|picture|wallpaper)\b/g, " ");
+          d = d.replace(/\b(banao|bana do|banana hai|banana|bana|chahiye|dikhao|generate|create|make|draw|ek|ki|ka|ke|of|an|a|the)\b/g, " ");
+          return d.replace(/\s+/g, " ").trim();
+        }
+
+        function doPhotoFlow(desc) {
+          addTyping();
+          translatePrompt(desc).then(function (enPrompt) {
+            removeTyping();
+            busy = false;
+            addPhotoMessage(desc, enPrompt);
+          });
+        }
+
+        function translatePrompt(desc) {
+          var controller = new AbortController();
+          var timer = setTimeout(function () { controller.abort(); }, 30000);
+          return fetch("https://text.pollinations.ai/", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              messages: [
+                { role: "system", content: "You convert image requests into image-generation prompts." },
+                { role: "user", content: "Convert this into one short, vivid English prompt for an AI image generator. Reply with ONLY the prompt text, no quotes, no explanation: " + desc }
+              ],
+              model: "openai"
+            }),
+            signal: controller.signal
+          })
+            .then(function (r) {
+              clearTimeout(timer);
+              if (!r.ok) throw new Error("http " + r.status);
+              return r.text();
+            })
+            .then(function (t) {
+              var p = extractReply(t).replace(/^["']+|["']+$/g, "").trim();
+              return p.length > 3 && p.length < 300 ? p : desc;
+            })
+            .catch(function () {
+              clearTimeout(timer);
+              return desc;
+            });
+        }
+
+        function addPhotoMessage(desc, enPrompt) {
+          var row = document.createElement("div");
+          row.className = "row ai";
+          var bubble = document.createElement("div");
+          bubble.className = "bubble";
+          bubble.innerHTML = '<div class="photo-loading">🎨 Photo ban raha hai… thoda time lagega</div>';
+          row.appendChild(bubble);
+          messagesEl.appendChild(row);
+          scrollToMessageTop(row);
+
+          var img = new Image();
+          img.className = "chat-photo";
+          img.alt = desc;
+          img.onload = function () {
+            bubble.innerHTML = "";
+            bubble.appendChild(img);
+            var cap = document.createElement("div");
+            cap.className = "photo-cap";
+            cap.textContent = "📸 " + desc + " — save karne ke liye photo par der tak dabao (long-press). Aur photo chahiye to bas likh do!";
+            bubble.appendChild(cap);
+            history.push({ role: "assistant", content: "Maine ek photo banaya: " + desc });
+            scrollToMessageTop(row);
+          };
+          img.onerror = function () {
+            bubble.innerHTML = "";
+            var p = document.createElement("p");
+            p.textContent = "Photo nahi ban paya 😕 — free photo service abhi busy lag rahi hai. Thodi der mein dobara 'photo banao' likh kar try karo.";
+            bubble.appendChild(p);
+            history.push({ role: "assistant", content: "Photo nahi ban paya — free photo service busy thi." });
+          };
+          img.src = "https://image.pollinations.ai/prompt/" + encodeURIComponent(enPrompt) +
+            "?width=768&height=1024&seed=" + Math.floor(Math.random() * 100000) + "&nologo=true";
+        }
+
+        /* ---------------- tools: menu, to-do, kharcha, quiz ---------------- */
+
+        function openToolsMenu() {
+          trayEl.classList.remove("open");
+          plusBtn.classList.remove("open");
+          var body = openOverlay("🧰 Tools", false);
+          [
+            ["✅", "To-Do List", "Kaam ki list banao — ho jaye to tap karke tick karo", showTodo],
+            ["💰", "Kharcha Tracker", "Roz ka kharcha note karo, chart ke saath", showKharcha],
+            ["🧠", "Quiz Khelo", "10 aasan sawal — dekho kitne sahi hote hain", showQuiz]
+          ].forEach(function (t) {
+            var b = document.createElement("button");
+            b.type = "button";
+            b.className = "tool-menu-btn";
+            b.innerHTML = '<span style="font-size:24px">' + t[0] + "</span><span>" + t[1] + "<small>" + t[2] + "</small></span>";
+            b.addEventListener("click", t[3]);
+            body.appendChild(b);
+          });
+        }
+
+        function toolHead(body, title) {
+          sheetTitle.textContent = title;
+          body.innerHTML = "";
+          var back = document.createElement("button");
+          back.type = "button";
+          back.className = "tool-back";
+          back.textContent = "← Saare Tools";
+          back.addEventListener("click", openToolsMenu);
+          body.appendChild(back);
+        }
+
+        function showTodo() {
+          var body = sheetBody;
+          toolHead(body, "✅ To-Do List");
+          var row = document.createElement("div");
+          row.className = "tool-row";
+          var inp = document.createElement("input");
+          inp.className = "tool-input";
+          inp.type = "text";
+          inp.placeholder = "Naya kaam likho...";
+          var add = document.createElement("button");
+          add.type = "button";
+          add.className = "tool-add";
+          add.textContent = "Add karo";
+          row.appendChild(inp);
+          row.appendChild(add);
+          body.appendChild(row);
+          var list = document.createElement("div");
+          body.appendChild(list);
+
+          function render() {
+            list.innerHTML = "";
+            if (!todos.length) {
+              list.innerHTML = '<div class="tool-empty">Abhi list khaali hai — pehla kaam upar likh kar Add karo.</div>';
+              return;
+            }
+            todos.forEach(function (item, i) {
+              var d = document.createElement("div");
+              d.className = "todo-item" + (item.done ? " done" : "");
+              var t = document.createElement("span");
+              t.className = "t-text";
+              t.textContent = (item.done ? "✅ " : "⬜ ") + item.text;
+              t.addEventListener("click", function () { item.done = !item.done; render(); });
+              var del = document.createElement("button");
+              del.type = "button";
+              del.className = "item-del";
+              del.textContent = "✕";
+              del.setAttribute("aria-label", "Hatao");
+              del.addEventListener("click", function () { todos.splice(i, 1); render(); });
+              d.appendChild(t);
+              d.appendChild(del);
+              list.appendChild(d);
+            });
+          }
+          function doAdd() {
+            var v = inp.value.trim();
+            if (!v) return;
+            todos.push({ text: v, done: false });
+            inp.value = "";
+            render();
+          }
+          add.addEventListener("click", doAdd);
+          inp.addEventListener("keydown", function (e) {
+            if (e.key === "Enter") { e.preventDefault(); doAdd(); }
+          });
+          render();
+        }
+
+        function showKharcha() {
+          var body = sheetBody;
+          toolHead(body, "💰 Kharcha Tracker");
+          var row = document.createElement("div");
+          row.className = "tool-row";
+          var amt = document.createElement("input");
+          amt.className = "tool-input";
+          amt.type = "number";
+          amt.min = "0";
+          amt.placeholder = "₹ Amount";
+          amt.style.flex = "0 1 110px";
+          var note = document.createElement("input");
+          note.className = "tool-input";
+          note.type = "text";
+          note.placeholder = "Kis cheez par? (khana, safar...)";
+          var add = document.createElement("button");
+          add.type = "button";
+          add.className = "tool-add";
+          add.textContent = "Add karo";
+          row.appendChild(amt);
+          row.appendChild(note);
+          row.appendChild(add);
+          body.appendChild(row);
+          var wrap = document.createElement("div");
+          body.appendChild(wrap);
+
+          function render() {
+            wrap.innerHTML = "";
+            var total = document.createElement("div");
+            total.className = "tool-total";
+            total.textContent = "Kul kharcha: ₹" + fmtNum(totalKharcha()) + " (" + kharchas.length + " kharche)";
+            wrap.appendChild(total);
+            if (!kharchas.length) {
+              var e = document.createElement("div");
+              e.className = "tool-empty";
+              e.textContent = "Abhi koi kharcha nahi. Upar amount + cheez likh kar Add karo — ya chat mein likho: kharcha 200 khana";
+              wrap.appendChild(e);
+              return;
+            }
+            wrap.appendChild(buildKharchaChart());
+            kharchas.slice().reverse().forEach(function (k, ri) {
+              var idx = kharchas.length - 1 - ri;
+              var d = document.createElement("div");
+              d.className = "kh-item";
+              var n = document.createElement("span");
+              n.className = "k-note";
+              n.textContent = k.note;
+              var a = document.createElement("span");
+              a.className = "k-amt";
+              a.textContent = "₹" + fmtNum(k.amount);
+              var del = document.createElement("button");
+              del.type = "button";
+              del.className = "item-del";
+              del.textContent = "✕";
+              del.setAttribute("aria-label", "Hatao");
+              del.addEventListener("click", function () { kharchas.splice(idx, 1); render(); });
+              d.appendChild(n);
+              d.appendChild(a);
+              d.appendChild(del);
+              wrap.appendChild(d);
+            });
+          }
+          function doAdd() {
+            var v = parseFloat(amt.value);
+            if (!isFinite(v) || v <= 0) return;
+            kharchas.push({ amount: v, note: note.value.trim() || "Kharcha" });
+            amt.value = "";
+            note.value = "";
+            render();
+          }
+          add.addEventListener("click", doAdd);
+          render();
+        }
+
+        // Chart — cheez ke hisaab se kul kharcha (sirf asli note kiye kharche se)
+        function buildKharchaChart() {
+          var groups = {};
+          kharchas.forEach(function (k) {
+            var key = (k.note || "kharcha").trim().toLowerCase();
+            groups[key] = (groups[key] || 0) + k.amount;
+          });
+          var entries = Object.keys(groups).map(function (k) { return [k, groups[k]]; })
+            .sort(function (a, b) { return b[1] - a[1]; }).slice(0, 6);
+          var max = entries[0][1];
+          var accent = getComputedStyle(document.documentElement).getPropertyValue("--send-bg").trim() || "#5b93f5";
+          var rowH = 30, W = 320, H = entries.length * rowH + 6;
+          var svg = '<svg viewBox="0 0 ' + W + " " + H + '" width="100%" role="img" aria-label="Kharcha chart">';
+          entries.forEach(function (e, i) {
+            var y = i * rowH + 4;
+            var bw = Math.max(4, Math.round((e[1] / max) * 140));
+            var label = e[0].length > 11 ? e[0].slice(0, 11) + "…" : e[0];
+            svg += '<text x="0" y="' + (y + 15) + '" font-size="12" fill="currentColor">' + escapeHtml(label) + "</text>";
+            svg += '<rect x="100" y="' + y + '" width="' + bw + '" height="18" rx="5" fill="' + accent + '"></rect>';
+            svg += '<text x="' + (106 + bw) + '" y="' + (y + 15) + '" font-size="12" font-weight="700" fill="currentColor">₹' + fmtNum(e[1]) + "</text>";
+          });
+          svg += "</svg>";
+          var div = document.createElement("div");
+          div.className = "chart-wrap";
+          div.innerHTML = svg;
+          return div;
+        }
+
+        var QUIZ = [
+          { q: "Bharat ki rajdhani kaunsi hai?", options: ["Mumbai", "New Delhi", "Kolkata", "Chennai"], answer: 1 },
+          { q: "Taj Mahal kis shahar mein hai?", options: ["Jaipur", "Delhi", "Agra", "Lucknow"], answer: 2 },
+          { q: "Cricket mein ek over mein kitni balls hoti hain?", options: ["4", "5", "6", "8"], answer: 2 },
+          { q: "Paani ka chemical formula kya hai?", options: ["CO2", "H2O", "O2", "NaCl"], answer: 1 },
+          { q: "Bharat ke pehle Pradhan Mantri kaun the?", options: ["Sardar Patel", "Dr. Rajendra Prasad", "Jawaharlal Nehru", "Lal Bahadur Shastri"], answer: 2 },
+          { q: "Suraj kis disha se ugta (nikalta) hai?", options: ["Paschim", "Poorab", "Uttar", "Dakshin"], answer: 1 },
+          { q: "Ek saal mein kitne mahine hote hain?", options: ["10", "11", "12", "13"], answer: 2 },
+          { q: "Computer ka 'dimaag' kise kehte hain?", options: ["Monitor", "Keyboard", "CPU", "Mouse"], answer: 2 },
+          { q: "Duniya ka sabse bada mahasagar kaunsa hai?", options: ["Atlantic", "Indian", "Arctic", "Pacific (Prashant)"], answer: 3 },
+          { q: "Ramayan kisne likhi thi?", options: ["Tulsidas", "Valmiki", "Ved Vyas", "Kalidas"], answer: 1 }
+        ];
+        var quizState = null;
+
+        function showQuiz() {
+          var body = sheetBody;
+          toolHead(body, "🧠 Quiz Khelo");
+          quizState = { i: 0, score: 0 };
+          renderQuizQ(body);
+        }
+
+        function renderQuizQ(body) {
+          while (body.children.length > 1) body.removeChild(body.lastChild);
+          var st = quizState;
+          if (st.i >= QUIZ.length) {
+            var done = document.createElement("div");
+            var msg = st.score >= 8 ? "Bahut badhiya! 🏆" : st.score >= 5 ? "Achha khela! 👍 Thoda aur practice karo." : "Koi baat nahi — dobara try karo, score badhega! 💪";
+            done.innerHTML = '<div class="quiz-q">Quiz khatm! 🎉</div>' +
+              '<p style="font-size:16px">Tumhara score: <strong>' + st.score + " / " + QUIZ.length + "</strong></p><p>" + msg + "</p>";
+            var again = document.createElement("button");
+            again.type = "button";
+            again.className = "tool-add";
+            again.textContent = "Dobara khelo";
+            again.addEventListener("click", function () {
+              quizState = { i: 0, score: 0 };
+              renderQuizQ(body);
+            });
+            done.appendChild(again);
+            body.appendChild(done);
+            return;
+          }
+          var item = QUIZ[st.i];
+          var prog = document.createElement("div");
+          prog.className = "tool-empty";
+          prog.textContent = "Sawal " + (st.i + 1) + " / " + QUIZ.length + "  •  Score: " + st.score;
+          body.appendChild(prog);
+          var q = document.createElement("div");
+          q.className = "quiz-q";
+          q.textContent = item.q;
+          body.appendChild(q);
+          item.options.forEach(function (opt, oi) {
+            var b = document.createElement("button");
+            b.type = "button";
+            b.className = "quiz-opt";
+            b.textContent = opt;
+            b.addEventListener("click", function () {
+              var opts = body.querySelectorAll(".quiz-opt");
+              opts.forEach(function (o) { o.disabled = true; });
+              opts[item.answer].classList.add("right");
+              if (oi === item.answer) st.score++;
+              else b.classList.add("wrong");
+              var next = document.createElement("button");
+              next.type = "button";
+              next.className = "tool-add";
+              next.style.marginTop = "6px";
+              next.textContent = st.i + 1 >= QUIZ.length ? "Result dekho" : "Agla sawal →";
+              next.addEventListener("click", function () { st.i++; renderQuizQ(body); });
+              body.appendChild(next);
+            });
+            body.appendChild(b);
+          });
+        }
+
+        document.getElementById("trayTools").addEventListener("click", openToolsMenu);
+
+        /* ---------------- file padhna (PDF / text) ----------------
+           PDF ka text pdf.js (CDN, classic build) se, text file seedha
+           FileReader se. Text AI ko bhej kar summary + sawal-jawab. */
+
+        var fileInput = document.getElementById("fileInput");
+        if (window.pdfjsLib) {
+          try {
+            pdfjsLib.GlobalWorkerOptions.workerSrc =
+              "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+          } catch (e) {}
+        }
+
+        document.getElementById("trayFile").addEventListener("click", function () {
+          trayEl.classList.remove("open");
+          plusBtn.classList.remove("open");
+          fileInput.click();
+        });
+        fileInput.addEventListener("change", function () {
+          var f = fileInput.files && fileInput.files[0];
+          fileInput.value = "";
+          if (f) handleFile(f);
+        });
+
+        function extractFileText(file, isPdf) {
+          if (isPdf) {
+            if (!window.pdfjsLib) return Promise.reject(new Error("pdf library load nahi hui"));
+            return file.arrayBuffer().then(function (buf) {
+              return pdfjsLib.getDocument({ data: buf }).promise;
+            }).then(function (pdf) {
+              var count = Math.min(pdf.numPages, 30);
+              var seq = Promise.resolve("");
+              for (var p = 1; p <= count; p++) {
+                (function (pn) {
+                  seq = seq.then(function (acc) {
+                    return pdf.getPage(pn).then(function (page) {
+                      return page.getTextContent();
+                    }).then(function (tc) {
+                      var line = tc.items.map(function (it) { return it.str; }).join(" ");
+                      return acc + "\n" + line;
+                    });
+                  });
+                })(p);
+              }
+              return seq;
+            });
+          }
+          if (file.text) return file.text();
+          return new Promise(function (res, rej) {
+            var r = new FileReader();
+            r.onload = function () { res(r.result); };
+            r.onerror = rej;
+            r.readAsText(file);
+          });
+        }
+
+        function handleFile(file) {
+          if (busy) return;
+          var isPdf = /\.pdf$/i.test(file.name) || file.type === "application/pdf";
+          var isText = /^text\//.test(file.type) || /\.(txt|md|csv|json|log)$/i.test(file.name);
+          if (!isPdf && !isText) {
+            busy = true;
+            replyLocal("Ye file main nahi padh sakta 😕 — sirf **PDF** ya **text file** (.txt, .md, .csv, .json) chalegi. + wale menu mein **📄 File padho** se sahi file chuno.");
+            return;
+          }
+          if (file.size > 8 * 1024 * 1024) {
+            busy = true;
+            replyLocal("File bahut badi hai (8 MB se zyada) 😕 — chhoti file bhejo, main turant padh dunga.");
+            return;
+          }
+          busy = true;
+          trayEl.classList.remove("open");
+          plusBtn.classList.remove("open");
+          addMessage("user", "📄 File bheji: " + file.name);
+          scrollToBottom();
+          history.push({ role: "user", content: "Maine ek file bheji hai: " + file.name + " — iska summary chahiye." });
+          addTyping();
+          extractFileText(file, isPdf).then(function (text) {
+            removeTyping();
+            text = (text || "").replace(/\s+\n/g, "\n").trim();
+            if (text.length < 10) {
+              var r0 = addMessage("ai", "File khul to gayi, par usmein padhne layak text nahi mila 😕 — agar ye scanned photo wali PDF hai to uska text nahi nikalta. Koi text wali file try karo.");
+              history.push({ role: "assistant", content: "File mein text nahi mila." });
+              scrollToMessageTop(r0);
+              busy = false;
+              return;
+            }
+            var clipped = text.slice(0, 12000);
+            var truncNote = text.length > 12000
+              ? " (File lambi thi, isliye pehle 12,000 akshar hi padhe hain — baaki par sawal ho to file ka woh hissa alag se bhej dena.)"
+              : "";
+            var prompt =
+              "Neeche meri bheji hui file \"" + file.name + "\" ka text hai. Pehle iska aasan Hinglish mein summary do, phir main points bullet mein batao." + truncNote +
+              "\n\n--- FILE TEXT ---\n" + clipped;
+            askFreeAI(prompt).then(function (reply) {
+              var row = addMessage("ai", reply);
+              history.push({ role: "assistant", content: reply });
+              setStatus(true, aiName + " online — bina API key");
+              scrollToMessageTop(row);
+              busy = false;
+            }).catch(function () {
+              var row2 = addMessage("ai", "File padh to li, par abhi free AI se summary nahi aa paya 😕 — thodi der mein file dobara bhej kar try karo.");
+              history.push({ role: "assistant", content: "File ki summary nahi ban payi — free AI busy tha." });
+              setStatus(false, aiName + " busy — basic mode");
+              scrollToMessageTop(row2);
+              busy = false;
+            });
+          }).catch(function () {
+            removeTyping();
+            var row3 = addMessage("ai", "File padhne mein dikkat aayi 😕 — net slow ho sakta hai (PDF library net se aati hai). Dobara try karo, ya koi text file bhej kar dekho.");
+            history.push({ role: "assistant", content: "File padhne mein dikkat aayi." });
+            scrollToMessageTop(row3);
+            busy = false;
+          });
+        }
+
+        /* ---------------- bol kar likhna (voice input) ----------------
+           Browser ki apni speech recognition — Hindi (hi-IN) pehle,
+           fail ho to English (en-IN). Support na ho to imaandaar note. */
+
+        var micBtn = document.getElementById("micBtn");
+        var recognition = null;
+        var listening = false;
+
+        function stopListening() {
+          listening = false;
+          micBtn.classList.remove("rec");
+          if (recognition) { try { recognition.stop(); } catch (e) {} recognition = null; }
+        }
+
+        micBtn.addEventListener("click", function () {
+          if (listening) { stopListening(); return; }
+          var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+          if (!SR) {
+            if (!busy) {
+              busy = true;
+              replyLocal("Is browser mein bol-kar-likhna (voice typing) support nahi hai 😕 — Chrome browser mein khologe to mic chalega. Tab tak type karke bhejo, main yahin hoon!");
+            }
+            return;
+          }
+          recognition = new SR();
+          recognition.interimResults = true;
+          recognition.continuous = false;
+          var base = inputEl.value ? inputEl.value.replace(/\s+$/, "") + " " : "";
+          recognition.onresult = function (e) {
+            var txt = "";
+            for (var i = 0; i < e.results.length; i++) txt += e.results[i][0].transcript;
+            inputEl.value = base + txt;
+            autoGrow();
+          };
+          recognition.onend = function () { listening = false; micBtn.classList.remove("rec"); recognition = null; };
+          recognition.onerror = function () { listening = false; micBtn.classList.remove("rec"); recognition = null; };
+          try {
+            recognition.lang = "hi-IN";
+            recognition.start();
+            listening = true;
+            micBtn.classList.add("rec");
+          } catch (e) {
+            try {
+              recognition.lang = "en-IN";
+              recognition.start();
+              listening = true;
+              micBtn.classList.add("rec");
+            } catch (e2) { listening = false; micBtn.classList.remove("rec"); }
+          }
+        });
+
+        /* ---------------- naam / rang (settings) ---------------- */
+
+        var THEME_LIST = [
+          ["blue", "Neela", "#5b93f5"],
+          ["green", "Hara", "#2f9e5f"],
+          ["orange", "Narangi", "#e8710a"],
+          ["pink", "Gulabi", "#d6336c"],
+          ["purple", "Baingani", "#7c5cd6"]
+        ];
+
+        function openSettings() {
+          trayEl.classList.remove("open");
+          plusBtn.classList.remove("open");
+          var body = openOverlay("🎨 Naam / Rang", false);
+          var selTheme = document.documentElement.getAttribute("data-theme") || "blue";
+
+          var l1 = document.createElement("div");
+          l1.className = "set-label";
+          l1.textContent = "Mera naam kya rakhein?";
+          body.appendChild(l1);
+          var nameInp = document.createElement("input");
+          nameInp.className = "tool-input";
+          nameInp.type = "text";
+          nameInp.maxLength = 20;
+          nameInp.value = aiName;
+          nameInp.style.width = "100%";
+          body.appendChild(nameInp);
+
+          var l2 = document.createElement("div");
+          l2.className = "set-label";
+          l2.textContent = "Rang chuno (button aur theme ka rang)";
+          body.appendChild(l2);
+          var sw = document.createElement("div");
+          sw.className = "swatches";
+          THEME_LIST.forEach(function (t) {
+            var b = document.createElement("button");
+            b.type = "button";
+            b.className = "swatch" + (t[0] === selTheme ? " sel" : "");
+            b.innerHTML = '<span class="dotc" style="background:' + t[2] + '"></span>' + t[1];
+            b.addEventListener("click", function () {
+              selTheme = t[0];
+              sw.querySelectorAll(".swatch").forEach(function (s) { s.classList.remove("sel"); });
+              b.classList.add("sel");
+            });
+            sw.appendChild(b);
+          });
+          body.appendChild(sw);
+
+          var apply = document.createElement("button");
+          apply.type = "button";
+          apply.className = "tool-add set-apply";
+          apply.textContent = "Lagao ✓";
+          apply.addEventListener("click", function () {
+            var nm = nameInp.value.trim().slice(0, 20);
+            if (nm) aiName = nm;
+            if (selTheme === "blue") document.documentElement.removeAttribute("data-theme");
+            else document.documentElement.setAttribute("data-theme", selTheme);
+            closeOverlay();
+            setStatus(true, aiName + " ready — bina API key");
+            if (!busy) {
+              busy = true;
+              replyLocal("Ho gaya! 🎉 Ab mera naam hai **" + aiName + "** aur rang bhi badal gaya. Kaisa laga? Aur kuch badalna ho to + wale menu mein **🎨 Naam / Rang** phir se khol lena.");
+            }
+          });
+          body.appendChild(apply);
+        }
+        document.getElementById("traySettings").addEventListener("click", openSettings);
+
+        /* ---------------- dimaag (model + deep mode) ---------------- */
+
+        function openBrain() {
+          trayEl.classList.remove("open");
+          plusBtn.classList.remove("open");
+          var body = openOverlay("🧠 Dimaag", false);
+
+          var l1 = document.createElement("div");
+          l1.className = "set-label";
+          l1.textContent = "Kaun sa free AI model use karein?";
+          body.appendChild(l1);
+          var sel = document.createElement("select");
+          sel.className = "tool-input";
+          sel.style.width = "100%";
+          var optAuto = document.createElement("option");
+          optAuto.value = "auto";
+          optAuto.textContent = "Auto (sabse achha available chunega)";
+          sel.appendChild(optAuto);
+          modelList.forEach(function (m) {
+            var o = document.createElement("option");
+            o.value = m;
+            o.textContent = m;
+            sel.appendChild(o);
+          });
+          sel.value = chosenModel;
+          body.appendChild(sel);
+
+          var l2 = document.createElement("div");
+          l2.className = "set-label";
+          l2.textContent = "Gehra soch (Deep mode)";
+          body.appendChild(l2);
+          var chk = document.createElement("label");
+          chk.style.display = "flex";
+          chk.style.gap = "8px";
+          chk.style.alignItems = "center";
+          var cb = document.createElement("input");
+          cb.type = "checkbox";
+          cb.checked = deepMode;
+          chk.appendChild(cb);
+          chk.appendChild(document.createTextNode("Jawab dene se pehle khud dobara check kare (jawab thoda der se aayega)"));
+          body.appendChild(chk);
+
+          if (!modelList.length) {
+            var note = document.createElement("div");
+            note.className = "set-label";
+            note.textContent = "Models ki list abhi nahi mili (net ya service ki dikkat). Auto mode chalega.";
+            body.appendChild(note);
+          }
+
+          var apply = document.createElement("button");
+          apply.type = "button";
+          apply.className = "tool-add set-apply";
+          apply.textContent = "Lagao ✓";
+          apply.addEventListener("click", function () {
+            chosenModel = sel.value;
+            deepMode = cb.checked;
+            closeOverlay();
+            setStatus(true, aiName + " ready — " + (chosenModel === "auto" ? "auto model" : chosenModel) + (deepMode ? " + deep" : ""));
+          });
+          body.appendChild(apply);
+        }
+        document.getElementById("trayBrain").addEventListener("click", openBrain);
+
+        /* ---------------- chat download ---------------- */
+
+        document.getElementById("trayDownload").addEventListener("click", function () {
+          trayEl.classList.remove("open");
+          plusBtn.classList.remove("open");
+          if (!history.length) {
+            if (!busy) { busy = true; replyLocal("Abhi chat khaali hai — pehle kuch baat karo, phir download kar lena. 😊"); }
+            return;
+          }
+          var lines = [aiName + " ke saath chat — " + new Date().toLocaleString("en-IN"), ""];
+          history.forEach(function (h) {
+            lines.push((h.role === "user" ? "Tum" : aiName) + ": " + h.content);
+            lines.push("");
+          });
+          var blob = new Blob([lines.join("\n")], { type: "text/plain;charset=utf-8" });
+          var url = URL.createObjectURL(blob);
+          var a = document.createElement("a");
+          a.href = url;
+          a.download = "free-ai-chat.txt";
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
+          if (!busy) {
+            busy = true;
+            replyLocal("Chat download ho gayi! ⬇️ **free-ai-chat.txt** file save ho gayi hai — usmein hamari poori baat-cheet hai.");
+          }
+        });
+
+        /* ---------------- send flow ---------------- */
+
+        function handleSend(text) {
+          var userText = (text != null ? text : inputEl.value).trim();
+          if (!userText || busy) return;
+          busy = true;
+          sendBtn.classList.remove("ready");
+          inputEl.value = "";
+          autoGrow();
+          stopListening();
+          trayEl.classList.remove("open");
+          plusBtn.classList.remove("open");
+
+          addMessage("user", userText);
+          scrollToBottom();
+          history.push({ role: "user", content: userText });
+
+          // App commands pehle — yaad rakhna + kharcha note (bina net ke bhi chalte hain)
+          var cmdReply = matchAppCommand(userText);
+          if (cmdReply !== null) {
+            replyLocal(cmdReply);
+            return;
+          }
+
+          // Photo banana — app khud banata hai
+          var pDesc = photoDesc(userText);
+          if (pDesc !== null) {
+            if (pDesc.length < 3) {
+              replyLocal("Zaroor, photo banata hoon! 🎨 Bas bata do kis cheez ki — aise likho:\n\n`photo banao: samundar kinare sunset`");
+              return;
+            }
+            doPhotoFlow(pDesc);
+            return;
+          }
+
+          // Pehle local turant jawab (hisab/time/date) — bina net ke bhi chalta hai
+          var local = tryLocalAnswer(userText);
+          if (local !== null) {
+            setTimeout(function () {
+              var row = addMessage("ai", local);
+              history.push({ role: "assistant", content: local });
+              scrollToMessageTop(row);
+              busy = false;
+            }, 250);
+            return;
+          }
+
+          addTyping();
+          askFreeAI(userText)
+            .then(function (reply) {
+              removeTyping();
+              var row = addMessage("ai", reply);
+              history.push({ role: "assistant", content: reply });
+              setStatus(true, aiName + " online — bina API key");
+              scrollToMessageTop(row);
+              busy = false;
+            })
+            .catch(function () {
+              removeTyping();
+              var localFallback = tryLocalAnswer(userText);
+              var reply = localFallback !== null ? localFallback : offlineAnswer();
+              var row = addMessage("ai", reply);
+              history.push({ role: "assistant", content: reply });
+              setStatus(false, aiName + " busy — basic mode");
+              scrollToMessageTop(row);
+              busy = false;
+            });
+        }
+
+        formEl.addEventListener("submit", function (e) {
+          e.preventDefault();
+          handleSend();
+        });
+
+        inputEl.addEventListener("keydown", function (e) {
+          if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            handleSend();
+          }
+        });
+
+        function autoGrow() {
+          inputEl.style.height = "auto";
+          inputEl.style.height = Math.min(inputEl.scrollHeight, 132) + "px";
+          sendBtn.classList.toggle("ready", inputEl.value.trim().length > 0);
+        }
+        inputEl.addEventListener("input", autoGrow);
+
+        plusBtn.addEventListener("click", function () {
+          var open = trayEl.classList.toggle("open");
+          plusBtn.classList.toggle("open", open);
+        });
+
+        trayEl.querySelectorAll("[data-q]").forEach(function (btn) {
+          btn.addEventListener("click", function () {
+            handleSend(btn.getAttribute("data-q"));
+          });
+        });
+
+        function startFresh() {
+          history = [];
+          memories = [];
+          messagesEl.innerHTML = "";
+          var welcome =
+            "Namaste Shiva! 😊 Main **" + aiName + "** hoon — bilkul Mera AI jaisa chat, par ye **bina API key** ke chalta hai, to Gemini wali daily limit khatm hone ki dikkat nahi.\n\nAb meri **coding aur strong** hai: poora chalta-hua code milega — aadha-adhura nahi. Website ya app ka code ek hi HTML file mein dunga, aur har code ke upar **Copy** aur **Download** button hoga — Download se seedha file save karke khol sakte ho. Apna purana code ya error paste karoge to galti bata kar poora sahi code dunga.\n\nEk saaf baat: free service kabhi-kabhi slow ho sakti hai — coding wale jawab mein 1 minute tak lag sakta hai. Basic jawab (hisab, time, date, joke) main bina net ke bhi turant de deta hoon.\n\nAb main aur bhi seekh gaya hoon:\n\n- 🖼️ **Photo banana** — likho: photo banao: pahadon par sunset\n- 👁️ **Code Preview** — HTML code ke upar Preview button se result turant dikhega\n- 🔊 **Bol kar sunana** — har jawab ke neeche Sunao button\n- 🧠 **Yaad rakhna** — 'yaad rakho: ...' likho, is chat mein yaad rakhunga\n- 🧰 **Tools** — + wale menu mein To-Do, Kharcha Tracker aur Quiz\n- 📄 **File padhna** — + wale menu se PDF ya text file bhejo, summary dunga\n- 🎤 **Bol kar likhna** — input ke paas mic dabao aur bol do\n- 🎨 **Naam / Rang** — + wale menu se mera naam aur rang badlo\n- ⬇️ **Chat download** — poori chat ek file mein save karo\n\nJo poochna hai likho — code, sawal, hisab, kuch bhi. Ya neeche ke button dabao:";
+          var row = addMessage("ai", welcome);
+          var chips = document.createElement("div");
+          chips.className = "chips";
+          [
+            ["💻 Calculator app ka code banao", "Ek sundar calculator app ka poora HTML code banao jo ek hi file mein chale"],
+            ["🖼️ Photo banao: pahadon par sunset", "Ek photo banao: pahadon par khoobsurat sunset aur ek chhota sa ghar"],
+            ["🧰 Tools kholo (To-Do, Kharcha, Quiz)", null],
+            ["🌐 Meri ek-page website ka code banao", "Ek one-page personal website ka poora HTML code banao jisme mera naam Shiva bade aksharon mein dikhe"],
+            ["Ek joke sunao", "Ek joke sunao"],
+            ["Tum kya-kya kar sakte ho?", "Tum kya-kya kar sakte ho?"]
+          ].forEach(function (pair) {
+            var c = document.createElement("button");
+            c.type = "button";
+            c.className = "chip";
+            c.textContent = pair[0];
+            c.addEventListener("click", function () {
+              if (pair[1]) handleSend(pair[1]);
+              else openToolsMenu();
+            });
+            chips.appendChild(c);
+          });
+          row.querySelector(".bubble").appendChild(chips);
+          setStatus(true, aiName + " ready — bina API key");
+          scrollToBottom();
+        }
+
+        newChatBtn.addEventListener("click", startFresh);
+        document.getElementById("trayClear").addEventListener("click", startFresh);
+
+        loadModels();
+        startFresh();
+      })();
+    </script>
+  </body>
+</html>
