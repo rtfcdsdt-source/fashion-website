@@ -2612,6 +2612,9 @@
         function gmailWanted(text) {
           if (!text) return false;
           var low = String(text).toLowerCase();
+          // "email kaise bhejte hain" / "Gmail kya hota hai" jaise SAWAL list nahi kholte —
+          // wo AI ko jaate hain, jo step-by-step guide deta hai.
+          if (/kaise|kya hota|kya hai|kya chahiye|tarika|tareeka|steps|step by step|sikhao|samjhao|matlab kya/.test(low)) return false;
           if (low.indexOf("email") >= 0 || low.indexOf("gmail") >= 0 || low.indexOf("inbox") >= 0 || low.indexOf("ईमेल") >= 0 || low.indexOf("मेल") >= 0) return true;
           return /(^|[^a-z])mail([^a-z]|$)/.test(low);
         }
@@ -2622,6 +2625,9 @@
           var s = t.match(/subject:\s*(.+)/i);
           if (s) return "subject:" + s[1].trim().slice(0, 100);
           if (/unread/i.test(t)) return "is:unread";
+          // "jawab dena baki hai" / "kaun se Gmail baki hain" = bina padhi emails
+          if (/jawab/i.test(t) && /baki/i.test(t)) return "is:unread";
+          if (/bina padhi|na padhi/i.test(t)) return "is:unread";
           return "";
         }
         // ---- Gmail (har user apna Gmail jode — Google login, read + send) ----
@@ -2935,9 +2941,22 @@
             replyLocal("Theek hai, email nahi bheja.");
             return;
           }
+          // Beech mein "email kaise bhejte hain" jaisa SAWAL aaye to draft chhodo aur
+          // sawal ka jawab normal tareeke se do (AI step-by-step guide deta hai).
+          if (/kaise|kya hota|kya hai|kya chahiye|tarika|tareeka|steps|step by step|sikhao|samjhao|matlab kya/.test(low)) {
+            emailDraft = null;
+            return "reroute";
+          }
           if (emailDraft.step === "to") {
             var em = String(userText).match(/[^\s@]+@[^\s@]+\.[^\s@]+/);
-            if (!em) { replyLocal("Ye email address nahi lagta 😕 — sahi email likho (jaise rahul@gmail.com)."); return; }
+            if (!em) {
+              // Draft ke beech mein padhne wala sawal aaye ("unread email dikhao" jaisa)
+              // to draft chhodo aur wahi karo — address ka error mat do.
+              if (gmailReadWanted(userText) && lastGmailEmails.length) { emailDraft = null; doGmailRead(userText); return; }
+              if (gmailWanted(userText)) { emailDraft = null; doGmailCheck(userText); return; }
+              replyLocal("Ye email address nahi lagta 😕 — sahi email likho (jaise rahul@gmail.com).");
+              return;
+            }
             emailDraft.to = em[0];
             emailDraft.step = "subject";
             replyLocal("Subject kya likhun?");
@@ -3088,8 +3107,8 @@
 
           // Gmail email bhejo — draft chal raha ho to har jawab yahin aata hai
           if (emailDraft) {
-            emailComposeStep(userText);
-            return;
+            // "reroute" mile to draft chhoda — neeche normal routing se sawal ka jawab do
+            if (emailComposeStep(userText) !== "reroute") return;
           }
           if (emailComposeWanted(userText)) {
             emailComposeStart(userText);
