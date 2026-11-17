@@ -385,7 +385,7 @@ function renderMemories(){
  });
 }
 function showHint(){if(!log.querySelector("#hint")){var h=document.createElement("div");h.id="hint";h.textContent="Namaste! Apna sawal neeche likho.";log.appendChild(h)}}
-function add(cls,txt){var d=document.createElement("div");d.className="m "+cls;d.textContent=txt;log.appendChild(d);log.scrollTop=log.scrollHeight;return d}
+function add(cls,txt){var d=document.createElement("div");d.className="m "+cls;d.textContent=txt;log.appendChild(d);if(d.scrollIntoView)d.scrollIntoView();return d}
 // ---- Copy button ----
 function copyText(t){
  if(navigator.clipboard&&navigator.clipboard.writeText)return navigator.clipboard.writeText(t).then(function(){return true},function(){return legacyCopy(t)});
@@ -496,7 +496,7 @@ function showFilePreview(name){
  fileName=name;
  pvi.removeAttribute("src");pvi.style.display="none";
  pv.querySelector("span").textContent="📁 "+name;
- pv.style.display="flex";q.focus();
+ pv.style.display="flex";
 }
 cam.onclick=function(){fp.click()};
 pvx.onclick=clearPhoto;
@@ -513,7 +513,7 @@ fp.onchange=function(){
   var d=c.toDataURL("image/jpeg",0.8);
   photo={mime:"image/jpeg",data:d.split(",")[1]};photoUrl=d;
   pvi.style.display="";pv.querySelector("span").textContent="Photo jod di gayi hai";
-  pvi.src=d;pv.style.display="flex";q.focus();
+  pvi.src=d;pv.style.display="flex";
  };
  im.onerror=function(){URL.revokeObjectURL(url);alert("Photo khul nahi payi. Doosri photo try karo.");fp.value=""};
  im.src=url;
@@ -742,9 +742,9 @@ async function buildSite(t){
   wbtn("✏️ Badlav karo",function(){webEditing=true;q.placeholder="Kya badlav chahiye?";closeSite();showChat();q.focus()});
   wbtn("🌐 Live karo",function(){publishSite(site,card)});
   openSite(site);
-  log.scrollTop=log.scrollHeight;
+  if(card.scrollIntoView)card.scrollIntoView();
  }catch(e){clearInterval(timer);head.textContent="Internet ya server se jod nahi paya. Dobara try karo."}
- b.disabled=false;cam.disabled=false;ib.disabled=false;q.disabled=false;q.focus();
+ b.disabled=false;cam.disabled=false;ib.disabled=false;q.disabled=false;
 }
 // ---- Website ko GitHub → Vercel par live karo ----
 async function publishSite(site,card){
@@ -820,8 +820,8 @@ async function send(keepMode){
  if(WEB.test(t)||webEditing){q.value="";add("u",t);clearPhoto();return buildSite(t)}
  if(/chart|graph/i.test(t)&&/bana|dikha/i.test(t)){q.value="";add("u",t);clearPhoto();showPanel("panel-chart");if(/kharcha|kharch/i.test(t)){chLoadKharcha()}return}
  q.value="";var ub=add("u",t);
- if(photoUrl){var pim=document.createElement("img");pim.alt="photo";pim.style.cssText="width:100%;max-width:220px;border-radius:10px;display:block;margin-top:8px";pim.src=photoUrl;ub.appendChild(pim);log.scrollTop=log.scrollHeight}
- if(fileName){var fn=document.createElement("div");fn.style.cssText="font-size:.8rem;opacity:.75;margin-top:6px";fn.textContent="📁 "+fileName;ub.appendChild(fn);log.scrollTop=log.scrollHeight}
+ if(photoUrl){var pim=document.createElement("img");pim.alt="photo";pim.style.cssText="width:100%;max-width:220px;border-radius:10px;display:block;margin-top:8px";pim.src=photoUrl;ub.appendChild(pim);if(ub.scrollIntoView)ub.scrollIntoView()}
+ if(fileName){var fn=document.createElement("div");fn.style.cssText="font-size:.8rem;opacity:.75;margin-top:6px";fn.textContent="📁 "+fileName;ub.appendChild(fn);if(ub.scrollIntoView)ub.scrollIntoView()}
  hist.push({role:"user",text:t});
  var imgToSend=photo;var fileToSend=fileData;var textToSend=fileText;clearPhoto();
  var box=add("a","Soch raha hun...");b.disabled=true;cam.disabled=true;ib.disabled=true;q.disabled=true;
@@ -833,12 +833,12 @@ async function send(keepMode){
   if(savedMemories.length)payload.memories=savedMemories.slice();
   var r=await fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
   var d={};try{d=await r.json()}catch(e){}
-  if(!r.ok){box.textContent=d.error||("Kuch gadbad hui (code "+r.status+"). Thodi der baad dobara try karo.");b.disabled=false;cam.disabled=false;ib.disabled=false;q.disabled=false;q.focus();return}
+  if(!r.ok){box.textContent=d.error||("Kuch gadbad hui (code "+r.status+"). Thodi der baad dobara try karo.");b.disabled=false;cam.disabled=false;ib.disabled=false;q.disabled=false;return}
   var ans=(d.reply||"").trim();
-  if(!ans){box.textContent="Khali jawab aaya. Dobara try karo.";b.disabled=false;cam.disabled=false;ib.disabled=false;q.disabled=false;q.focus();return}
+  if(!ans){box.textContent="Khali jawab aaya. Dobara try karo.";b.disabled=false;cam.disabled=false;ib.disabled=false;q.disabled=false;return}
   box.textContent=ans;attachCopy(box,function(){return ans});if(Array.isArray(d.sources)&&d.sources.length){attachSources(box,d.sources,d.searchQuery||t)}hist.push({role:"assistant",text:ans});saveHist();saveServerHist();
  }catch(e){box.textContent="Internet ya server se jod nahi paya. Dobara try karo."}
- b.disabled=false;cam.disabled=false;ib.disabled=false;q.disabled=false;q.focus();
+ b.disabled=false;cam.disabled=false;ib.disabled=false;q.disabled=false;
 }
 // ---- Tasveer banana (🎨 SVG illustration; asli photo nahi banti) ----
 var STYLES={simple:{label:"Simple",pre:""},cartoon:{label:"Cartoon",pre:"Cartoon style mein, rang-biranga: "},naksha:{label:"Naksha",pre:"Saaf diagram/naksha style mein, labels ke saath: "},logo:{label:"Logo",pre:"Simple logo style mein, saaf background par: "}};
@@ -876,11 +876,11 @@ async function draw(tOverride,labelOverride){
     var svg=m[0];box._svg=svg;
     attachCopy(box,function(){return box._svg||""});
     attachEdit(box,t);
-    log.scrollTop=log.scrollHeight;
+    if(box.scrollIntoView)box.scrollIntoView();
    }
   }
  }catch(e){box.textContent="Internet ya server se jod nahi paya. Dobara try karo."}
- b.disabled=false;ib.disabled=false;q.disabled=false;q.focus();
+ b.disabled=false;ib.disabled=false;q.disabled=false;
 }
 ib.onclick=function(){draw()};
 // ---- Modes / Settings / Roadmap / Clear ----
