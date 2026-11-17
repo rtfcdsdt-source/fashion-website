@@ -11,8 +11,7 @@
 //   POST /api/freeai?fn=memory {code, memories} → yaadein save karo (admin only)
 //   POST /api/freeai?fn=memory&action=clear {code} → yaadein delete karo (admin only).
 //   POST /api/freeai?fn=video {video: {mimeType, data}} → {ok, text} (Gemini video samajh, no admin code)
-//   POST /api/freeai?fn=gmail {code, q} → {ok, emails: [{id, from, subject, date, snippet}]} (Gmail read-only, admin only)
-// Env: SERPER_API_KEY (search) + DATABASE_URL (ya POSTGRES_URL / NEON_DATABASE_URL) + REELS_ADMIN_CODE + GEMINI_API_KEY (video) + GOOGLE_GMAIL_CLIENT_ID / GOOGLE_GMAIL_CLIENT_SECRET / GOOGLE_GMAIL_REFRESH_TOKEN (gmail).
+// Env: SERPER_API_KEY (search) + DATABASE_URL (ya POSTGRES_URL / NEON_DATABASE_URL) + REELS_ADMIN_CODE + GEMINI_API_KEY (video).
 // Storage: Neon Postgres over its raw HTTP /sql endpoint (no npm packages).
 // Chat limit: max 100 messages, har message max 4000 chars, total max ~200,000 chars.
 // Memory limit: max 30 yaadein, har yaad max 500 chars, total max ~50,000 chars.
@@ -372,52 +371,6 @@ async function handleVideo(req, res) {
   return send(res, 200, { ok: true, text: text });
 }
 
-// POST /api/freeai?fn=gmail {code, q} → {ok, emails: [{id, from, subject, date, snippet}]} (Gmail read-only, admin only).
-// Sirf Shiva ka Gmail — env GOOGLE_GMAIL_CLIENT_ID / GOOGLE_GMAIL_CLIENT_SECRET / GOOGLE_GMAIL_REFRESH_TOKEN.
-// Token kabhi page ya log mein nahi aata; access token har call par refresh hota hai.
-// Bhejna (send) is version mein nahi hai — sirf padhna.
-async function handleGmail(req, res) {
-  if (req.method !== "POST") { res.setHeader("Allow", "POST"); return send(res, 405, { ok: false, error: "Sirf POST chalega." }); }
-  const body = await readBody(req);
-  if (!checkAdminCode(body && body.code)) return send(res, 401, { ok: false, error: "bad_code" });
-  const cid = (process.env.GOOGLE_GMAIL_CLIENT_ID || "").trim();
-  const csec = (process.env.GOOGLE_GMAIL_CLIENT_SECRET || "").trim();
-  const rtok = (process.env.GOOGLE_GMAIL_REFRESH_TOKEN || "").trim();
-  if (!cid || !csec || !rtok) return send(res, 503, { ok: false, error: "not_configured" });
-  const q = typeof (body && body.q) === "string" ? body.q.replace(/[\r\n]/g, " ").trim().slice(0, 200) : "";
-  try {
-    const tr = await fetch("https://oauth2.googleapis.com/token", {
-      method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: "client_id=" + encodeURIComponent(cid) + "&client_secret=" + encodeURIComponent(csec) + "&refresh_token=" + encodeURIComponent(rtok) + "&grant_type=refresh_token",
-      signal: AbortSignal.timeout(8000)
-    });
-    if (!tr || !tr.ok) return send(res, 502, { ok: false, error: "gmail_auth_error" });
-    const td = await tr.json().catch(() => null);
-    const at = td && td.access_token;
-    if (!at) return send(res, 502, { ok: false, error: "gmail_auth_error" });
-    const listUrl = "https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=5" + (q ? "&q=" + encodeURIComponent(q) : "");
-    const lr = await fetch(listUrl, { headers: { Authorization: "Bearer " + at }, signal: AbortSignal.timeout(8000) });
-    if (!lr || !lr.ok) return send(res, 502, { ok: false, error: "gmail_error" });
-    const ld = await lr.json().catch(() => null);
-    const msgs = (ld && Array.isArray(ld.messages)) ? ld.messages.slice(0, 5) : [];
-    const emails = [];
-    for (const m of msgs) {
-      try {
-        const gr = await fetch("https://gmail.googleapis.com/gmail/v1/users/me/messages/" + encodeURIComponent(m.id) + "?format=metadata&metadataHeaders=From&metadataHeaders=Subject&metadataHeaders=Date", { headers: { Authorization: "Bearer " + at }, signal: AbortSignal.timeout(5000) });
-        if (!gr || !gr.ok) continue;
-        const gd = await gr.json().catch(() => null);
-        if (!gd) continue;
-        const hdrs = {};
-        (gd.payload && Array.isArray(gd.payload.headers) ? gd.payload.headers : []).forEach(function (h) { hdrs[String(h.name).toLowerCase()] = h.value || ""; });
-        emails.push({ id: m.id, from: (hdrs.from || "").slice(0, 120), subject: (hdrs.subject || "(bina subject)").slice(0, 150), date: (hdrs.date || "").slice(0, 60), snippet: (gd.snippet || "").slice(0, 220) });
-      } catch (e) { /* ek mail fail to aage badho */ }
-    }
-    return send(res, 200, { ok: true, emails: emails });
-  } catch (e) {
-    return send(res, 502, { ok: false, error: "gmail_error" });
-  }
-}
-
 module.exports = async (req, res) => {
   let fn = "";
   let action = "";
@@ -433,6 +386,5 @@ module.exports = async (req, res) => {
   if (fn === "chat") return handleChat(req, res, action, codeParam);
   if (fn === "memory") return handleMemory(req, res, action, codeParam);
   if (fn === "video") return handleVideo(req, res);
-  if (fn === "gmail") return handleGmail(req, res);
   send(res, 400, { ok: false, error: "bad_fn" });
 };
