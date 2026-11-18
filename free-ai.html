@@ -127,6 +127,15 @@
         cursor: pointer;
       }
       .newchat-btn:active { transform: scale(0.97); }
+      /* Upar wala topbar hata diya — full screen chat; Nayi chat button
+         upar right corner mein tairta hua rehta hai */
+      .newchat-float {
+        position: fixed;
+        top: 10px;
+        right: 12px;
+        z-index: 60;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18);
+      }
       .reload-btn {
         flex: 0 0 auto;
         display: inline-flex;
@@ -172,7 +181,7 @@
         flex: 1 1 auto;
         overflow-y: auto;
         overscroll-behavior: contain;
-        padding: 14px 12px 10px;
+        padding: 54px 12px 10px;
         display: flex;
         flex-direction: column;
         gap: 10px;
@@ -605,15 +614,10 @@
   </head>
   <body>
     <div class="app">
-      <div class="topbar">
-        <span class="status-dot" id="statusDot"></span>
-        <span class="status-text" id="statusText">Free AI ready — bina API key</span>
-        <button class="reload-btn" id="reloadBtn" type="button" aria-label="Page reload karo" title="Reload" onclick="location.reload()">↻</button>
-        <button class="newchat-btn" id="newChatBtn" type="button" aria-label="Nayi chat shuru karo">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
-          Nayi chat
-        </button>
-      </div>
+      <button class="newchat-btn newchat-float" id="newChatBtn" type="button" aria-label="Nayi chat shuru karo">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+        Nayi chat
+      </button>
 
       <div class="messages" id="messages" aria-live="polite"></div>
 
@@ -1031,8 +1035,9 @@
 
         /* ---------------- status ---------------- */
         function setStatus(ok, text) {
-          statusDot.classList.toggle("warn", !ok);
-          statusText.textContent = text;
+          // Topbar hata diya hai — status dot/text ab page par nahi hain
+          if (statusDot) statusDot.classList.toggle("warn", !ok);
+          if (statusText) statusText.textContent = text;
         }
 
         /* ---------------- local brain (fallback + turant jawab) ---------------- */
