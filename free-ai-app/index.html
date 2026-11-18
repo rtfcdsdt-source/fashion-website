@@ -3365,6 +3365,8 @@
         function igRedirectUri() { try { return location.origin + "/"; } catch (e) { return "https://fashion-website-theta-taupe.vercel.app/"; } }
         function igConnectWanted(text) {
           if (!text) return false;
+          // Paste kiye hue HTML code ke andar ke words command nahi hain
+          if (/<!doctype html|<html[\s>]|<\/html>/i.test(text)) return false;
           var low = String(text).toLowerCase();
           // "instagram kaise jodte hain" jaisa SAWAL connect nahi karta — AI guide deta hai
           if (/kaise|kya hota|kya hai|kya chahiye|tarika|tareeka|steps|step by step|sikhao|samjhao|matlab kya/.test(low)) return false;
@@ -3372,6 +3374,8 @@
         }
         function igPostWanted(text) {
           if (!text) return false;
+          // Paste kiye hue HTML code ke andar ke words command nahi hain
+          if (/<!doctype html|<html[\s>]|<\/html>/i.test(text)) return false;
           var low = String(text).toLowerCase();
           if (/kaise|kya hota|kya hai|kya chahiye|tarika|tareeka|steps|step by step|sikhao|samjhao|matlab kya/.test(low)) return false;
           if (low.indexOf("instagram") < 0) return false;
@@ -3839,6 +3843,39 @@
             });
         }
 
+        // ---- Apna code paste karke "website banaa do" ----
+        // Code ke andar ke words (instagram/post/email/login) command nahi hain —
+        // isliye website-build ki pehchan Gmail/Instagram se PEHLE hoti hai.
+        function hasPastedHtml(text) {
+          if (!text) return false;
+          return /<!doctype html|<html[\s>]|<\/html>/i.test(text) || /```\s*html/i.test(text);
+        }
+        function websiteBuildWanted(text) {
+          if (!text) return false;
+          var low = String(text).toLowerCase();
+          if (low.indexOf("website") < 0) return false;
+          if (!/(banaa|banao|bana|banakar|banake|banado|chahiye|dikhao|kar do)/.test(low)) return false;
+          return hasPastedHtml(text);
+        }
+        function extractPastedHtml(text) {
+          var m = text.match(/```\s*html\s*([\s\S]*?)```/i);
+          if (m) return m[1].trim();
+          var start = text.search(/<!doctype html|<html[\s>]/i);
+          if (start < 0) return "";
+          var tail = text.slice(start);
+          var end = tail.search(/<\/html\s*>/i);
+          if (end >= 0) return tail.slice(0, end + 7).trim();
+          return tail.trim();
+        }
+        function doWebsiteBuild(userText) {
+          var html = extractPastedHtml(userText);
+          if (!html) {
+            replyLocal("Code nahi mila — poora HTML code paste karke dobara bhejo, saath mein 'website banaa do' likho.");
+            return;
+          }
+          replyLocal("Ye raha tumhara website ka code — 👁 Preview se dekh lo, 🌐 Live karo se live kar do:\n\n```html\n" + html + "\n```");
+        }
+
         function handleSend(text) {
           var userText = (text != null ? text : inputEl.value).trim();
           if (!userText || busy) return;
@@ -3914,6 +3951,14 @@
               return;
             }
             doPhotoFlow(pDesc);
+            return;
+          }
+
+          // Apna code paste karke "website banaa do" — code ke andar ke
+          // words (instagram/post/email) command nahi hain; website-build
+          // Gmail/Instagram se pehle aata hai
+          if (websiteBuildWanted(userText)) {
+            doWebsiteBuild(userText);
             return;
           }
 
