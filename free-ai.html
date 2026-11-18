@@ -3561,9 +3561,15 @@
             .replace(/\b(?=[0-9a-f]{4,}\b)[0-9a-f]*[a-f][0-9a-f]*\b/gi, " ")
             // 4+ anko wale tukde (4787) — saal (19xx/20xx) nahi
             .replace(/\b(?!(?:19|20)\d\d\b)\d{4,}\b/g, " ")
-            .replace(/\b(media generation|original|video)\b/gi, " ")
-            .replace(/[_-]+/g, " ").replace(/\s+/g, " ").trim().replace(/\s+\d{1,2}$/, "");
+            .replace(/[_-]+/g, " ")
+            // faltu shabd — hyphen hatne ke BAAD (media-generation -> "media generation")
+            .replace(/\b(media generation|original|video|9x16|16x9|9:16|16:9)\b/gi, " ")
+            .replace(/\s+/g, " ").trim().replace(/\s+\d{1,2}$/, "");
           return s;
+        }
+        // File ke naam / AI ke jawab se faltu shabd hatao (media generation, 9x16...)
+        function ytCleanJunk(s) {
+          return String(s || "").replace(/\b(media generation|9x16|16x9|9:16|16:9)\b/gi, " ").replace(/\s+/g, " ").trim();
         }
         function ytParseMeta(reply, base) {
           var r = String(reply || "");
@@ -3573,7 +3579,7 @@
           var tagsLine = grab(/hashtags\s*:\s*(.+)/i);
           var seoLine = grab(/seo tags\s*:\s*(.+)/i);
           if (!title) title = base.replace(/\b\w/g, function (c) { return c.toUpperCase(); });
-          title = title.slice(0, 100);
+          title = ytCleanJunk(title).slice(0, 100);
           // Description: agar "Description:" line nahi mili to reply ke pehle asli paragraph se lo
           // (AI kabhi-kabhi format tod kar free-form likh deta hai)
           if (!desc) {
@@ -3583,6 +3589,7 @@
           }
           // "How to use" ke baad ka hissa description nahi hai
           desc = desc.split(/how to use/i)[0].trim();
+          desc = ytCleanJunk(desc);
           if (!desc) desc = base + " — video dekho, like aur subscribe karo!";
           var hashWords = (tagsLine.match(/#[\w\u0900-\u097F]+/g) || []);
           // "Hashtags & SEO Tags:" jaise heading ke neeche wale #words bhi pakdo
@@ -3590,8 +3597,9 @@
           if (!hashWords.length) {
             hashWords = base.split(/\s+/).filter(function (w) { return w.length >= 3; }).slice(0, 8).map(function (w) { return "#" + w.charAt(0).toUpperCase() + w.slice(1); });
           }
-          hashWords = hashWords.slice(0, 15);
+          hashWords = hashWords.filter(function (h) { return !/^(media|generation|9x16|16x9|video|original)$/i.test(h.replace(/^#/, "")); }).slice(0, 15);
           var tags = (seoLine ? seoLine.split(/[,|\n]+/) : []).map(function (s) { return s.replace(/[#*`]/g, "").trim(); }).filter(function (s) { return s.length > 1 && s.length <= 30; }).slice(0, 15);
+          tags = tags.filter(function (s) { return !/^(media|generation|9x16|16x9|video|original)$/i.test(s); });
           if (!tags.length) tags = hashWords.map(function (h) { return h.replace(/^#/, ""); });
           if (!tags.length) tags = base.split(/\s+/).filter(function (w) { return w.length >= 3; }).slice(0, 10);
           desc = desc.slice(0, 4000);
@@ -3605,7 +3613,7 @@
             return;
           }
           var base = ytCleanName(fileName) || "video";
-          var aiPrompt = "Is YouTube video ke liye title, description, hashtags aur SEO tags banao. Video file ka naam: '" + base + "'. Sirf ye 4 cheezein likho, aur kuch mat likho — no 'How to use', no Subscribe/Like lines, no extra headings. Har cheez apni line me:\nTitle: ...\nDescription: ... (2-3 lines, video ke baare me)\nHashtags: #... #...\nSEO tags: ..., ..., ...\nSirf Hinglish me jawab do.";
+          var aiPrompt = "Is YouTube video ke liye title, description, hashtags aur SEO tags banao. Video file ka naam: '" + base + "'. Title short aur saaf likho, sirf video ke asli vishay par. Sirf ye 4 cheezein likho, aur kuch mat likho — no 'How to use', no Subscribe/Like lines, no extra headings. Har cheez apni line me:\nTitle: ...\nDescription: ... (2-3 lines, video ke baare me)\nHashtags: #... #...\nSEO tags: ..., ..., ...\nSirf Hinglish me jawab do.";
           function showMeta(meta) {
             // Upload/cancel ho chuka ho to purana suggestion mat dikhao
             if (!ytPendingFile && !ytPendingName) { busy = false; return; }
