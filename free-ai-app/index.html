@@ -80,7 +80,9 @@
       .app {
         display: flex;
         flex-direction: column;
+        height: 100vh;
         height: 100dvh;
+        height: 100svh;
         max-width: 860px;
         margin: 0 auto;
       }
@@ -673,6 +675,25 @@
       </div>
     </div>
 
+    <script>
+      // Refresh par neeche wala likhne ka hissa (composer) kabhi-kabhi screen
+      // se neeche chhup jata tha — 100dvh pehle paint par poori screen ki
+      // height le leta hai (status bar + gesture bar ke peeche wala hissa
+      // bhi). window.innerHeight hamesha dikhai dene wali height hoti hai,
+      // isliye app ki height usi se set karte hain. Ye script pdf.js se
+      // PEHLE chalta hai taaki pehle paint par hi height sahi ho.
+      (function () {
+        var app = document.querySelector(".app");
+        function fitAppHeight() {
+          if (!app) return;
+          var h = window.innerHeight;
+          if (h > 0) app.style.height = h + "px";
+        }
+        fitAppHeight();
+        window.addEventListener("resize", fitAppHeight);
+        window.addEventListener("orientationchange", fitAppHeight);
+      })();
+    </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <script async defer src="https://accounts.google.com/gsi/client"></script>
     <script>
