@@ -1,7 +1,7 @@
 // api/freeai.js — Free AI Chat ka EK HI server endpoint.
 // Vercel Hobby plan mein max 12 Serverless Functions hote hain — isliye Free AI Chat
-// ke saat kaam (live search + permanent chat + permanent memory + video samajh + photo samajh
-// + Instagram token exchange + YouTube search) ek hi file mein hain.
+// ke aath kaam (live search + permanent chat + permanent memory + video samajh + photo samajh
+// + Instagram token exchange + YouTube search + music dhun) ek hi file mein hain.
 // Route ?fn= se:
 //   POST /api/freeai?fn=search {q} → {ok, results: [{title, snippet, link}]} (Serper Google Search)
 //   GET  /api/freeai?fn=chat&code=... → chat load karo (admin only)
@@ -14,7 +14,8 @@
 //   POST /api/freeai?fn=photo {image: {mimeType, data}, question?} → {ok, text} (Gemini photo samajh, no admin code)
 //   POST /api/freeai?fn=ig-exchange {code, redirect_uri} → {ok, access_token, user_id, expires_in} (Instagram Login token, no admin code)
 //   POST /api/freeai?fn=youtube {q} → {ok, results: [{videoId, title, channel, link}]} (YouTube search, no admin code)
-// Env: SERPER_API_KEY (search) + DATABASE_URL (ya POSTGRES_URL / NEON_DATABASE_URL) + REELS_ADMIN_CODE + GEMINI_API_KEY (video + photo) + IG_APP_ID + IG_APP_SECRET (Instagram exchange) + YOUTUBE_API_KEY (YouTube search).
+//   POST /api/freeai?fn=music {prompt} → {ok, audio: "data:audio/wav;base64,...", duration: 10} (MusicGen dhun, no admin code)
+// Env: SERPER_API_KEY (search) + DATABASE_URL (ya POSTGRES_URL / NEON_DATABASE_URL) + REELS_ADMIN_CODE + GEMINI_API_KEY (video + photo) + IG_APP_ID + IG_APP_SECRET (Instagram exchange) + YOUTUBE_API_KEY (YouTube search) + HF_API_TOKEN (MusicGen dhun — Hugging Face ka free token).
 // Storage: Neon Postgres over its raw HTTP /sql endpoint (no npm packages).
 // Chat limit: max 100 messages, har message max 4000 chars, total max ~200,000 chars.
 // Memory limit: max 30 yaadein, har yaad max 500 chars, total max ~50,000 chars.
@@ -491,6 +492,42 @@ async function handleYoutube(req, res) {
   }
 }
 
+// MusicGen (Hugging Face) — 10 second ki bina-lyrics dhun banao.
+// POST /api/freeai?fn=music {prompt} → {ok, audio: "data:audio/wav;base64,...", duration: 10}
+// Free tier: token-based (HF_API_TOKEN, bina card), ~100 dhun/roz, max 30s;
+// yahan 10s mangte hain taaki Vercel ki 10s wall mein jawab aa jaye (garam model ~5-10s).
+// Model musicgen-small (300M) — dhun hi banata hai, gaata nahi (no vocals/lyrics).
+async function handleMusic(req, res) {
+  if (req.method !== "POST") { res.setHeader("Allow", "POST"); return send(res, 405, { ok: false, error: "Sirf POST chalega." }); }
+  const key = (process.env.HF_API_TOKEN || "").trim();
+  if (!key) return send(res, 503, { ok: false, error: "no_token" });
+  const body = await readBody(req);
+  const prompt = typeof (body && body.prompt) === "string" ? body.prompt.trim().slice(0, 200) : "";
+  if (!prompt) return send(res, 400, { ok: false, error: "Kis mood ki dhun chahiye, wo likho." });
+  try {
+    const r = await fetch("https://router.huggingface.co/hf-inference/models/facebook/musicgen-small", {
+      method: "POST",
+      headers: { "Authorization": "Bearer " + key, "Content-Type": "application/json" },
+      body: JSON.stringify({ inputs: prompt, parameters: { max_new_tokens: 500 } }),
+      signal: AbortSignal.timeout(9000),
+    });
+    if (r.status === 401 || r.status === 403) return send(res, 401, { ok: false, error: "bad_token" });
+    if (r.status === 429) return send(res, 429, { ok: false, error: "limit" });
+    if (r.status === 503) {
+      let est = 20;
+      try { const j = await r.clone().json(); if (j && j.estimated_time) est = Math.ceil(Number(j.estimated_time) || 20); } catch (e) {}
+      return send(res, 503, { ok: false, error: "loading", retry_after: Math.min(Math.max(est, 5), 60) });
+    }
+    if (!r.ok) return send(res, 502, { ok: false, error: "MusicGen se jawab nahi mila — thodi der baad dobara try karo." });
+    const buf = Buffer.from(await r.arrayBuffer());
+    if (!buf.length) return send(res, 502, { ok: false, error: "MusicGen se khaali jawab mila — dobara try karo." });
+    if (buf.length > 4000000) return send(res, 502, { ok: false, error: "Dhun bahut badi ban gayi — chhoti prompt se dobara try karo." });
+    return send(res, 200, { ok: true, audio: "data:audio/wav;base64," + buf.toString("base64"), duration: 10 });
+  } catch (e) {
+    return send(res, 504, { ok: false, error: "MusicGen se jod nahi paya — thodi der baad dobara try karo." });
+  }
+}
+
 module.exports = async (req, res) => {
   // CORS: the standalone Free AI Chat app (own Vercel project / origin) calls
   // this endpoint cross-origin. No cookies/credentials are used (the admin
@@ -516,5 +553,6 @@ module.exports = async (req, res) => {
   if (fn === "photo") return handlePhoto(req, res);
   if (fn === "ig-exchange") return handleIgExchange(req, res);
   if (fn === "youtube") return handleYoutube(req, res);
+  if (fn === "music") return handleMusic(req, res);
   send(res, 400, { ok: false, error: "bad_fn" });
 };

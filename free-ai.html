@@ -632,6 +632,7 @@
         <button class="chip" type="button" id="trayIg">📸 Instagram jodo</button>
         <button class="chip" type="button" id="trayIgPost">📸 Instagram post</button>
         <button class="chip" type="button" id="trayYtUpload">📺 YouTube upload</button>
+        <button class="chip" type="button" id="trayMusic">🎵 Gaana banao</button>
         <button class="chip" type="button" id="trayInstallApp" style="display:none">📲 App install karo</button>
         <button class="chip" type="button" id="traySettings">🎨 Naam / Rang</button>
         <button class="chip" type="button" id="trayBrain">🧠 Dimaag</button>
@@ -702,7 +703,7 @@
           "(7) If the user asks a follow-up change to code you already gave, return the FULL updated code again, not only the diff. " +
           "(8) If the request is unclear, make the most sensible complete version instead of asking many questions. " +
           "For non-coding questions, answer normally and helpfully — study, business, videos and daily questions included. Use simple markdown (bold, lists, code blocks) when it helps." +
-          " APP FEATURES: this chat app itself can generate a photo when the user asks for one (e.g. 'photo banao: ...'), check any link the user sends for safety (it shows name-based warnings instantly, reads the page text through the free r.jina.ai reader when it can, then you give a short Hinglish verdict — what the link looks like, what the danger is, what to do; NEVER say 'pakka safe' or '100% safe', it is only an estimate; if the page cannot be read, judge by the name only and say so clearly; never ask the user to send private or login links for checking), describe a YouTube video from its title and description (it reads the video page text through the free r.jina.ai reader, then you summarise what the video is about from the title and description ONLY — you cannot see the scenes or hear the audio, so never invent scene details; if the page cannot be read, say so honestly and do not guess), understand a video FILE the user uploads from the + tray 'Video samjhao' button (the file goes to the server, which shows it to Gemini and returns a description of the scenes and the audio — max 2.5 MB, MP4/WebM/MOV), understand a PHOTO the user uploads from the + tray 'Photo samjhao' button (the file goes to the server, which shows it to Gemini and describes what is in it, or answers the user's question about it — max 2.5 MB, JPEG/PNG/WebP/GIF; if the user typed a question before choosing the photo, answer that question about the photo), show a live Preview of HTML code (Preview button above the code), publish an HTML website live with the 'Live karo' button above the code (asks for the admin code once, then gives a live link), answer live/current questions (price, news, weather, gold rate...) using the fresh Google search results the app attaches to your prompt, save the chat and remembered facts on the server forever when the admin code is set (the user enables it from 'Chat hamesha save karo' in the + tray), read any answer aloud (Sunao button under each answer), remember facts for this chat when the user says 'yaad rakho', read a PDF or text file the user attaches from the + tray (the app extracts the file's text and sends it to you — then summarize it and answer questions about it), accept voice dictation through the mic button, let the user rename you and change your theme colour in the + tray settings, download the whole chat as a file; the user can also install this chat as a phone app (the + tray 'App install karo' button appears when Chrome offers it, otherwise Chrome menu → 'Add to Home screen'); and it has To-do, Kharcha Tracker and Quiz tools in the + tray. It can also read the user's own Gmail inbox when asked (each user connects their own Gmail with Google login from the + tray 'Gmail jodo' button — read-only, only the latest emails, sender + subject + a short snippet, and read one email fully when asked ('pehli email padho' or '2 number wali email padho' after the list), and send an email when asked (step by step: who, subject, what to write — it shows the draft first and sends only after the user says 'bhej do'), and write a complete formal email for the user when asked ('mere liye email likho: ...' — subject + body, but it does NOT send it; sending needs a separate 'email bhejo'); the exact commands are 'email bhejo' to send, 'mere liye email likho: <topic>' to get a written email, 'meri email dikhao' or 'unread email dikhao' to list emails, 'pehli email padho' to read one fully — quote THESE commands in any how-to guide, never invent other command formats; the mail stays in the user's own account and nothing is saved on the server; if Gmail is not connected yet, say so plainly instead of guessing). It can also connect the user's own Instagram (Professional account only) when asked — the user connects it from the + tray 'Instagram jodo' button (Instagram login, token kept in memory only), and post a photo when asked ('instagram par post karo' — the app uploads the photo to the user's own site first for a public link, then publishes it through the Instagram API; caption is the text typed with the command). If Instagram is not connected yet, say so plainly and tell the user the Meta app setup is still needed. It can also search YouTube videos when asked ('youtube par ... dhoondho' — it asks the server, which searches YouTube and shows the top videos with links; if the YouTube key is not set up yet, say so plainly). It can also upload a video file to the user's own YouTube channel when asked ('youtube par video upload karo' — or just 'upload karo' / 'fir se upload karo' to upload again, the gallery opens straight away without the + tray; the user picks a video file from the + tray 'YouTube upload' button or the command; after picking, the video appears inside the chat and the app automatically makes a title, description, hashtags and SEO tags for it (from the video file's name) and shows two buttons — 'Haan, pasand aaya' uploads it to YouTube with that title and description, and 'Nahin, pasand nahi aaya' makes new suggestions; the user can also type 'haan' to upload, 'pasand nahi aaya' for new suggestions, or 'upload kar do' to upload straight away; the app uploads it directly to YouTube as Public (sabko dikhegi) using the user's Google login token, max 100 MB, MP4/WebM/MOV; if Google login is not connected yet, say so plainly). The app handles those requests itself, so never claim you cannot make photos or remember things in this chat." +
+          " APP FEATURES: this chat app itself can generate a photo when the user asks for one (e.g. 'photo banao: ...'), check any link the user sends for safety (it shows name-based warnings instantly, reads the page text through the free r.jina.ai reader when it can, then you give a short Hinglish verdict — what the link looks like, what the danger is, what to do; NEVER say 'pakka safe' or '100% safe', it is only an estimate; if the page cannot be read, judge by the name only and say so clearly; never ask the user to send private or login links for checking), describe a YouTube video from its title and description (it reads the video page text through the free r.jina.ai reader, then you summarise what the video is about from the title and description ONLY — you cannot see the scenes or hear the audio, so never invent scene details; if the page cannot be read, say so honestly and do not guess), understand a video FILE the user uploads from the + tray 'Video samjhao' button (the file goes to the server, which shows it to Gemini and returns a description of the scenes and the audio — max 2.5 MB, MP4/WebM/MOV), understand a PHOTO the user uploads from the + tray 'Photo samjhao' button (the file goes to the server, which shows it to Gemini and describes what is in it, or answers the user's question about it — max 2.5 MB, JPEG/PNG/WebP/GIF; if the user typed a question before choosing the photo, answer that question about the photo), show a live Preview of HTML code (Preview button above the code), publish an HTML website live with the 'Live karo' button above the code (asks for the admin code once, then gives a live link), answer live/current questions (price, news, weather, gold rate...) using the fresh Google search results the app attaches to your prompt, save the chat and remembered facts on the server forever when the admin code is set (the user enables it from 'Chat hamesha save karo' in the + tray), read any answer aloud (Sunao button under each answer), remember facts for this chat when the user says 'yaad rakho', read a PDF or text file the user attaches from the + tray (the app extracts the file's text and sends it to you — then summarize it and answer questions about it), accept voice dictation through the mic button, let the user rename you and change your theme colour in the + tray settings, download the whole chat as a file; the user can also install this chat as a phone app (the + tray 'App install karo' button appears when Chrome offers it, otherwise Chrome menu → 'Add to Home screen'); and it has To-do, Kharcha Tracker and Quiz tools in the + tray. It can also read the user's own Gmail inbox when asked (each user connects their own Gmail with Google login from the + tray 'Gmail jodo' button — read-only, only the latest emails, sender + subject + a short snippet, and read one email fully when asked ('pehli email padho' or '2 number wali email padho' after the list), and send an email when asked (step by step: who, subject, what to write — it shows the draft first and sends only after the user says 'bhej do'), and write a complete formal email for the user when asked ('mere liye email likho: ...' — subject + body, but it does NOT send it; sending needs a separate 'email bhejo'); the exact commands are 'email bhejo' to send, 'mere liye email likho: <topic>' to get a written email, 'meri email dikhao' or 'unread email dikhao' to list emails, 'pehli email padho' to read one fully — quote THESE commands in any how-to guide, never invent other command formats; the mail stays in the user's own account and nothing is saved on the server; if Gmail is not connected yet, say so plainly instead of guessing). It can also connect the user's own Instagram (Professional account only) when asked — the user connects it from the + tray 'Instagram jodo' button (Instagram login, token kept in memory only), and post a photo when asked ('instagram par post karo' — the app uploads the photo to the user's own site first for a public link, then publishes it through the Instagram API; caption is the text typed with the command). If Instagram is not connected yet, say so plainly and tell the user the Meta app setup is still needed. It can also search YouTube videos when asked ('youtube par ... dhoondho' — it asks the server, which searches YouTube and shows the top videos with links; if the YouTube key is not set up yet, say so plainly). It can also upload a video file to the user's own YouTube channel when asked ('youtube par video upload karo' — or just 'upload karo' / 'fir se upload karo' to upload again, the gallery opens straight away without the + tray; the user picks a video file from the + tray 'YouTube upload' button or the command; after picking, the video appears inside the chat and the app automatically makes a title, description, hashtags and SEO tags for it (from the video file's name) and shows two buttons — 'Haan, pasand aaya' uploads it to YouTube with that title and description, and 'Nahin, pasand nahi aaya' makes new suggestions; the user can also type 'haan' to upload, 'pasand nahi aaya' for new suggestions, or 'upload kar do' to upload straight away; the app uploads it directly to YouTube as Public (sabko dikhegi) using the user's Google login token, max 100 MB, MP4/WebM/MOV; if Google login is not connected yet, say so plainly). It can also make a short instrumental tune (no vocals, no lyrics) when asked ('gaana banao: <mood>' — it uses the free MusicGen model, 10 seconds, plays in the chat with a download link; if the Hugging Face token is not set up yet, say so plainly). The app handles those requests itself, so never claim you cannot make photos or remember things in this chat." +
           " THINKING RULES: before answering, think step by step silently. For maths, logic and code, double-check your result before replying. Never invent facts, names, numbers or links - if you are not sure, say so honestly and give your best guess clearly marked as a guess. Answer exactly what was asked, with no filler.";
 
         var history = []; // {role: 'user'|'assistant', content: string}
@@ -2011,6 +2012,12 @@
           pushHist({ role: "user", content: "youtube par video upload karo" });
           ytUploadStart("youtube par video upload karo");
         });
+        document.getElementById("trayMusic").addEventListener("click", function () {
+          trayEl.classList.remove("open");
+          plusBtn.classList.remove("open");
+          // input mein likh kar chhod do — keyboard tabhi khulega jab wo input par tap kare
+          inputEl.value = "gaana banao: ";
+        });
         // ---- PWA: app install (beforeinstallprompt) + service worker ----
         var deferredInstallPrompt = null;
         window.addEventListener("beforeinstallprompt", function (e) {
@@ -2089,6 +2096,85 @@
           messagesEl.appendChild(row);
           scrollToMessageTop(row);
           return row;
+        }
+
+        // MusicGen dhun: audio player wala AI bubble (download link ke saath)
+        function addAudioBubble(prompt, dataUrl) {
+          var row = document.createElement("div");
+          row.className = "row ai";
+          var bubble = document.createElement("div");
+          bubble.className = "bubble";
+          var t = document.createElement("div");
+          t.textContent = "🎵 Tumhari dhun taiyar hai: " + prompt + " (10 second, bina lyrics)";
+          bubble.appendChild(t);
+          var a = document.createElement("audio");
+          a.src = dataUrl;
+          a.controls = true;
+          a.preload = "metadata";
+          a.style.width = "100%";
+          a.style.marginTop = "8px";
+          bubble.appendChild(a);
+          var dl = document.createElement("a");
+          dl.href = dataUrl;
+          dl.download = "free-ai-dhun.wav";
+          dl.textContent = "⬇️ Download karo";
+          dl.style.display = "inline-block";
+          dl.style.marginTop = "6px";
+          bubble.appendChild(dl);
+          row.appendChild(bubble);
+          messagesEl.appendChild(row);
+          scrollToMessageTop(row);
+          return row;
+        }
+
+        // "gaana banao: ..." → POST /api/freeai?fn=music → audio player
+        // 503 loading = model abhi load ho raha hai → ek baar retry_after baad dobara
+        function doMusic(userText, retried) {
+          var prompt = musicPrompt(userText);
+          addTyping();
+          fetch("/api/freeai?fn=music", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ prompt: prompt })
+          }).then(function (res) { return res.json().then(function (d) { return { status: res.status, d: d }; }); })
+          .then(function (r) {
+            removeTyping();
+            if (r.d && r.d.ok && r.d.audio) {
+              var row = addAudioBubble(prompt, r.d.audio);
+              pushHist({ role: "assistant", content: "🎵 Tumhari dhun taiyar hai: " + prompt });
+              scrollToMessageTop(row);
+              busy = false;
+              return;
+            }
+            var err = r.d && r.d.error ? String(r.d.error) : "";
+            if (err === "loading" && !retried) {
+              var wait = (r.d && r.d.retry_after) ? r.d.retry_after : 20;
+              var waitMsg = "⏳ Music model load ho raha hai (~" + wait + " second) — thoda ruko, dhun abhi banti hai...";
+              var waitRow = addMessage("ai", waitMsg);
+              pushHist({ role: "assistant", content: waitMsg });
+              scrollToMessageTop(waitRow);
+              busy = true;
+              setTimeout(function () { doMusic(userText, true); }, wait * 1000);
+              return;
+            }
+            var reply;
+            if (err === "loading") reply = "Music model abhi bhi load ho raha hai — thodi der baad 'gaana banao' dobara likho.";
+            else if (err === "no_token") reply = "🎵 Gaana banane ke liye Hugging Face ka free token Vercel mein daalna baki hai — token banao, phir batao, main daalne ke steps de dunga.";
+            else if (err === "bad_token") reply = "Hugging Face ka token galat lagta hai — token dobara check karke Vercel mein daalo.";
+            else if (err === "limit") reply = "⚠️ Aaj ki free dhun limit poori ho gayi hai — kal dobara try karo.";
+            else reply = (r.d && r.d.error) ? r.d.error : "Dhun nahi ban payi — dobara try karo.";
+            var row2 = addMessage("ai", reply);
+            pushHist({ role: "assistant", content: reply });
+            scrollToMessageTop(row2);
+            busy = false;
+          }).catch(function () {
+            removeTyping();
+            var reply = "Dhun banane mein dikkat aayi — net check karke dobara try karo.";
+            var row = addMessage("ai", reply);
+            pushHist({ role: "assistant", content: reply });
+            scrollToMessageTop(row);
+            busy = false;
+          });
         }
 
         function handlePhotoFile(file) {
@@ -3440,6 +3526,23 @@
           if (low.indexOf("youtube") < 0 && low.indexOf("youtu.be") < 0) return false;
           return /(upload|chadhao|daalo|daal|post karo|bhejo)/.test(low);
         }
+        // ---- Gaana banao: MusicGen (Hugging Face) se 10 second ki bina-lyrics dhun ----
+        function musicWanted(text) {
+          if (!text) return false;
+          var low = String(text).toLowerCase();
+          // "gaana kaise banate hain" jaisa SAWAL dhun nahi banata — AI guide deta hai
+          if (/kaise|kya hota|kya hai|kya chahiye|tarika|tareeka|steps|step by step|sikhao|samjhao|matlab kya/.test(low)) return false;
+          if (/(photo|tasveer|image|instagram|email|mail|youtube|youtu\.be|video)/.test(low)) return false;
+          if (!/(gaana|gana|song|music|dhun|tune)/.test(low)) return false;
+          return /(banao|bana do|banado|generate|bajao|baja do|bana)/.test(low);
+        }
+        function musicPrompt(text) {
+          var s = String(text || "");
+          s = s.replace(/gaana banao|gana banao|song banao|music banao|dhun banao|tune banao|gaana bana do|gana bana do|song bana do|music bana do|dhun bana do|gaana banado|gaana generate|gana generate|song generate|music generate|gaana bajao|song bajao|music bajao|gaana bana|gana bana|song bana|music bana/gi, " ");
+          s = s.replace(/\b(mere liye|mujhe|ek|acha sa|achha sa|koi achha sa|please|plz|kar do|karo|karna|do)\b/gi, " ");
+          s = s.replace(/[:\-–—]/g, " ").replace(/\s+/g, " ").trim();
+          return s.slice(0, 200) || "happy upbeat melody";
+        }
         // ---- YouTube metadata: chuni hui video ke liye title/description/hashtag/SEO ----
         function ytMetaWanted(text) {
           if (!text) return false;
@@ -3886,6 +3989,13 @@
           // YouTube search — video dhoondho
           if (ytSearchWanted(userText)) {
             doYouTubeSearch(userText);
+            return;
+          }
+
+          // Gaana banao — MusicGen se 10 second ki bina-lyrics dhun (YouTube search ke baad,
+          // kyunki "youtube par gaana dhoondho" mein bhi "gaana" hota hai)
+          if (musicWanted(userText)) {
+            doMusic(userText, false);
             return;
           }
 
