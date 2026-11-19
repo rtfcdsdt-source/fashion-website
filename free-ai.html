@@ -842,6 +842,8 @@
           var lines = html.split("\n");
           var out = [];
           var listType = null;
+          var olCount = 0;       // is jawab mein ab tak ke numbered items — serial numbering (1, 2, 3...) ke liye
+          var lastItem = false;  // pichhli line list item thi — continuation line usi item mein jayegi
           function closeList() {
             if (listType) { out.push(listType === "ul" ? "</ul>" : "</ol>"); listType = null; }
           }
@@ -850,6 +852,7 @@
             var blockMatch = trimmed.match(/^\u0001(\d+)\u0001$/);
             if (blockMatch) {
               closeList();
+              olCount = 0; lastItem = false;
               var blk = blocks[parseInt(blockMatch[1], 10)] || { lang: "", code: "" };
               var label = blk.lang ? escapeHtml(blk.lang) : "code";
               out.push(
@@ -865,15 +868,29 @@
             if (ul) {
               if (listType !== "ul") { closeList(); out.push("<ul>"); listType = "ul"; }
               out.push("<li>" + ul[1] + "</li>");
+              lastItem = true;
               return;
             }
             if (ol) {
-              if (listType !== "ol") { closeList(); out.push("<ol>"); listType = "ol"; }
+              if (listType !== "ol") {
+                closeList();
+                out.push(olCount > 0 ? '<ol start="' + (olCount + 1) + '">' : "<ol>");
+                listType = "ol";
+              }
               out.push("<li>" + ol[1] + "</li>");
+              olCount++;
+              lastItem = true;
+              return;
+            }
+            if (trimmed === "") { closeList(); lastItem = false; return; }
+            if (lastItem && out.length && /<\/li>$/.test(out[out.length - 1])) {
+              // item ki continuation line (jaise joke ka jawab) — usi item mein jodo, numbering na toote
+              out[out.length - 1] = out[out.length - 1].replace(/<\/li>$/, "<br>" + trimmed + "</li>");
               return;
             }
             closeList();
-            if (trimmed === "") return;
+            olCount = 0;
+            lastItem = false;
             out.push("<p>" + trimmed + "</p>");
           });
           closeList();
