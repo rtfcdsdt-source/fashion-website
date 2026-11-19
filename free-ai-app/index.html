@@ -725,6 +725,7 @@
           "(4) Only say what is actually there — for a photo, screenshot or page, describe ONLY what is visible in it and read its text exactly as shown. Never invent names, buttons, commands, numbers or links that are not in it; if something is not visible, say 'yeh ismein nahi dikh raha' instead of guessing. " +
           "(5) If you are not sure about a fact, say so honestly instead of making up a confident-sounding detail. " +
           "(6) Sawal se bhatko mat — sirf wahi jawab do jo poocha gaya hai; jawab mein dusra topic mat jodo; chhote sawal ka chhota jawab do, extra jaankari mat bharo; agar jawab lamba ho to bhi sawal par hi raho. " +
+          "(7) Aasan jaankari wale sawal ka jawab hamesha do — mana mat karo. Vyakaran, itihas, samvidhan jaise topics mein agar pakka jawab na pata ho to naya niyam ya naya naam mat banao — bolo 'Mujhe pakka nahi pata'. " +
           "CODING RULES — follow these strictly whenever the user asks for code, a website, an app, a script, a fix or an explanation of code: " +
           "(1) Always give COMPLETE, working, ready-to-run code — never partial snippets, never '...' placeholders, never 'baaki code khud likh lo'. " +
           "(2) For a web page or web app, default to ONE single self-contained HTML file with the CSS inside a <style> tag and the JavaScript inside a <script> tag at the end of the body, so Shiva can save it as one .html file and open it directly. Mention multiple files only when truly necessary. " +
@@ -1137,11 +1138,11 @@
 
           // --- time / date / din ---
           var now = new Date();
-          if (/(time|samay|baj)/.test(low) && /(kya|hai|ho raha|now|current)/.test(low)) {
+          if (low.length <= 40 && /(time|samay|baj)/.test(low) && /(kya|hai|ho raha|now|current|hua)/.test(low)) {
             var t = now.toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit", hour12: true });
             return "Abhi time hai **" + t + "** ⏰";
           }
-          if (/(aaj).*(date|din|tarikh|day)|(?:date|tarikh)\s*(kya|hai|batao)/.test(low)) {
+          if (low.length <= 40 && (/(aaj).*(date|din|tarikh|day)/.test(low) || /(?:date|tarikh)\s*(kya|hai|batao)/.test(low))) {
             var dstr = now.toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
             return "Aaj hai **" + dstr + "** 📅";
           }
@@ -1153,7 +1154,7 @@
           if (/(tum kaun ho|tumhara naam|who are you|your name|aap kaun)/.test(low)) {
             return "Main **" + aiName + "** hoon — Mera AI jaisa hi chat assistant, par ye bina kisi API key ke chalta hai. Sawal poochho, hisab karwao, code likhwao — koshish poori karunga! 💪";
           }
-          if (/(kya kya kar sakte|kya kar sakte|tum kya kar|help|madad|features|kaam karte ho)/.test(low)) {
+          if (/(kya kya kar sakte|kya kar sakte|what can you do|tumhari features|features kya|kaam karte ho)/.test(low)) {
             return "Main ye sab kar sakta hoon:\n\n- **Coding (strong)** — poora chalta-hua code: website, app, game, script — ek hi file mein, Download button ke saath\n- **Code Preview** — HTML code ke upar Preview button dabao, result turant chal kar dikhega\n- **Live karo** — HTML website ke upar Live karo button se site seedha live karo\n- **Live search** — aaj ka bhav, news, mausam poochho, taza jawab milega\n- **Link check** — koi link bhejo ('yeh link safe hai kya?'), naam + page padh kar bata doon — kabhi 'pakka safe' nahi kehta\n- **Video link** — YouTube link bhejo ('ye video kya hai?'), title/description se bata doon (scenes nahi dikhte)\n- **Video samjhao** — + menu mein **🎬 Video samjhao** se video file bhejo (2.5 MB tak), dekh kar + sun kar bata doon\n- **Photo samjhao** — + menu mein **📷 Photo samjhao** se photo bhejo (2.5 MB tak), kya dikh raha hai bata doon\n- **Gmail** — apna Gmail + menu mein 📧 Gmail jodo se jodo, phir 'meri email dikhao' likho — haal ki emails dikha doon; poori padhne ke liye 'pehli email padho' likho; bhejne ke liye 'email bhejo' likho\n- **Email likhwana** — likho `mere liye email likho: boss ko chhutti ke liye`, poora formal email likh dunga (ye sirf likhta hai, bhejta nahi — bhejne ke liye 'email bhejo' likho)\n- **Instagram** — + menu mein 📸 Instagram jodo se apna Instagram jodo (Professional account chahiye), phir 'instagram par post karo' likh kar photo post karo\n- **YouTube search** — likho `youtube par dance video dhoondho`, top videos + link dunga\n- **YouTube upload** — + menu mein 📺 YouTube upload se video chuno, apne channel par Public upload ho jayegi (sabko dikhegi)\n- **App install** — + menu mein 📲 App install karo se app install karo (Chrome menu → 'Add to Home screen' se bhi hota hai)\n- **Permanent save** — + menu mein 'Chat hamesha save karo' se chat aur yaadein hamesha ke liye save hongi\n- **Bug fix** — apna code ya error paste karo, main galti bata kar poora sahi code dunga\n- **Photo banana** — likho `photo banao: pahadon par sunset`, photo ban jayegi\n- **File padhna** — + wale menu mein **📄 File padho** se PDF ya text file bhejo, main padh kar summary dunga aur sawalon ke jawab bhi\n- **Bol kar likhna** — type karne ki jagah input ke paas 🎤 mic dabao aur bol do\n- **Bol kar sunana** — har jawab ke neeche 🔊 Sunao button hai\n- **Yaad rakhna** — `yaad rakho: ...` likho, is chat mein yaad rakhunga\n- **Naam / Rang badalna** — + wale menu mein **🎨 Naam / Rang** se mera naam aur rang apni pasand ka karo\n- **Chat download** — + wale menu mein **⬇️ Chat download** se poori chat file mein save karo\n- **Tools** — + wale menu mein To-Do list, Kharcha Tracker (chart ke saath) aur Quiz\n- **Sawal-jawab** — koi bhi topic, Hindi / Hinglish / English\n- **Hisab** — jaise `125 ka 15%` ya `45 * 8 + 20`; kharcha note karne ke liye `kharcha 200 khana`\n- **Time / date** — turant bata deta hoon\n\nBas likh kar bhejo!";
           }
           if (/(thank|dhanyavad|shukriya|thanks)/.test(low)) {
@@ -1251,7 +1252,7 @@
 
         // ---- Live search (taza Google results, server endpoint se) ----
         var lastLiveSources = [];
-        var LIVE_WORDS = ["aaj", "आज", "today", "abhi", "अभी", "current", "latest", "live", "taza", "ताज़ा", "fresh", "price", "bhav", "भाव", "rate", "daam", "दाम", "kimat", "कीमत", "sona", "gold", "chandi", "silver", "bitcoin", "crypto", "petrol", "diesel", "stock", "share", "sensex", "nifty", "dollar", "rupee", "news", "khabar", "खबर", "mausam", "मौसम", "weather", "barish", "बारिश", "temperature", "match", "cricket", "score"];
+        var LIVE_WORDS = ["aaj", "आज", "today", "abhi", "अभी", "current", "latest", "live", "taza", "ताज़ा", "fresh", "price", "bhav", "भाव", "rate", "daam", "दाम", "kimat", "कीमत", "sona", "gold", "chandi", "silver", "bitcoin", "crypto", "petrol", "diesel", "stock", "share", "sensex", "nifty", "dollar", "rupee", "news", "khabar", "खबर", "mausam", "मौसम", "weather", "barish", "बारिश", "temperature", "match", "cricket", "score", "world cup", "champion", "winner"];
         function needsLiveInfo(text) {
           if (!text) return false;
           var low = String(text).toLowerCase();
@@ -1291,7 +1292,9 @@
               var m = chain[i++];
               var isLast = i >= chain.length;
               used = m;
-              return callModel(msgs, m, false, isLast ? 60000 : 30000).catch(next);
+              return callModel(msgs, m, false, isLast ? 60000 : 30000).catch(function () {
+                return new Promise(function (res) { setTimeout(res, 1500); }).then(next);
+              });
             }
 
             return next().then(function (draft) {
