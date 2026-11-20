@@ -175,6 +175,20 @@
       }
       .yt-choice button.yt-yes { background: #16a34a; border-color: #16a34a; color: #fff; }
       .yt-choice button:disabled { opacity: 0.5; cursor: default; }
+      .yt-choice button.yt-sel { background: #2563eb; border-color: #2563eb; color: #fff; }
+      .yt-progress { margin-top: 8px; font-weight: 700; font-size: 14px; }
+      .yt-edit { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
+      .yt-edit input, .yt-edit textarea {
+        width: 100%;
+        box-sizing: border-box;
+        padding: 8px 10px;
+        border-radius: 10px;
+        border: 1px solid var(--chip-border);
+        background: var(--chip-bg);
+        color: var(--chip-text);
+        font-size: 14px;
+        font-family: inherit;
+      }
 
       /* ---------- messages ---------- */
       .messages {
@@ -669,6 +683,7 @@
         <button class="chip" type="button" id="trayVideo">🎬 Video samjhao</button>
         <button class="chip" type="button" id="trayPhoto">📷 Photo samjhao</button>
         <button class="chip" type="button" id="trayGmail">📧 Gmail jodo</button>
+        <button class="chip" type="button" id="trayGmailOut" style="display:none">🚪 Gmail + YouTube alag karo</button>
         <button class="chip" type="button" id="trayIg">📸 Instagram jodo</button>
         <button class="chip" type="button" id="trayIgPost">📸 Instagram post</button>
         <button class="chip" type="button" id="trayYtUpload">📺 YouTube upload</button>
@@ -776,13 +791,22 @@
           "(7) If the user asks a follow-up change to code you already gave, return the FULL updated code again, not only the diff. " +
           "(8) If the request is unclear, make the most sensible complete version instead of asking many questions. " +
           "For non-coding questions, answer normally and helpfully — study, business, videos and daily questions included. Use simple markdown (bold, lists, code blocks) when it helps." +
-          " APP FEATURES: this chat app itself can generate a photo when the user asks for one (e.g. 'photo banao: ...'), check any link the user sends for safety (it shows name-based warnings instantly, reads the page text through the free r.jina.ai reader when it can, then you give a short Hinglish verdict — what the link looks like, what the danger is, what to do; NEVER say 'pakka safe' or '100% safe', it is only an estimate; if the page cannot be read, judge by the name only and say so clearly; never ask the user to send private or login links for checking), describe a YouTube video from its title and description (it reads the video page text through the free r.jina.ai reader, then you summarise what the video is about from the title and description ONLY — you cannot see the scenes or hear the audio, so never invent scene details; if the page cannot be read, say so honestly and do not guess), understand a video FILE the user uploads from the + tray 'Video samjhao' button (the file goes to the server, which shows it to Gemini and returns a description of the scenes and the audio — max 2.5 MB, MP4/WebM/MOV), understand a PHOTO the user uploads from the + tray 'Photo samjhao' button (the file goes to the server, which shows it to Gemini and describes what is in it, or answers the user's question about it — max 2.5 MB, JPEG/PNG/WebP/GIF; if the user typed a question before choosing the photo, answer that question about the photo), show a live Preview of HTML code (Preview button above the code), publish an HTML website live with the 'Live karo' button above the code (asks for the admin code once, then gives a live link), answer live/current questions (price, news, weather, gold rate...) using the fresh Google search results the app attaches to your prompt, save the chat and remembered facts on the server forever when the admin code is set (the user enables it from 'Chat hamesha save karo' in the + tray), read any answer aloud (Sunao button under each answer), remember facts for this chat when the user says 'yaad rakho', read a PDF or text file the user attaches from the + tray (the app extracts the file's text and sends it to you — then summarize it and answer questions about it), accept voice dictation through the mic button, let the user rename you and change your theme colour in the + tray settings, download the whole chat as a file; the user can also install this chat as a phone app (the + tray 'App install karo' button appears when Chrome offers it, otherwise Chrome menu → 'Add to Home screen'); and it has To-do, Kharcha Tracker and Quiz tools in the + tray. It can also read the user's own Gmail inbox when asked (each user connects their own Gmail with Google login from the + tray 'Gmail jodo' button — read-only, only the latest emails, sender + subject + a short snippet, and read one email fully when asked ('pehli email padho' or '2 number wali email padho' after the list), and send an email when asked (step by step: who, subject, what to write — it shows the draft first and sends only after the user says 'bhej do'), and write a complete formal email for the user when asked ('mere liye email likho: ...' — subject + body, but it does NOT send it; sending needs a separate 'email bhejo'); the exact commands are 'email bhejo' to send, 'mere liye email likho: <topic>' to get a written email, 'meri email dikhao' or 'unread email dikhao' to list emails, 'pehli email padho' to read one fully — quote THESE commands in any how-to guide, never invent other command formats; the mail stays in the user's own account and nothing is saved on the server; if Gmail is not connected yet, say so plainly instead of guessing). It can also connect the user's own Instagram (Professional account only) when asked — the user connects it from the + tray 'Instagram jodo' button (Instagram login, token kept in memory only), and post a photo when asked ('instagram par post karo' — the app uploads the photo to the user's own site first for a public link, then publishes it through the Instagram API; caption is the text typed with the command). If Instagram is not connected yet, say so plainly and tell the user the Meta app setup is still needed. It can also search YouTube videos when asked ('youtube par ... dhoondho' — it asks the server, which searches YouTube and shows the top videos with links; if the YouTube key is not set up yet, say so plainly). It can also upload a video file to the user's own YouTube channel when asked ('youtube par video upload karo' — or just 'upload karo' / 'fir se upload karo' to upload again, the gallery opens straight away without the + tray; the user picks a video file from the + tray 'YouTube upload' button or the command; after picking, the video appears inside the chat and the app automatically makes a title, description, hashtags and SEO tags for it (from the video file's name) and shows two buttons — 'Haan, pasand aaya' uploads it to YouTube with that title and description, and 'Nahin, pasand nahi aaya' makes new suggestions; the user can also type 'haan' to upload, 'pasand nahi aaya' for new suggestions, or 'upload kar do' to upload straight away; the app uploads it directly to YouTube as Public (sabko dikhegi) using the user's Google login token, max 100 MB, MP4/WebM/MOV; if Google login is not connected yet, say so plainly). It can also make a short instrumental tune (no vocals, no lyrics) when asked ('gaana banao: <mood>' — it uses the free MusicGen model, 10 seconds, plays in the chat with a download link; if the Hugging Face token is not set up yet, say so plainly). It also has a Skills library in the + tray ('Skills' button) with 327 ready-made expert guides from the public ECC repo — the user picks one skill (or types 'skill <name>', e.g. 'skill seo') and you then follow that skill's instructions for your answers until the user clears it (the ✕ on the skill chip above the input, or by saying 'skill band karo'); only one skill can be active at a time. The app handles those requests itself, so never claim you cannot make photos or remember things in this chat." +
+          " APP FEATURES: the app itself (not you) handles these — the user reaches them from the + tray at the bottom, from buttons the app adds itself, or by the exact chat commands written here; never invent other features or command formats. From the + tray: 'Photo banao' (or typing 'photo banao: ...') makes a photo from a written description; 'File padho' reads a PDF or text file the user attaches (the app extracts the file's text and sends it to you — then summarize it and answer questions about it); 'Video samjhao' understands a video file the user uploads (the server shows it to Gemini — max 2.5 MB, MP4/WebM/MOV); 'Photo samjhao' does the same for a photo (max 2.5 MB, JPEG/PNG/WebP/GIF; if the user typed a question before choosing the photo, answer that question about the photo); 'Gaana banao' only types 'gaana banao:' in the input — the user adds the topic and sends it, then the app makes a short instrumental tune (no vocals or lyrics, 10 seconds, free MusicGen model, plays in the chat with a download link; if the Hugging Face token is not set up yet, say so plainly); 'Tools' has a To-Do list, a Kharcha Tracker and a Quiz; 'Skills' is a library of 327 ready-made expert guides from the public ECC repo — the user picks one (or types 'skill <name>', e.g. 'skill seo') and you follow that guide until it is cleared (the ✕ on the skill chip above the input, or 'skill band karo'); only one skill at a time; 'Kya yaad hai' shows remembered facts — the app remembers facts for this chat when the user says 'yaad rakho'; 'Chat download' saves the whole chat as a file (it asks for confirmation first); 'Chat hamesha save karo' saves the chat and remembered facts on the server — the user signs in with Google and the chat is saved to their own Google account, so the same chat follows them to any device; the owner can instead (or also) turn on the older admin-code save; without sign-in the chat is saved only in this browser; 'Naam / Rang' lets the user rename you and change your theme colour; 'Dimaag' lets the user pick the AI model or turn on Deep mode; 'App install karo' installs this chat as a phone app (the button appears only when Chrome offers it, otherwise Chrome menu → 'Add to Home screen'); 'Gmail + YouTube alag karo' disconnects the Google accounts. Above every HTML code answer the app itself adds a '👁 Preview' button (the page runs inside the chat) and a '🌐 Live karo' button (publishes the page live — asks for the admin code once, then gives a live link); these two buttons exist only above HTML code answers, not in the tray. Under every answer there is a 'Sunao' button that reads the answer aloud, and the mic button takes voice dictation. For questions about current things (price, news, weather, gold rate...), the app searches Google itself and attaches the fresh results to your prompt — answer from those results; if no results are attached or they do not contain the answer, say honestly that fresh information was not found instead of guessing. When the user sends a link, the app checks it (name-based warnings instantly; it reads the page text through the free r.jina.ai reader when it can) and you then give a short Hinglish verdict — what the link looks like, what the danger is, what to do; NEVER say 'pakka safe' or '100% safe', it is only an estimate; if the page cannot be read, judge by the name only and say so clearly; never ask the user to send private or login links for checking. When the user sends a YouTube video link, the app reads the video's page text the same way and you summarise the video from its title and description ONLY — you cannot see the scenes or hear the audio, so never invent scene details; if the page cannot be read, say so honestly and do not guess. Gmail (the user connects their own Gmail with Google login from the + tray 'Gmail jodo' button): the app lists the latest emails (sender + subject + a short snippet), reads one email fully when asked, and sends an email when asked (step by step: who, subject, what to write — it shows the draft first and sends only after the user says 'bhej do'); the exact commands are 'email bhejo' to send, 'mere liye email likho: <topic>' to get a complete formal email written (subject + body — this does NOT send it; sending needs a separate 'email bhejo'), 'meri email dikhao' or 'unread email dikhao' to list emails, 'pehli email padho' or '2 number wali email padho' to read one fully — quote THESE commands in any how-to guide; the mail stays in the user's own account and nothing is saved on the server; if Gmail is not connected yet, say so plainly instead of guessing. Instagram (the user connects their own Professional account from the + tray 'Instagram jodo' button; the login token is kept in memory only): 'Instagram post' or 'instagram par post karo' posts a photo (the app uploads the photo to the user's own site first for a public link, then publishes it through the Instagram API; the caption is the text typed with the command); if Instagram is not connected yet, say so plainly and tell the user the Meta app setup is still needed. YouTube search: 'youtube par ... dhoondho' — the app asks the server, which searches YouTube and shows the top videos with links; if the YouTube key is not set up yet, say so plainly. YouTube upload (the + tray 'YouTube upload' button, or typing 'youtube par video upload karo', 'upload karo' or 'fir se upload karo'): the user picks a video file (max 100 MB, MP4/WebM/MOV); the video appears inside the chat and the app makes a title, description, hashtags and SEO tags for it (from the file's name, and for small files from the video's actual content) and shows them for approval — the approval message shows the channel name, the user can edit the title/description and pick the visibility (Public / Unlisted / Private — default Public), and 'Haan, pasand aaya' uploads it to the user's own YouTube channel with their Google login token, while 'Nahin, pasand nahi aaya' makes new suggestions; the user can also type 'haan' to upload, 'pasand nahi aaya' for new suggestions, or 'upload kar do' to upload straight away; if the account has no YouTube channel the app says so and does not upload; if Google login is not connected yet, say so plainly. The app handles those requests itself, so never claim you cannot make photos or remember things in this chat." +
           " THINKING RULES: before answering, think step by step silently. For maths, logic and code, double-check your result before replying. Never invent facts, names, numbers or links - if you are not sure, say so honestly and give your best guess clearly marked as a guess. Answer exactly what was asked, with no filler.";
 
         var history = []; // {role: 'user'|'assistant', content: string}
         var busy = false;
         // ---- Server save (admin code ho to chat + yaadein hamesha ke liye server par save) ----
         var serverChatTimer = null;
+        // ---- Google pehchan wala save (batch 5): user Google se login kare to
+        // chat uske apne khaate mein save hoti hai (server par "user:<sub>" key
+        // par) — isliye chat har device par milti hai. Token + profile sirf is
+        // page ki memory mein rehte hain; khaata-save chalu hai ya nahi, iska
+        // nishan localStorage "fg-user-save" mein rehta hai (token wahan NAHI).
+        var fgUserToken = "";
+        var fgUserEmail = "";
+        var fgUserName = "";
+        var fgUserSaveTimer = null;
         function getAdminCode() {
           try { return localStorage.getItem("fg-publish-code") || localStorage.getItem("fg-photos-code") || localStorage.getItem("fg-addproduct-code") || ""; } catch (e) { return ""; }
         }
@@ -793,9 +817,34 @@
           } else {
             history.push({ role: role, content: content });
           }
+          saveLocalHist();
           saveServerHist();
         }
+        // ---- Local save (flaw 13 fix): chat isi browser ke localStorage mein bhi
+        // save hoti hai, taaki refresh ke baad bhi wapas aa jaye — bina admin code ke.
+        // Server wala save (owner ke liye) iske upar ki extra suvidha hai, waisa hi rakha hai.
+        var LOCAL_CHAT_KEY = "fg-chat-local";
+        function saveLocalHist() {
+          try {
+            var msgs = history.slice(-100).map(function (h) { return { role: h.role, content: h.content }; });
+            localStorage.setItem(LOCAL_CHAT_KEY, JSON.stringify(msgs));
+          } catch (e) {}
+        }
+        function loadLocalHist() {
+          try {
+            var raw = localStorage.getItem(LOCAL_CHAT_KEY);
+            if (!raw) return null;
+            var arr = JSON.parse(raw);
+            if (!Array.isArray(arr)) return null;
+            return arr.filter(function (m) { return m && typeof m.content === "string"; })
+              .map(function (m) { return { role: m.role === "assistant" ? "assistant" : "user", content: m.content }; });
+          } catch (e) { return null; }
+        }
+        function clearLocalHist() {
+          try { localStorage.removeItem(LOCAL_CHAT_KEY); } catch (e) {}
+        }
         function saveServerHist() {
+          fgUserSaveChat(); // Google khaata-save (batch 5) — login ho to har badlav par
           if (!serverChatOn()) return;
           clearTimeout(serverChatTimer);
           serverChatTimer = setTimeout(function () {
@@ -843,12 +892,34 @@
             .catch(function () {});
         }
         function saveMemories() {
+          fgUserSaveMemories(); // Google khaata-save (batch 5) — login ho to yaadein bhi khaate mein
           if (!serverChatOn()) return;
           try { fetch("/api/freeai?fn=memory", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code: getAdminCode(), memories: memories }) }).catch(function () {}); } catch (e) {}
         }
         var memories = []; // 'yaad rakho' wali baatein — sirf is chat ke liye (page band = khatm)
-        var todos = [];    // To-Do tool ka data — in-memory
-        var kharchas = []; // Kharcha tool ka data — {amount, note}, in-memory
+        var todos = [];    // To-Do tool ka data — localStorage mein save hota hai (flaw 14 fix)
+        var kharchas = []; // Kharcha tool ka data — {amount, note}, localStorage mein save hota hai (flaw 14 fix)
+        function saveToolsData() {
+          try {
+            localStorage.setItem("fg-todos", JSON.stringify(todos));
+            localStorage.setItem("fg-kharchas", JSON.stringify(kharchas));
+          } catch (e) {}
+        }
+        function loadToolsData() {
+          try {
+            var t = JSON.parse(localStorage.getItem("fg-todos") || "[]");
+            if (Array.isArray(t)) {
+              todos = t.filter(function (x) { return x && typeof x.text === "string"; })
+                .map(function (x) { return { text: x.text, done: !!x.done }; });
+            }
+            var k = JSON.parse(localStorage.getItem("fg-kharchas") || "[]");
+            if (Array.isArray(k)) {
+              kharchas = k.filter(function (x) { return x && isFinite(parseFloat(x.amount)); })
+                .map(function (x) { return { amount: parseFloat(x.amount), note: String(x.note || "Kharcha") }; });
+            }
+          } catch (e) {}
+        }
+        loadToolsData();
         var aiName = "Free AI"; // Settings se badla ja sakta hai — sirf is session ke liye
 
         /* ---------------- rendering ---------------- */
@@ -869,10 +940,34 @@
           sh: "sh", shell: "sh", text: "txt", txt: "txt"
         };
 
+        // Hisab wala jawab kabhi-kabhi ``` wale dabbe mein aa jata hai. Agar dabbe
+        // ke andar SIRF hisab hai (ank, + - * / = % aur zyada se zyada unit wale
+        // shabd) to use code mat dikhao — aam text ki tarah dikhao. Zara bhi shaq
+        // ho (code wale shabd, nishan ya function-call jaisa kuch) to dabba waisa
+        // hi rehne do — galti se asal code ko text bana dena isse bura hoga.
+        function isPureMath(code) {
+          var t = (code || "").trim();
+          if (!t || t.length > 300) return false;
+          if (!/\d/.test(t)) return false;
+          if (/[;{}<>`#@_~|\\]|\*\*|=>|==|!=/.test(t)) return false;
+          if (/\b(function|var|let|const|return|if|else|for|while|print|import|def|class|new|await|async|console|document|window|echo|printf)\b/i.test(t)) return false;
+          if (/[A-Za-z]{2,}\s*\(/.test(t)) return false; // function call jaisa — code hi hoga
+          var units = { rs: 1, inr: 1, rupee: 1, rupees: 1, paisa: 1, paise: 1, lakh: 1, crore: 1, arab: 1, kharab: 1, million: 1, billion: 1, thousand: 1, hundred: 1, percent: 1, percentage: 1, cm: 1, mm: 1, km: 1, m: 1, meter: 1, meters: 1, metre: 1, metres: 1, kg: 1, g: 1, gram: 1, grams: 1, l: 1, ml: 1, litre: 1, liter: 1, litres: 1, liters: 1, sec: 1, secs: 1, second: 1, seconds: 1, min: 1, mins: 1, minute: 1, minutes: 1, hr: 1, hrs: 1, hour: 1, hours: 1, day: 1, days: 1, week: 1, weeks: 1, month: 1, months: 1, year: 1, years: 1, degree: 1, degrees: 1, x: 1, ans: 1, total: 1, sum: 1 };
+          var words = t.match(/[A-Za-z]+/g) || [];
+          for (var wi = 0; wi < words.length; wi++) {
+            if (!units[words[wi].toLowerCase()]) return false;
+          }
+          return !/[^0-9\s.,+\-*/×÷=%()₹^]/.test(t.replace(/[A-Za-z]+/g, ""));
+        }
+
         // Small, safe markdown: code blocks, inline code, bold, lists, paragraphs.
         function renderMarkdown(text) {
           var blocks = [];
           var work = text.replace(/```([\w+#-]*)\n?([\s\S]*?)```/g, function (m, lang, code) {
+            var lg = (lang || "").toLowerCase();
+            if ((!lg || lg === "text" || lg === "txt" || lg === "math") && isPureMath(code)) {
+              return "\n" + code.trim() + "\n"; // sirf hisab hai — code dabba nahi, aam text
+            }
             blocks.push({ lang: (lang || "").toLowerCase(), code: code.replace(/\n$/, "") });
             return "\u0001" + (blocks.length - 1) + "\u0001";
           });
@@ -1194,12 +1289,24 @@
           }
 
           // --- time / date / din ---
+          // Flaws 10+11 fix: ghadi/date wala shortcut SIRF tab chalega jab poora
+          // sandesh hi samay ya date ke baare mein ho (chhota, aur har shabd usi
+          // vishay ka). Beech mein koi aur baat (mausam, kal ka plan...) ho to
+          // shortcut nahi chalega — sawal poora AI ke paas jayega.
           var now = new Date();
-          if (low.length <= 40 && /(time|samay|baj)/.test(low) && /(kya|hai|ho raha|now|current|hua)/.test(low)) {
+          var qWords = low.replace(/[^a-z0-9\s]/g, " ").split(/\s+/).filter(function (w) { return !!w; });
+          function onlyQWords(list) {
+            if (!qWords.length || qWords.length > 7) return false;
+            for (var wi = 0; wi < qWords.length; wi++) { if (list.indexOf(qWords[wi]) === -1) return false; }
+            return true;
+          }
+          var TIME_Q_WORDS = ["time", "samay", "baj", "baje", "abhi", "kya", "hai", "hain", "ho", "raha", "rahe", "hua", "batao", "bata", "do", "now", "current", "what", "is", "the", "please", "kitna", "kitne", "aur", "clock"];
+          var DATE_Q_WORDS = ["date", "din", "tarikh", "day", "aaj", "kya", "hai", "hain", "batao", "bata", "do", "what", "is", "the", "today", "please", "ka", "ki", "ke", "aur"];
+          if (/(time|samay|baj)/.test(low) && onlyQWords(TIME_Q_WORDS)) {
             var t = now.toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit", hour12: true });
             return "Abhi time hai **" + t + "** ⏰";
           }
-          if (low.length <= 40 && (/(aaj).*(date|din|tarikh|day)/.test(low) || /(?:date|tarikh)\s*(kya|hai|batao)/.test(low))) {
+          if (/(date|din|tarikh|day)/.test(low) && onlyQWords(DATE_Q_WORDS)) {
             var dstr = now.toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
             return "Aaj hai **" + dstr + "** 📅";
           }
@@ -1211,8 +1318,17 @@
           if (/(tum kaun ho|tumhara naam|who are you|your name|aap kaun)/.test(low)) {
             return "Main **" + aiName + "** hoon — Mera AI jaisa hi chat assistant, par ye bina kisi API key ke chalta hai. Sawal poochho, hisab karwao, code likhwao — koshish poori karunga! 💪";
           }
-          if (/(kya kya kar sakte|kya kar sakte|what can you do|tumhari features|features kya|kaam karte ho)/.test(low)) {
-            return "Main ye sab kar sakta hoon:\n\n- **Coding (strong)** — poora chalta-hua code: website, app, game, script — ek hi file mein, Download button ke saath\n- **Code Preview** — HTML code ke upar Preview button dabao, result turant chal kar dikhega\n- **Live karo** — HTML website ke upar Live karo button se site seedha live karo\n- **Live search** — aaj ka bhav, news, mausam poochho, taza jawab milega\n- **Link check** — koi link bhejo ('yeh link safe hai kya?'), naam + page padh kar bata doon — kabhi 'pakka safe' nahi kehta\n- **Video link** — YouTube link bhejo ('ye video kya hai?'), title/description se bata doon (scenes nahi dikhte)\n- **Video samjhao** — + menu mein **🎬 Video samjhao** se video file bhejo (2.5 MB tak), dekh kar + sun kar bata doon\n- **Photo samjhao** — + menu mein **📷 Photo samjhao** se photo bhejo (2.5 MB tak), kya dikh raha hai bata doon\n- **Gmail** — apna Gmail + menu mein 📧 Gmail jodo se jodo, phir 'meri email dikhao' likho — haal ki emails dikha doon; poori padhne ke liye 'pehli email padho' likho; bhejne ke liye 'email bhejo' likho\n- **Email likhwana** — likho `mere liye email likho: boss ko chhutti ke liye`, poora formal email likh dunga (ye sirf likhta hai, bhejta nahi — bhejne ke liye 'email bhejo' likho)\n- **Instagram** — + menu mein 📸 Instagram jodo se apna Instagram jodo (Professional account chahiye), phir 'instagram par post karo' likh kar photo post karo\n- **YouTube search** — likho `youtube par dance video dhoondho`, top videos + link dunga\n- **YouTube upload** — + menu mein 📺 YouTube upload se video chuno, apne channel par Public upload ho jayegi (sabko dikhegi)\n- **App install** — + menu mein 📲 App install karo se app install karo (Chrome menu → 'Add to Home screen' se bhi hota hai)\n- **Permanent save** — + menu mein 'Chat hamesha save karo' se chat aur yaadein hamesha ke liye save hongi\n- **Bug fix** — apna code ya error paste karo, main galti bata kar poora sahi code dunga\n- **Photo banana** — likho `photo banao: pahadon par sunset`, photo ban jayegi\n- **File padhna** — + wale menu mein **📄 File padho** se PDF ya text file bhejo, main padh kar summary dunga aur sawalon ke jawab bhi\n- **Bol kar likhna** — type karne ki jagah input ke paas 🎤 mic dabao aur bol do\n- **Bol kar sunana** — har jawab ke neeche 🔊 Sunao button hai\n- **Yaad rakhna** — `yaad rakho: ...` likho, is chat mein yaad rakhunga\n- **Naam / Rang badalna** — + wale menu mein **🎨 Naam / Rang** se mera naam aur rang apni pasand ka karo\n- **Chat download** — + wale menu mein **⬇️ Chat download** se poori chat file mein save karo\n- **Tools** — + wale menu mein To-Do list, Kharcha Tracker (chart ke saath) aur Quiz\n- **Skills** — + wale menu mein **📚 Skills** se 327 ready-made expert guides mein se ek chuno (ya likho `skill seo`), phir main usi hisab se jawab dunga; band karne ke liye 'skill band karo'\n- **Sawal-jawab** — koi bhi topic, Hindi / Hinglish / English\n- **Hisab** — jaise `125 ka 15%` ya `45 * 8 + 20`; kharcha note karne ke liye `kharcha 200 khana`\n- **Time / date** — turant bata deta hoon\n\nBas likh kar bhejo!";
+          // Flaw 10 fix: canned list ki jagah CHHOTA saar, aur shortcut sirf tab
+          // jab poora sandesh hi "tum kya kar sakte ho" ke baare mein ho — lamba ya
+          // mila-jula sawal AI ke paas jayega.
+          var capHit = /(kya kya kar sakte|kya kar sakte|what can you do|tumhari features|features kya|kaam karte ho)/.test(low);
+          var capOnly = false;
+          if (capHit) {
+            var CAP_Q_WORDS = ["tum", "aap", "kya", "kar", "sakte", "sakti", "sakta", "ho", "what", "can", "you", "do", "tumhari", "features", "kaam", "karte", "batao", "bata", "do", "please", "aur", "sab", "kuch", "hai", "hain", "bolo", "ata", "aata", "tumhe"];
+            capOnly = qWords.length > 0 && qWords.length <= 10 && qWords.every(function (w) { return CAP_Q_WORDS.indexOf(w) !== -1; });
+          }
+          if (capOnly) {
+            return "Main ye kar sakta hoon:\n\n- **Sawal-jawab aur coding** — koi bhi sawal poochho, ya poora chalta-hua code likhwao\n- **Hisab aur live search** — hisab-kitab, aur aaj ki taza jaankari search karke\n- **Photo banana** — likho `photo banao: ...`\n\nBaaki suvidhayein **+ wale menu** mein hain: 📧 Gmail jodo, 📸 Instagram jodo/post, 📺 YouTube upload, 🎬 Video samjhao, 📷 Photo samjhao, 📄 File padho, 🎵 Gaana banao, 🧰 Tools (To-Do, Kharcha, Quiz) aur 📚 Skills.\n\nBas jo chahiye, likh kar bhejo!";
           }
           if (/(thank|dhanyavad|shukriya|thanks)/.test(low)) {
             return "Koi baat nahi! 😊 Aur kuch chahiye to bas likh do.";
@@ -1369,6 +1485,18 @@
             });
         }
 
+        // Chhota sa jawab jo saaf mana kar raha ho ("I can't...", "nahi kar sakta...")
+        // use asal jawab mat mano — woh model ki haar hai, agla model try hoga.
+        // Sirf bahut chhote (≤200 akshar) jawabon par lagta hai, taaki kisi lambe
+        // sahi jawab ke beech mein aaya "I can't" jaisa tukda galti se fail na ho.
+        // (Khaali jawab callModel pehle se hi "empty" fail kar deta hai.)
+        function looksLikeRefusal(t) {
+          var s = (t || "").trim();
+          if (!s || s.length > 200) return false;
+          return /\b(i can'?t|i cannot|i'?m unable to|i am unable to|as an ai( language)? model|i must decline)\b/i.test(s) ||
+            /(nahi kar sakta|nahi kar sakti|nahi de sakta|nahi de sakti|main asamarth|mana kar raha|mujhe khed hai)/i.test(s);
+        }
+
         // ---- Live search (taza Google results, server endpoint se) ----
         var lastLiveSources = [];
         var LIVE_WORDS = ["aaj", "आज", "today", "abhi", "अभी", "current", "latest", "live", "taza", "ताज़ा", "fresh", "price", "bhav", "भाव", "rate", "daam", "दाम", "kimat", "कीमत", "sona", "gold", "chandi", "silver", "bitcoin", "crypto", "petrol", "diesel", "stock", "share", "sensex", "nifty", "dollar", "rupee", "news", "khabar", "खबर", "mausam", "मौसम", "weather", "barish", "बारिश", "temperature", "match", "cricket", "score", "world cup", "champion", "winner"];
@@ -1405,22 +1533,35 @@
             var i = 0;
             function next() {
               if (i >= chain.length) {
-                // sab plain mode fail — aakhri koshish JSON mode se
-                return callModel(msgs, "openai", true, 60000);
+                // sab plain mode fail — aakhri koshish JSON mode se (wahi 20s seema;
+                // iska khaali/mana wala jawab bhi fail hi mana jayega, taaki aakhir
+                // mein offline wala sandesh hi dikhe)
+                return callModel(msgs, "openai", true, 20000).then(function (r) {
+                  if (looksLikeRefusal(r)) throw new Error("refusal");
+                  return r;
+                });
               }
               var m = chain[i++];
-              var isLast = i >= chain.length;
               used = m;
+              // Har model ko zyada se zyada 20 second — streaming par bhi aur aam
+              // call par bhi (pehle streaming 45/90s, aam 30/60s the). Network/HTTP
+              // fail, khaali jawab ya mana karne par bina ruke turant agla model —
+              // pehle wali 1.5s ki deri bhi gayi. Streamed mana wala jawab agar
+              // dikhai diya ho to agle model ki shuruaat par onChunk("") use
+              // saaf kar deta hai, isliye wahi galat jawab aakhir mein nahi tikta.
               var attempt;
               if (onChunk && !deepMode) {
                 // streaming: jawab type hota hua dikhega (deep mode mein nahi — wahan final jawab badal jata hai)
                 try { onChunk(""); } catch (e) {}
-                attempt = callModelStream(msgs, m, onChunk, isLast ? 90000 : 45000);
+                attempt = callModelStream(msgs, m, onChunk, 20000);
               } else {
-                attempt = callModel(msgs, m, false, isLast ? 60000 : 30000);
+                attempt = callModel(msgs, m, false, 20000);
               }
-              return attempt.catch(function () {
-                return new Promise(function (res) { setTimeout(res, 1500); }).then(next);
+              return attempt.then(function (r) {
+                if (looksLikeRefusal(r)) throw new Error("refusal");
+                return r;
+              }).catch(function () {
+                return next();
               });
             }
 
@@ -1430,7 +1571,9 @@
                 { role: "assistant", content: draft },
                 { role: "user", content: "Is jawab ko dhyan se check karo: kya koi galti, adhura hissa, galat hisab ya adhura code hai? Agar hai to use theek karke POORA final jawab do. Agar sab sahi hai to wahi jawab dobara do. Check ke baare mein kuch mat likho, sirf final jawab do. Same language aur style rakho." }
               ]);
-              return callModel(review, used, false, 45000).catch(function () { return draft; });
+              return callModel(review, used, false, 20000).then(function (r) {
+                return looksLikeRefusal(r) ? draft : r;
+              }).catch(function () { return draft; });
             });
           });
         }
@@ -1689,7 +1832,7 @@
             if (!memories.length) return "Abhi maine kuch yaad hi nahi rakha hai — bhoolne ko kuch hai hi nahi! 😄";
             memories = [];
             saveMemories();
-            return serverChatOn() ? "Theek hai, sab bhool gaya! 🧹 Ab hamesha ke liye kuch bhi yaad nahi hai." : "Theek hai, sab bhool gaya! 🧹 Ab is chat mein kuch bhi yaad nahi hai.";
+            return (serverChatOn() || fgUserSignedIn()) ? "Theek hai, sab bhool gaya! 🧹 Ab hamesha ke liye kuch bhi yaad nahi hai." : "Theek hai, sab bhool gaya! 🧹 Ab is chat mein kuch bhi yaad nahi hai.";
           }
 
           // yaad rakho: ...
@@ -1698,7 +1841,7 @@
             var fact = save[1].trim().replace(/[。.]+$/, "");
             memories.push(fact);
             saveMemories();
-            return "Yaad kar liya! 🧠\n\n**" + fact + "**\n\n" + (serverChatOn() ? "Ye baat maine hamesha ke liye yaad rakh li hai (server par save ho gayi)." : "Ye baat main is poori chat mein yaad rakhunga.") + " Aur kuch yaad karwana ho to bas 'yaad rakho:' likh kar bhej do.";
+            return "Yaad kar liya! 🧠\n\n**" + fact + "**\n\n" + ((serverChatOn() || fgUserSignedIn()) ? "Ye baat maine hamesha ke liye yaad rakh li hai (server par save ho gayi)." : "Ye baat main is poori chat mein yaad rakhunga.") + " Aur kuch yaad karwana ho to bas 'yaad rakho:' likh kar bhej do.";
           }
 
           // kya yaad hai
@@ -1717,6 +1860,7 @@
             var amt = parseFloat(kh[1]);
             var note = (kh[2] || "").trim() || "Kharcha";
             kharchas.push({ amount: amt, note: note });
+            saveToolsData();
             return "Note kar liya! 💰\n\n**₹" + fmtNum(amt) + "** — " + note + "\n\nAb tak ka kul kharcha: **₹" + fmtNum(totalKharcha()) + "**\nPoora hisaab aur chart dekhna ho to + wale menu ke **Tools** mein Kharcha Tracker kholo.";
           }
 
@@ -1885,13 +2029,13 @@
               var t = document.createElement("span");
               t.className = "t-text";
               t.textContent = (item.done ? "✅ " : "⬜ ") + item.text;
-              t.addEventListener("click", function () { item.done = !item.done; render(); });
+              t.addEventListener("click", function () { item.done = !item.done; saveToolsData(); render(); });
               var del = document.createElement("button");
               del.type = "button";
               del.className = "item-del";
               del.textContent = "✕";
               del.setAttribute("aria-label", "Hatao");
-              del.addEventListener("click", function () { todos.splice(i, 1); render(); });
+              del.addEventListener("click", function () { todos.splice(i, 1); saveToolsData(); render(); });
               d.appendChild(t);
               d.appendChild(del);
               list.appendChild(d);
@@ -1901,6 +2045,7 @@
             var v = inp.value.trim();
             if (!v) return;
             todos.push({ text: v, done: false });
+            saveToolsData();
             inp.value = "";
             render();
           }
@@ -1966,7 +2111,7 @@
               del.className = "item-del";
               del.textContent = "✕";
               del.setAttribute("aria-label", "Hatao");
-              del.addEventListener("click", function () { kharchas.splice(idx, 1); render(); });
+              del.addEventListener("click", function () { kharchas.splice(idx, 1); saveToolsData(); render(); });
               d.appendChild(n);
               d.appendChild(a);
               d.appendChild(del);
@@ -1977,6 +2122,7 @@
             var v = parseFloat(amt.value);
             if (!isFinite(v) || v <= 0) return;
             kharchas.push({ amount: v, note: note.value.trim() || "Kharcha" });
+            saveToolsData();
             amt.value = "";
             note.value = "";
             render();
@@ -2074,6 +2220,8 @@
               opts[item.answer].classList.add("right");
               if (oi === item.answer) st.score++;
               else b.classList.add("wrong");
+              // Flaw 30 fix: score wahi turant dikhao — pehle "Agla" dabane par hi badhta dikhta tha
+              prog.textContent = "Sawal " + (st.i + 1) + " / " + QUIZ.length + "  •  Score: " + st.score;
               var next = document.createElement("button");
               next.type = "button";
               next.className = "tool-add";
@@ -2157,34 +2305,61 @@
           body.appendChild(search);
           var list = document.createElement("div");
           body.appendChild(list);
+          // Flaw 25 fix: pehle render 60 par ruk jata tha — ab 60-60 ke pages mein
+          // "Aur dikhao" button se saari 327 skills tak pahuncha ja sakta hai
+          // (poori list par bhi, search ke results par bhi).
+          var SKILL_PAGE = 60;
+          var skillShown = 0;
+          var skillFilter = "";
+          function makeSkillBtn(s) {
+            var b = document.createElement("button");
+            b.type = "button";
+            b.className = "tool-menu-btn";
+            var icon = document.createElement("span");
+            icon.textContent = "📚";
+            var main = document.createElement("span");
+            main.textContent = s[0];
+            var small = document.createElement("small");
+            small.textContent = s[1];
+            main.appendChild(small);
+            b.appendChild(icon);
+            b.appendChild(main);
+            b.addEventListener("click", function () { loadSkill(s[0]); });
+            return b;
+          }
+          function renderSkillsPage() {
+            var oldMore = list.querySelector(".skills-more-btn");
+            if (oldMore) oldMore.remove();
+            var f = skillFilter;
+            var matched = [];
+            ECC_SKILLS.forEach(function (s) {
+              if (!f || s[0].indexOf(f) !== -1 || s[1].toLowerCase().indexOf(f) !== -1) matched.push(s);
+            });
+            if (!matched.length) {
+              if (!skillShown) {
+                var p = document.createElement("p");
+                p.textContent = "Koi skill nahi mili — dusra naam try karo.";
+                list.appendChild(p);
+              }
+              return;
+            }
+            var end = Math.min(skillShown + SKILL_PAGE, matched.length);
+            for (var i = skillShown; i < end; i++) list.appendChild(makeSkillBtn(matched[i]));
+            skillShown = end;
+            if (skillShown < matched.length) {
+              var more = document.createElement("button");
+              more.type = "button";
+              more.className = "tool-menu-btn skills-more-btn";
+              more.textContent = "⬇️ Aur dikhao (" + (matched.length - skillShown) + " aur skills bachi hain)";
+              more.addEventListener("click", renderSkillsPage);
+              list.appendChild(more);
+            }
+          }
           function render(filter) {
             list.innerHTML = "";
-            var f = (filter || "").toLowerCase();
-            var shown = 0;
-            ECC_SKILLS.forEach(function (s) {
-              if (shown >= 60) return;
-              if (f && s[0].indexOf(f) === -1 && s[1].toLowerCase().indexOf(f) === -1) return;
-              shown++;
-              var b = document.createElement("button");
-              b.type = "button";
-              b.className = "tool-menu-btn";
-              var icon = document.createElement("span");
-              icon.textContent = "📚";
-              var main = document.createElement("span");
-              main.textContent = s[0];
-              var small = document.createElement("small");
-              small.textContent = s[1];
-              main.appendChild(small);
-              b.appendChild(icon);
-              b.appendChild(main);
-              b.addEventListener("click", function () { loadSkill(s[0]); });
-              list.appendChild(b);
-            });
-            if (!shown) {
-              var p = document.createElement("p");
-              p.textContent = "Koi skill nahi mili — dusra naam try karo.";
-              list.appendChild(p);
-            }
+            skillFilter = (filter || "").toLowerCase();
+            skillShown = 0;
+            renderSkillsPage();
           }
           search.addEventListener("input", function () { render(search.value); });
           render("");
@@ -2234,6 +2409,40 @@
             if (!tok) { replyLocal("📧 Gmail jud nahi paya — Google popup mein apna Gmail chun kar Allow karna tha. Dobara dabakar try karo."); return; }
             replyLocal("📧 Gmail jud gaya ✓ — ab 'meri email dikhao' likho, haal ki emails dikha doon.");
           });
+        });
+        // Gmail alag karo (flaw 24 fix): Google se token revoke karo, token saaf karo,
+        // button wapas "Gmail jodo" karo aur chat mein pushti ka sandesh do.
+        // Flaw 22 ke baad Gmail aur YouTube ke token alag hain — alag karne par
+        // DONO token saaf + revoke hote hain.
+        document.getElementById("trayGmailOut").addEventListener("click", function () {
+          trayEl.classList.remove("open");
+          plusBtn.classList.remove("open");
+          var tokG = gmailToken;
+          gmailToken = "";
+          var tokY = ytToken;
+          ytToken = "";
+          ytChannelState = "unknown";
+          ytChannelTitle = "";
+          // Batch 5: chat-save wala pehchan-token bhi saaf karo — khaata-save
+          // band, "fg-user-save" nishan bhi hatao (warna agle page-load par
+          // khamosh wapasi phir login kar degi). Local save chalta rahega.
+          var tokU = fgUserToken;
+          fgUserToken = "";
+          fgUserEmail = "";
+          fgUserName = "";
+          clearTimeout(fgUserSaveTimer);
+          try { localStorage.removeItem("fg-user-save"); } catch (e) {}
+          updateGmailButton();
+          fgRenderSaveStatus();
+          function revokeTok(t) {
+            if (t && window.google && window.google.accounts && window.google.accounts.oauth2 && typeof window.google.accounts.oauth2.revoke === "function") {
+              try { window.google.accounts.oauth2.revoke(t, function () {}); } catch (e) {}
+            }
+          }
+          revokeTok(tokG);
+          if (tokY && tokY !== tokG) revokeTok(tokY);
+          if (tokU && tokU !== tokG && tokU !== tokY) revokeTok(tokU);
+          replyLocal("🚪 Google alag ho gaya ✓ — Gmail, YouTube aur chat-save, teeno ka login is browser se hat gaya. Chat ab sirf isi browser mein save hogi. Dobara jodna ho to + menu mein **📧 Gmail jodo** dabao, 'youtube par video upload karo' likho, ya **💾 Chat hamesha save karo** se Google login karo.");
         });
         videoInput.addEventListener("change", function () {
           var f = videoInput.files && videoInput.files[0];
@@ -2289,6 +2498,9 @@
           plusBtn.classList.remove("open");
           // input mein likh kar chhod do — keyboard tabhi khulega jab wo input par tap kare
           inputEl.value = "gaana banao: ";
+          // Sirf text ghusane se user ko pata nahi chalta tha ki aage kya karna hai —
+          // chat mein chhota sa ishara bhi de do (insert wala vyavhaar waisa hi hai)
+          replyLocal("🎵 Gaana banane ke liye neeche wale dabbe mein **gaane ka vishay likho** — jaise `gaana banao: khushi wali halki dhun` — aur **Bhejo** dabao. 10 second ki bina-bol wali dhun ban jayegi.");
         });
         // ---- PWA: app install (beforeinstallprompt) + service worker ----
         var deferredInstallPrompt = null;
@@ -2336,6 +2548,7 @@
           // "Haan, pasand aaya" = upload, "Nahin" = naye suggestions.
           ytPendingFile = f;
           ytPendingMeta = null;
+          ytPrivacy = "public"; // nayi video = default visibility Public (Shiva ka order)
           ytPendingName = f.name;
           try { localStorage.setItem("yt-pending-name", f.name); } catch (e) {}
           addVideoBubble(f);
@@ -2878,33 +3091,38 @@
         function askServerCode() {
           trayEl.classList.remove("open");
           plusBtn.classList.remove("open");
-          if (serverChatOn()) {
-            if (!busy) { busy = true; replyLocal("Admin code pehle se daala hua hai — chat aur yaadein hamesha ke liye save ho rahi hain. 💾"); }
-            return;
-          }
-          if (document.getElementById("serverCodeRow")) return;
+          // Batch 5: dabba ab Google login wala khaata-save pehle dikhata hai;
+          // owner ka admin-code wala purana raasta secondary hisse mein hai
+          // (fgRenderSaveStatus use bharta hai). Dabba pehle se khula ho to
+          // sirf haalat tazaa karo.
+          if (document.getElementById("serverCodeRow")) { fgRenderSaveStatus(); return; }
           var row = document.createElement("div");
           row.id = "serverCodeRow";
           row.style.cssText = "background:#fff7e6;border:1px solid #f0c36d;border-radius:10px;padding:10px;margin:8px 0;font-size:.9rem";
-          row.textContent = "💾 Chat aur yaadein hamesha ke liye save karne ke liye admin code daalo (ek baar — wahi jo Orders/Photos mein lagta hai):";
-          row.appendChild(document.createElement("br"));
-          var inp = document.createElement("input");
-          inp.type = "password"; inp.placeholder = "Admin code daalo";
-          inp.style.cssText = "padding:8px;border:1px solid #ccc;border-radius:8px;width:55%;margin-top:6px";
-          var sb = document.createElement("button");
-          sb.type = "button"; sb.className = "cb-dl"; sb.textContent = "Save karo";
-          sb.onclick = function () {
-            var v = inp.value.trim();
-            if (!v) return;
-            try { localStorage.setItem("fg-publish-code", v); } catch (e) {}
-            row.remove();
-            syncChatFromServer();
-            loadMemories();
-            if (!busy) { busy = true; replyLocal("Ho gaya! 💾 Ab se chat aur yaadein hamesha ke liye save hongi — page band karke dobara kholo to bhi sab milega."); }
-          };
-          row.appendChild(inp);
-          row.appendChild(sb);
+          var title = document.createElement("div");
+          title.innerHTML = "💾 <b>Chat hamesha save karo</b>";
+          row.appendChild(title);
+          var status = document.createElement("div");
+          status.id = "fgSaveStatus";
+          status.style.cssText = "margin-top:6px";
+          row.appendChild(status);
+          var gb = document.createElement("button");
+          gb.type = "button"; gb.className = "cb-dl"; gb.id = "fgSaveGoogleBtn";
+          gb.textContent = "🔐 Google se login karo";
+          gb.style.cssText = "margin-top:8px";
+          gb.addEventListener("click", fgGoogleSaveSignIn);
+          row.appendChild(gb);
+          var adm = document.createElement("div");
+          adm.id = "fgSaveAdmin";
+          adm.style.cssText = "margin-top:10px;border-top:1px dashed #f0c36d;padding-top:8px";
+          row.appendChild(adm);
+          var close = document.createElement("button");
+          close.type = "button"; close.className = "cb-dl"; close.textContent = "✕ Band karo";
+          close.style.cssText = "margin-top:8px;margin-left:6px";
+          close.onclick = function () { row.remove(); };
+          row.appendChild(close);
           messagesEl.insertBefore(row, messagesEl.firstChild);
+          fgRenderSaveStatus();
         }
 
         document.getElementById("traySave").addEventListener("click", askServerCode);
@@ -2918,6 +3136,8 @@
             if (!busy) { busy = true; replyLocal("Abhi chat khaali hai — pehle kuch baat karo, phir download kar lena. 😊"); }
             return;
           }
+          // Flaw 31 fix: download bina poochhe nahi — pehle user se pushti lo
+          if (!window.confirm("Poori chat ek file (free-ai-chat.txt) mein download hogi. Pakka download karna hai?")) return;
           var lines = [aiName + " ke saath chat — " + new Date().toLocaleString("en-IN"), ""];
           history.forEach(function (h) {
             lines.push((h.role === "user" ? "Tum" : aiName) + ": " + h.content);
@@ -3156,6 +3376,18 @@
         var gmailTokenClient = null;
         var gmailTokenCb = null;
         var gmailTokenTimer = null;
+        // ---- YouTube ka ALAG token (flaw 22 fix) ----
+        // Gmail wala token ab SIRF Gmail (readonly + send) ke liye hai; YouTube
+        // upload ke liye alag token banta hai (sirf youtube.upload + youtube.readonly).
+        var ytToken = "";
+        var ytTokenClient = null;
+        var ytTokenCb = null;
+        var ytTokenTimer = null;
+        // Channel ki jaankari (flaw 20 fix): unknown | ok | failed | none
+        var ytChannelState = "unknown";
+        var ytChannelTitle = "";
+        var ytChannelBusy = false;
+        var ytChannelWaiters = [];
 
         // ---- Instagram (Meta app ka App ID milte hi yahan daal dunga) ----
         var IG_APP_ID = "";
@@ -3173,10 +3405,20 @@
         var ytPendingName = ""; // chuni video ka naam — page reload par bhi yaad rehta hai (file nahi, sirf naam)
         try { ytPendingName = localStorage.getItem("yt-pending-name") || ""; } catch (e) {}
         var YT_UPLOAD_MAX = 100 * 1024 * 1024; // 100 MB
+        var ytPrivacy = "public"; // upload ki visibility — default Public (Shiva ka order)
+        function ytPrivacyLabel() {
+          if (ytPrivacy === "public") return "Public (sabko dikhegi)";
+          if (ytPrivacy === "private") return "Private (sirf tumhe dikhegi)";
+          return "Unlisted (sirf link walon ko dikhegi)";
+        }
         function gmailHasToken() { return !!gmailToken; }
         function updateGmailButton() {
           var b = document.getElementById("trayGmail");
           if (b) b.textContent = gmailToken ? "📧 Gmail juda ✓" : "📧 Gmail jodo";
+          // "Alag karo" wala button tab dikhao jab Gmail, YouTube ya chat-save
+          // wala pehchan-login — teeno mein se koi bhi juda ho (flaw 24 + 22 fix, batch 5)
+          var o = document.getElementById("trayGmailOut");
+          if (o) o.style.display = (gmailToken || ytToken || fgUserToken) ? "" : "none";
         }
         function requestGmailToken(cb) {
           if (!window.google || !window.google.accounts || !window.google.accounts.oauth2) { cb(null); return; }
@@ -3184,7 +3426,7 @@
             if (!gmailTokenClient) {
               gmailTokenClient = window.google.accounts.oauth2.initTokenClient({
                 client_id: GMAIL_CLIENT_ID,
-                scope: "https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/gmail.send https://www.googleapis.com/auth/youtube.upload",
+                scope: "https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/gmail.send",
                 callback: function (resp) {
                   var f = gmailTokenCb; gmailTokenCb = null;
                   if (gmailTokenTimer) { clearTimeout(gmailTokenTimer); gmailTokenTimer = null; }
@@ -3204,7 +3446,292 @@
             gmailTokenClient.requestAccessToken({ prompt: "" });
           } catch (e) { cb(null); }
         }
+        // ---- YouTube token (flaw 22 fix): Gmail wale se bilkul alag client ----
+        // Scope sirf youtube.upload + youtube.readonly (channel ka naam padhne ke liye).
+        function ytHasToken() { return !!ytToken; }
+        function requestYtToken(cb) {
+          if (!window.google || !window.google.accounts || !window.google.accounts.oauth2) { cb(null); return; }
+          try {
+            if (!ytTokenClient) {
+              ytTokenClient = window.google.accounts.oauth2.initTokenClient({
+                client_id: GMAIL_CLIENT_ID,
+                scope: "https://www.googleapis.com/auth/youtube.upload https://www.googleapis.com/auth/youtube.readonly",
+                callback: function (resp) {
+                  var f = ytTokenCb; ytTokenCb = null;
+                  if (ytTokenTimer) { clearTimeout(ytTokenTimer); ytTokenTimer = null; }
+                  if (resp && resp.access_token) { ytToken = resp.access_token; updateGmailButton(); if (f) f(resp.access_token); }
+                  else if (f) f(null);
+                }
+              });
+            }
+            ytTokenCb = cb;
+            if (ytTokenTimer) clearTimeout(ytTokenTimer);
+            ytTokenTimer = setTimeout(function () {
+              var f = ytTokenCb; ytTokenCb = null; ytTokenTimer = null;
+              if (f) f(null);
+            }, (typeof window !== "undefined" && window.GMAIL_TOKEN_TIMEOUT_MS) || 60000);
+            ytTokenClient.requestAccessToken({ prompt: "" });
+          } catch (e) { cb(null); }
+        }
+        // ---- Google pehchan — chat save ke liye (batch 5) ----
+        // Gmail/YouTube walon se ALAG teesra token client: scope sirf
+        // "openid email profile" (na mail ki permission, na YouTube ki).
+        // Isi token se server par har user ki chat uske apne Google khaate
+        // ke naam par save hoti hai, isliye chat kisi bhi device par milti
+        // hai. Token sirf memory mein rehta hai; page khulne par
+        // "fg-user-save" nishan ho to khamosh koshish se wapas aa jata hai.
+        var fgUserClient = null;
+        var fgUserCb = null;
+        var fgUserTimer = null;
+        var fgUserRefreshing = false;
+        function fgUserSignedIn() { return !!fgUserToken; }
+        function fgFetchUserInfo(done) {
+          var finished = false;
+          function fin() { if (!finished) { finished = true; if (done) done(); } }
+          try {
+            var ctrl = (typeof AbortController !== "undefined") ? new AbortController() : null;
+            var to = setTimeout(function () { if (ctrl) ctrl.abort(); fin(); }, 6000);
+            var opts = { headers: { Authorization: "Bearer " + fgUserToken } };
+            if (ctrl) opts.signal = ctrl.signal;
+            fetch("https://openidconnect.googleapis.com/v1/userinfo", opts)
+              .then(function (r) { return r.ok ? r.json() : null; })
+              .then(function (j) {
+                clearTimeout(to);
+                if (j) {
+                  if (typeof j.email === "string") fgUserEmail = j.email;
+                  if (typeof j.name === "string") fgUserName = j.name;
+                }
+                fgRenderSaveStatus();
+                fin();
+              })
+              .catch(function () { clearTimeout(to); fin(); });
+          } catch (e) { fin(); }
+        }
+        function requestUserToken(cb) {
+          if (!window.google || !window.google.accounts || !window.google.accounts.oauth2) { cb(null); return; }
+          try {
+            if (!fgUserClient) {
+              fgUserClient = window.google.accounts.oauth2.initTokenClient({
+                client_id: GMAIL_CLIENT_ID,
+                scope: "openid email profile",
+                callback: function (resp) {
+                  var f = fgUserCb; fgUserCb = null;
+                  if (fgUserTimer) { clearTimeout(fgUserTimer); fgUserTimer = null; }
+                  if (resp && resp.access_token) {
+                    fgUserToken = resp.access_token;
+                    updateGmailButton(); // "alag karo" wala chip sirf isi login par bhi dikhe
+                    fgFetchUserInfo(function () { if (f) f(fgUserToken); });
+                  } else if (f) f(null);
+                }
+              });
+            }
+            fgUserCb = cb;
+            // Gmail wali hi safety: popup band ho jaye ya callback na aaye to
+            // 60s mein khud fail karo, warna koi intezaar atka reh jayega.
+            if (fgUserTimer) clearTimeout(fgUserTimer);
+            fgUserTimer = setTimeout(function () {
+              var f = fgUserCb; fgUserCb = null; fgUserTimer = null;
+              if (f) f(null);
+            }, 60000);
+            fgUserClient.requestAccessToken({ prompt: "" });
+          } catch (e) { cb(null); }
+        }
+        // Token expire ho jaye (server 401 de) to ek baar khamoshi se naya
+        // token la kar dobara try karo; na mile to khaata-save chup-chaap
+        // band — localStorage wala save waisa hi chalta rahega.
+        function fgUserRefreshThen(retryFn) {
+          if (fgUserRefreshing) return;
+          fgUserRefreshing = true;
+          requestUserToken(function (tok) {
+            fgUserRefreshing = false;
+            if (tok) { if (retryFn) retryFn(); }
+            else { fgUserToken = ""; updateGmailButton(); fgRenderSaveStatus(); }
+          });
+        }
+        function fgUserSaveChat() {
+          if (!fgUserToken) return;
+          clearTimeout(fgUserSaveTimer);
+          fgUserSaveTimer = setTimeout(function () {
+            if (!fgUserToken) return;
+            try {
+              var msgs = history.slice(-100).map(function (h) { return { role: h.role, text: h.content }; });
+              fetch("/api/freeai?fn=chat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ gtoken: fgUserToken, messages: msgs }) })
+                .then(function (r) { if (r.status === 401) fgUserRefreshThen(function () { fgUserSaveChat(); }); })
+                .catch(function () {});
+            } catch (e) {}
+          }, 800);
+        }
+        // Khaate wali chat load karo. Merge niyam (v1, jaan-boojh kar saada):
+        // SERVER WALI CHAT JEET-TI HAI — khaate mein chat mile to abhi wali
+        // view usi se badal jati hai (aur local copy bhi usi se mil jati hai);
+        // na mile aur yahan chat ho to wahi khaate mein save ho jati hai.
+        // Sirf-local sandesh server wali chat mein merge NAHI hote.
+        // done(found) har raaste par ek baar chalta hai.
+        function fgUserLoadChat(done) {
+          var finished = false;
+          function fin(found) { if (!finished) { finished = true; if (done) done(found); } }
+          if (!fgUserToken) { fin(false); return; }
+          fetch("/api/freeai?fn=chat", { headers: { Authorization: "Bearer " + fgUserToken } })
+            .then(function (r) {
+              if (r.status === 401) {
+                finished = true; // is koshish ka jawab yahi khatm; retry apna done khud dega
+                fgUserRefreshThen(function () { fgUserLoadChat(done); });
+                return null;
+              }
+              return r.json().catch(function () { return null; });
+            })
+            .then(function (d) {
+              if (!d) return;
+              if (!d.ok || !Array.isArray(d.messages)) { fin(false); return; }
+              var srv = d.messages.filter(function (m) { return m && typeof m.text === "string"; }).map(function (m) { return { role: m.role === "assistant" ? "assistant" : "user", content: m.text }; });
+              if (srv.length) {
+                history = srv;
+                saveLocalHist();
+                renderHist();
+                fin(true);
+              } else {
+                if (history.length) fgUserSaveChat();
+                fin(false);
+              }
+            })
+            .catch(function () { fin(false); });
+        }
+        function fgUserSaveMemories() {
+          if (!fgUserToken) return;
+          try {
+            fetch("/api/freeai?fn=memory", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ gtoken: fgUserToken, memories: memories }) })
+              .then(function (r) { if (r.status === 401) fgUserRefreshThen(function () { fgUserSaveMemories(); }); })
+              .catch(function () {});
+          } catch (e) {}
+        }
+        function fgUserLoadMemories() {
+          if (!fgUserToken) return;
+          fetch("/api/freeai?fn=memory", { headers: { Authorization: "Bearer " + fgUserToken } })
+            .then(function (r) {
+              if (r.status === 401) { fgUserRefreshThen(function () { fgUserLoadMemories(); }); return null; }
+              return r.json().catch(function () { return null; });
+            })
+            .then(function (d) {
+              if (d && d.ok && Array.isArray(d.memories)) {
+                if (d.memories.length) {
+                  memories = d.memories.filter(function (m) { return typeof m === "string"; });
+                } else if (memories.length) {
+                  fgUserSaveMemories();
+                }
+              }
+            })
+            .catch(function () {});
+        }
+        // "Chat hamesha save karo" wale dabbe (serverCodeRow) ki haalat dobara
+        // banao — signed-in ho to wahan "Chat save: <email> se juda hai" dikhta
+        // hai; admin code wala purana raasta secondary hisse mein waisa hi hai.
+        function fgRenderSaveStatus() {
+          var st = document.getElementById("fgSaveStatus");
+          var gb = document.getElementById("fgSaveGoogleBtn");
+          var adm = document.getElementById("fgSaveAdmin");
+          if (st) {
+            if (fgUserToken) {
+              st.innerHTML = "Chat save: <b>" + (fgUserEmail ? fgUserEmail.replace(/</g, "&lt;") : "tumhare Google khaate") + "</b> se juda hai ✓<br>Chat tumhare Google khaate mein save ho rahi hai — kisi bhi device par Google login karne se wahi chat milegi. (Is browser mein bhi ek copy save rehti hai.)";
+            } else {
+              st.textContent = "Chat abhi sirf isi browser mein save hoti hai — dusre phone/computer par nahi milegi. Google se login kar do to chat tumhare khaate mein save hogi aur har device par milegi.";
+            }
+          }
+          if (gb) gb.style.display = fgUserToken ? "none" : "";
+          if (adm) {
+            adm.innerHTML = "";
+            if (serverChatOn()) {
+              adm.textContent = "Owner wala admin-code save bhi chalu hai ✓ (purana raasta, waisa hi chal raha hai).";
+            } else {
+              var t = document.createElement("div");
+              t.textContent = "Owner ho? Admin code se purana wala save bhi chalu kar sakte ho (wahi code jo Orders/Photos mein lagta hai):";
+              adm.appendChild(t);
+              var inp = document.createElement("input");
+              inp.type = "password"; inp.placeholder = "Admin code daalo";
+              inp.style.cssText = "padding:8px;border:1px solid #ccc;border-radius:8px;width:55%;margin-top:6px";
+              var sb = document.createElement("button");
+              sb.type = "button"; sb.className = "cb-dl"; sb.textContent = "Save karo";
+              sb.onclick = function () {
+                var v = inp.value.trim();
+                if (!v) return;
+                try { localStorage.setItem("fg-publish-code", v); } catch (e) {}
+                syncChatFromServer();
+                loadMemories();
+                fgRenderSaveStatus();
+                if (!busy) { busy = true; replyLocal("Ho gaya! 💾 Admin code wala save chalu ho gaya — chat aur yaadein hamesha ke liye save hongi."); }
+              };
+              adm.appendChild(inp);
+              adm.appendChild(sb);
+            }
+          }
+        }
+        function fgGoogleSaveSignIn() {
+          requestUserToken(function (tok) {
+            if (!tok) {
+              var st = document.getElementById("fgSaveStatus");
+              if (st) st.textContent = "❌ Google login nahi ho paya — popup mein apna Google khaata chun kar Allow karna tha. Dobara 'Google se login karo' dabao.";
+              return;
+            }
+            try { localStorage.setItem("fg-user-save", fgUserEmail || "1"); } catch (e) {}
+            fgRenderSaveStatus();
+            fgUserLoadChat(function (found) {
+              if (!busy) {
+                busy = true;
+                replyLocal(found
+                  ? "💾 Tumhari save ki hui chat mil gayi aur load kar di! Ab se chat **" + (fgUserEmail || "tumhare Google khaate") + "** mein save hogi — kisi bhi device par milegi."
+                  : "🔐 Google se jud gaya ✓ — ab se chat **" + (fgUserEmail || "tumhare Google khaate") + "** mein save hogi, kisi bhi device par milegi.");
+              }
+            });
+            fgUserLoadMemories();
+          });
+        }
+        // Page khulne par khamosh wapasi: is browser par pehle kabhi
+        // khaata-save chalu hua tha ("fg-user-save" nishan) to bina popup ke
+        // token la kar khaate wali chat load karne ki koshish karo. Nishan na
+        // ho to kuch mat karo (pehli baar wala login dabbe se hi hoga), aur
+        // token na mile to chup raho — local save waisa hi chalta hai.
+        var fgSilentTries = 0;
+        function fgTrySilentSignIn() {
+          var hint = "";
+          try { hint = localStorage.getItem("fg-user-save") || ""; } catch (e) {}
+          if (!hint || fgUserToken) return;
+          if (!window.google || !window.google.accounts || !window.google.accounts.oauth2) {
+            fgSilentTries++;
+            if (fgSilentTries <= 5) setTimeout(fgTrySilentSignIn, 1500);
+            return;
+          }
+          requestUserToken(function (tok) {
+            if (!tok) return;
+            fgUserLoadChat();
+            fgUserLoadMemories();
+          });
+        }
+        // ---- Channel ka naam pata karo (flaw 20 fix) ----
+        // Token milne ke baad ek baar channels?mine=true se channel ka title laata
+        // hai. cb hamesha chalti hai (state jo bhi bane) — approval wahan atakti nahi.
+        function ytFlushChannelWaiters() {
+          var ws = ytChannelWaiters; ytChannelWaiters = [];
+          ws.forEach(function (f) { try { f(); } catch (e) {} });
+        }
+        function ytEnsureChannel(cb) {
+          if (cb) ytChannelWaiters.push(cb);
+          if (ytChannelState !== "unknown") { ytFlushChannelWaiters(); return; }
+          if (!ytToken) { ytFlushChannelWaiters(); return; } // token nahi — naam nahi milega, line "pata nahi" wali jayegi
+          if (ytChannelBusy) return;
+          ytChannelBusy = true;
+          fetch("https://www.googleapis.com/youtube/v3/channels?part=snippet&mine=true", { headers: { Authorization: "Bearer " + ytToken } })
+            .then(function (r) { if (!r.ok) throw new Error("http " + r.status); return r.json(); })
+            .then(function (j) {
+              var items = (j && Array.isArray(j.items)) ? j.items : [];
+              var t = (items.length && items[0].snippet && items[0].snippet.title) ? String(items[0].snippet.title).slice(0, 100) : "";
+              if (t) { ytChannelState = "ok"; ytChannelTitle = t; }
+              else if (items.length) { ytChannelState = "failed"; }
+              else { ytChannelState = "none"; } // is khaate par channel hai hi nahi
+            })
+            .catch(function () { ytChannelState = "failed"; })
+            .then(function () { ytChannelBusy = false; ytFlushChannelWaiters(); });
+        }
         function doGmailCheck(userText) {
+          gmailPendingRead = null; // nayi list aate hi purani poori-email pushti radd (flaw 23 fix)
           addTyping();
           if (!window.google || !window.google.accounts || !window.google.accounts.oauth2) {
             removeTyping();
@@ -3355,21 +3882,56 @@
           div.innerHTML = html;
           return (div.textContent || "").replace(/[ \t]+/g, " ").replace(/\n\s*\n+/g, "\n\n").trim();
         }
+        // Flaw 23 fix: poori email kholne se pehle pushti (Haan, dikhao) zaroori hai.
+        // List (sender/subject) bina pushti ke dikhti hai; poora text sirf haan ke baad.
+        var gmailPendingRead = null; // pushti ke intezaar wali email { em }
         function doGmailRead(userText) {
-          addTyping();
           if (!lastGmailEmails.length) {
-            removeTyping();
-            var msg0 = "📧 Pehle 'meri email dikhao' likho — list aane ke baad 'pehli email padho' ya '2 number wali email padho' likhna.";
-            var row0 = addMessage("ai", msg0);
-            pushHist({ role: "assistant", content: msg0 });
-            scrollToMessageTop(row0);
-            busy = false;
+            replyLocal("📧 Pehle 'meri email dikhao' likho — list aane ke baad 'pehli email padho' ya '2 number wali email padho' likhna.");
             return;
           }
           var idx = gmailReadIndex(userText);
           if (idx < 0) idx = 0;
           if (idx >= lastGmailEmails.length) idx = lastGmailEmails.length - 1;
           var em = lastGmailEmails[idx];
+          gmailPendingRead = { em: em };
+          var msg = "📧 **" + (em.subject || "(bina subject)") + "**\n" + (em.from || "") + (em.date ? " • " + em.date : "") + "\n\nPoori email kholun? Email ka poora text is chat mein dikhega — pushti ke liye neeche **👁 Haan, dikhao** dabao (ya 'haan, dikhao' likho).";
+          var row = addMessage("ai", msg);
+          pushHist({ role: "assistant", content: msg });
+          var choiceRow = document.createElement("div");
+          choiceRow.className = "yt-choice";
+          var yesBtn = document.createElement("button");
+          yesBtn.type = "button";
+          yesBtn.className = "yt-yes";
+          yesBtn.textContent = "👁 Haan, dikhao";
+          var noBtn = document.createElement("button");
+          noBtn.type = "button";
+          noBtn.textContent = "👎 Nahi, rehne do";
+          choiceRow.appendChild(yesBtn);
+          choiceRow.appendChild(noBtn);
+          row.querySelector(".bubble").appendChild(choiceRow);
+          yesBtn.addEventListener("click", function () {
+            yesBtn.disabled = true; noBtn.disabled = true;
+            gmailPendingRead = null;
+            doGmailReadFetch(em);
+          });
+          noBtn.addEventListener("click", function () {
+            yesBtn.disabled = true; noBtn.disabled = true;
+            gmailPendingRead = null;
+            replyLocal("Theek hai, email nahi kholi.");
+          });
+          scrollToMessageTop(row);
+          busy = false;
+        }
+        function doGmailReadConfirmed() {
+          // Chat mein 'haan, dikhao' likhne wala raasta (button ka badla)
+          if (!gmailPendingRead) return;
+          var em = gmailPendingRead.em;
+          gmailPendingRead = null;
+          doGmailReadFetch(em);
+        }
+        function doGmailReadFetch(em) {
+          addTyping();
           if (!window.google || !window.google.accounts || !window.google.accounts.oauth2) {
             removeTyping();
             var msgG = "📧 Google login abhi load nahi hua — net check karke page dobara kholo, phir dobara try karo.";
@@ -3780,7 +4342,7 @@
           }, (typeof window !== "undefined" && window.IG_POLL_MS) || 5000);
         }
 
-        // ---- YouTube search + upload (upload Public; sabko dikhegi) ----
+        // ---- YouTube search + upload (visibility approval par chunti hai — default Public) ----
         function ytSearchWanted(text) {
           if (!text) return false;
           var low = String(text).toLowerCase();
@@ -3881,6 +4443,26 @@
           desc = desc.slice(0, 4000);
           return { title: title, description: desc, hashtags: hashWords.join(" "), tags: tags };
         }
+        // Chhoti video (≤2.5 MB) ko fn=video se samajh kar uska varnan do (flaw 19) —
+        // fail ho to khaali string; meta tab sirf file-naam par banta hai (purana raasta).
+        function ytUnderstandSmallFile(cb) {
+          var file = ytPendingFile;
+          if (!file || file.size > 2.5 * 1024 * 1024) { cb(""); return; }
+          file.arrayBuffer().then(function (buf) {
+            var bytes = new Uint8Array(buf);
+            var bin = "";
+            var CH = 8192;
+            for (var i = 0; i < bytes.length; i += CH) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + CH));
+            var b64 = btoa(bin);
+            return fetch("/api/freeai?fn=video", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ video: { mimeType: file.type || "video/mp4", data: b64 } })
+            });
+          }).then(function (res) { return res.json().catch(function () { return null; }); })
+            .then(function (j) { cb(j && j.ok && j.text ? String(j.text).replace(/\s+/g, " ").slice(0, 800) : ""); })
+            .catch(function () { cb(""); });
+        }
         function ytMakeMeta() {
           // File ho to uska naam, warna reload ke baad bhi yaad rakha hua naam
           var fileName = ytPendingFile ? ytPendingFile.name : (ytPendingName || "");
@@ -3889,12 +4471,19 @@
             return;
           }
           var base = ytCleanName(fileName) || "video";
-          var aiPrompt = "Is YouTube video ke liye title, description, hashtags aur SEO tags banao. Video file ka naam: '" + base + "'. Title short aur saaf likho, sirf video ke asli vishay par. Sirf ye 4 cheezein likho, aur kuch mat likho — no 'How to use', no Subscribe/Like lines, no extra headings. Har cheez apni line me:\nTitle: ...\nDescription: ... (2-3 lines, video ke baare me)\nHashtags: #... #...\nSEO tags: ..., ..., ...\nSirf Hinglish me jawab do.";
+          var aiPrompt = "Is YouTube video ke liye title, description, hashtags aur SEO tags banao. Video file ka naam: '" + base + "'. SAKHT NIYAM: Sirf wahi likho jo file ke naam se saaf samajh aata hai — naam mein jo kriya ya ghatna NAHI hai, uski kahani mat ghadao (jaise sirf janwar ya jagah ka naam ho to 'migration', 'ladai', 'yatra' jaisi baatein bilkul mat jodo). Pakka na ho to aam (general) shabdon mein likho. Title short aur saaf likho, sirf video ke asli vishay par. Description seedhi-saadi aur sahi Hinglish mein likho — toote-phoote ya aadhe-adhure shabd bilkul mat likho, har shabd poora aur sahi ho. Sirf ye 4 cheezein likho, aur kuch mat likho — no 'How to use', no Subscribe/Like lines, no extra headings. Har cheez apni line me:\nTitle: ...\nDescription: ... (2-3 lines, video ke baare me)\nHashtags: #... #...\nSEO tags: ..., ..., ...\nSirf Hinglish me jawab do.";
           function showMeta(meta) {
             // Upload/cancel ho chuka ho to purana suggestion mat dikhao
             if (!ytPendingFile && !ytPendingName) { busy = false; return; }
+            // Flaw 20 fix: channel ka naam pehle pata karo (YouTube token ho to),
+            // phir approval dikhao — naam sandesh mein saaf dikhega.
+            if (ytChannelState === "unknown" && ytToken) { ytEnsureChannel(function () { showMeta(meta); }); return; }
             ytPendingMeta = meta;
-            var msg = "🎬 Is video ke liye (" + fileName + "):\n\n**Title:** " + meta.title + "\n\n**Description:** " + meta.description + "\n\n**Hashtags:** " + meta.hashtags + "\n\n**SEO tags:** " + meta.tags.join(", ") + "\n\nUpload kar dun? Neeche button dabao — 👍 Haan, pasand aaya to upload ho jayegi; 👎 Nahin to naye suggestions bana dunga. Ya 'haan' likho.";
+            var chLine = "";
+            if (ytChannelState === "ok" && ytChannelTitle) chLine = "\n\n📺 **Channel: " + ytChannelTitle + "** par upload hogi";
+            else if (ytChannelState === "none") chLine = "\n\n⛔ **Is Google khaate par koi YouTube channel nahi mila** — is khaate se upload nahi ho payegi. Pehle YouTube par apna channel banao, phir try karo.";
+            else chLine = "\n\n⚠️ Channel ka naam abhi pata nahi chal paya — upload tumhare Google khaate ke YouTube channel par jayegi.";
+            var msg = "🎬 Is video ke liye (" + fileName + "):\n\n**Title:** " + meta.title + "\n\n**Description:** " + meta.description + "\n\n**Hashtags:** " + meta.hashtags + "\n\n**SEO tags:** " + meta.tags.join(", ") + chLine + "\n\n**Kaun dekh sakta hai (Visibility):** abhi **" + ytPrivacyLabel() + "** chuna hai — badalna ho to neeche wale button dabao.\n\nTitle ya description apna likhna ho to neeche dabbon mein likh kar **✏️ Lagao** dabao — phir wahi title/description lagega.\n\nUpload kar dun? Neeche button dabao — 👍 Haan, pasand aaya to upload ho jayegi; 👎 Nahin to naye suggestions bana dunga. Ya 'haan' likho.";
             if (!ytPendingFile) msg += "\n\n⚠️ Upload ke liye video dobara chunni padegi — page reload hone par file yaad nahi rehti, sirf naam yaad rehta hai.";
             var row = addMessage("ai", msg);
             pushHist({ role: "assistant", content: msg });
@@ -3904,6 +4493,7 @@
             yesBtn.type = "button";
             yesBtn.className = "yt-yes";
             yesBtn.textContent = "👍 Haan, pasand aaya";
+            if (ytChannelState === "none") yesBtn.disabled = true; // channel hi nahi — upload yahin rok do (flaw 20 fix)
             var noBtn = document.createElement("button");
             noBtn.type = "button";
             noBtn.className = "yt-no";
@@ -3911,6 +4501,65 @@
             choiceRow.appendChild(yesBtn);
             choiceRow.appendChild(noBtn);
             row.querySelector(".bubble").appendChild(choiceRow);
+            // visibility chunav — Public / Unlisted / Private (default Public)
+            var visRow = document.createElement("div");
+            visRow.className = "yt-choice";
+            var visNote = document.createElement("div");
+            visNote.className = "yt-progress";
+            function ytVisBtn(val, label) {
+              var b = document.createElement("button");
+              b.type = "button";
+              b.textContent = label;
+              if (ytPrivacy === val) b.className = "yt-sel";
+              b.addEventListener("click", function () {
+                ytPrivacy = val;
+                var kids = visRow.querySelectorAll("button");
+                for (var i = 0; i < kids.length; i++) kids[i].className = "";
+                b.className = "yt-sel";
+                visNote.textContent = "👁 Visibility: " + ytPrivacyLabel();
+              });
+              return b;
+            }
+            visRow.appendChild(ytVisBtn("public", "🌐 Public"));
+            visRow.appendChild(ytVisBtn("unlisted", "🔗 Unlisted"));
+            visRow.appendChild(ytVisBtn("private", "🔒 Private"));
+            visNote.textContent = "👁 Visibility: " + ytPrivacyLabel();
+            row.querySelector(".bubble").appendChild(visRow);
+            row.querySelector(".bubble").appendChild(visNote);
+            // Flaw 19 fix: apna title/description likhne ke dabbe — "Lagao" dabane par
+            // generated wale ki jagah user ka likha hua lagta hai.
+            var editWrap = document.createElement("div");
+            editWrap.className = "yt-edit";
+            var tIn = document.createElement("input");
+            tIn.type = "text";
+            tIn.maxLength = 100;
+            tIn.value = meta.title;
+            tIn.placeholder = "Apna title likho";
+            var dIn = document.createElement("textarea");
+            dIn.rows = 3;
+            dIn.value = meta.description;
+            dIn.placeholder = "Apna description likho";
+            editWrap.appendChild(tIn);
+            editWrap.appendChild(dIn);
+            row.querySelector(".bubble").appendChild(editWrap);
+            var applyRow = document.createElement("div");
+            applyRow.className = "yt-choice";
+            var applyBtn = document.createElement("button");
+            applyBtn.type = "button";
+            applyBtn.className = "yt-yes";
+            applyBtn.textContent = "✏️ Mera title/description lagao";
+            applyRow.appendChild(applyBtn);
+            row.querySelector(".bubble").appendChild(applyRow);
+            var editNote = document.createElement("div");
+            editNote.className = "yt-progress";
+            row.querySelector(".bubble").appendChild(editNote);
+            applyBtn.addEventListener("click", function () {
+              var nt = tIn.value.trim().slice(0, 100);
+              var nd = dIn.value.trim().slice(0, 4000);
+              if (nt) ytPendingMeta.title = nt;
+              if (nd) ytPendingMeta.description = nd;
+              editNote.textContent = "✏️ Tumhara title/description lag gaya ✓ — ab 👍 Haan dabao to usi se upload hogi.";
+            });
             yesBtn.addEventListener("click", function () {
               yesBtn.disabled = true; noBtn.disabled = true;
               ytMetaAccept();
@@ -3923,18 +4572,29 @@
             busy = false;
           }
           addTyping();
-          askFreeAI(aiPrompt)
-            .then(function (reply) {
-              removeTyping();
-              showMeta(ytParseMeta(reply, base));
-            })
-            .catch(function () {
-              removeTyping();
-              showMeta(ytParseMeta("", base));
-            });
+          // Flaw 19 (optional hissa, joda gaya): chhoti file (≤2.5 MB) ho to pehle
+          // video samjho aur uska varnan prompt mein jodo — title/description asal
+          // content par bane, sirf file-naam ki kahani na bane. Fail ho to naam wala raasta.
+          ytUnderstandSmallFile(function (vdesc) {
+            var p = aiPrompt;
+            if (vdesc) p += "\n\nVideo ke andar asal mein ye dikhta hai: " + vdesc + "\nTitle/description ISI asal varnan par banao — file-naam se alag kahani mat ghadao.";
+            askFreeAI(p)
+              .then(function (reply) {
+                removeTyping();
+                showMeta(ytParseMeta(reply, base));
+              })
+              .catch(function () {
+                removeTyping();
+                showMeta(ytParseMeta("", base));
+              });
+          });
         }
         function ytMetaAccept() {
           // "Haan, pasand aaya" — suggestion wale title/description se upload
+          if (ytChannelState === "none") {
+            replyLocal("📺 Is Google khaate par koi YouTube channel nahi mila — upload nahi ho payegi. Pehle YouTube par apna channel banao, phir try karo.");
+            return;
+          }
           if (!ytPendingFile) {
             replyLocal("Video dobara chuno — upload ke liye file chahiye (sirf naam yaad hai, file nahi).");
             return;
@@ -4004,27 +4664,30 @@
           }
           var title = String(userText || "").replace(/youtube|youtu\.be/gi, "").replace(/\b(fir se|phir se|dobara|dubara|wapas|again)\b/gi, "").replace(/\b(par|pe|mein|me|se|per)\b\s*(upload|chadhao|daalo|daal|post karo|bhejo)\s*(karo|kar do|karna hai|karna|karni hai)?/gi, "").replace(/\b(upload|chadhao|daalo|daal|post karo|bhejo)\b/gi, "").replace(/\b(karna hai|karna|karni hai|karo|kar do|karu|chahiye)\b/gi, "").replace(/\b(mujhe|mere liye|mere|meri|mera|video|par|pe|mein|me|se|per|hai)\b/gi, "").trim().replace(/\s+/g, " ").replace(/^[^a-zA-Z0-9\u0900-\u097F]+/, "").slice(0, 100);
           ytUploadTitle = title || "";
-          if (!gmailToken) {
+          if (!ytToken) {
             // Login abhi chat se hi hoga: Google popup yahin khulega, Allow dabate hi
             // video picker khud khul jayega — + menu mein jaane ki zaroorat nahi.
+            // Flaw 22 fix: yahan GMAIL wala nahi, YouTube wala alag token manga jata hai.
             addTyping();
-            requestGmailToken(function (tok) {
+            requestYtToken(function (tok) {
               removeTyping();
               if (!tok) {
                 replyLocal("📺 Google login nahi mila — Allow nahi kiya to upload nahi hoga. Dobara 'youtube par video upload karo' likho, popup mein Allow dabao.");
                 return;
               }
+              ytEnsureChannel(); // channel ka naam peeche-peeche pata kar lo (flaw 20 fix)
               if (ytPickTimer) clearTimeout(ytPickTimer);
               ytPickTimer = setTimeout(function () { ytPickTimer = null; busy = false; }, 60000);
-              replyLocal("📺 Video chuno — jo video upload karni hai, use chuno. Video **Public** upload hogi (sabko dikhegi).");
+              replyLocal("📺 Video chuno — jo video upload karni hai, use chuno. Upload se pehle title/description dikhega — wahi se chun sakte ho ki video **Public, Unlisted ya Private** ho (default: Public — sabko dikhegi).");
               document.getElementById("ytVideoInput").click();
             });
             return;
           }
+          ytEnsureChannel(); // channel ka naam peeche-peeche pata kar lo (flaw 20 fix)
           // Video picker band kar diya to 60s mein chat khud chalu ho jaye (Gmail popup wala fix jaisa)
           if (ytPickTimer) clearTimeout(ytPickTimer);
           ytPickTimer = setTimeout(function () { ytPickTimer = null; busy = false; }, 60000);
-          replyLocal("📺 Video chuno — jo video upload karni hai, use chuno. Video **Public** upload hogi (sabko dikhegi).");
+          replyLocal("📺 Video chuno — jo video upload karni hai, use chuno. Upload se pehle title/description dikhega — wahi se chun sakte ho ki video **Public, Unlisted ya Private** ho (default: Public — sabko dikhegi).");
           document.getElementById("ytVideoInput").click();
         }
         function ytUploadVideo(file) {
@@ -4038,6 +4701,11 @@
             replyLocal("📺 Video bahut badi hai (100 MB se zyada) — chhoti video chuno.");
             return;
           }
+          if (ytChannelState === "none") {
+            // Flaw 20 fix: channel hai hi nahi — upload shuru hi mat karo
+            replyLocal("📺 Is Google khaate par koi YouTube channel nahi mila — upload nahi ho payegi. Pehle YouTube par apna channel banao, phir try karo.");
+            return;
+          }
           var meta = ytPendingMeta;
           var title = (meta && meta.title) || ytUploadTitle || file.name.replace(/\.[^.]+$/, "").replace(/[_-]+/g, " ").trim().slice(0, 100) || "Free AI Chat video";
           var description = meta ? ((meta.description || "") + (meta.hashtags ? "\n\n" + meta.hashtags : "")) : "Uploaded via Free AI Chat";
@@ -4045,27 +4713,34 @@
           var snippet = { title: title, description: description };
           if (meta && meta.tags && meta.tags.length) snippet.tags = meta.tags;
           addTyping();
+          // Progress wali line (flaw 21 fix): upload ka % isi par update hoga
+          var progRow = addMessage("ai", "📤 Upload ho raha hai…");
+          var progEl = document.createElement("div");
+          progEl.className = "yt-progress";
+          progEl.textContent = "📤 Upload: 0%";
+          var progBubble = progRow.querySelector(".bubble");
+          if (progBubble) progBubble.appendChild(progEl);
           var retried = false;
           function startSession() {
             return fetch("https://www.googleapis.com/upload/youtube/v3/videos?uploadType=resumable&part=snippet,status", {
               method: "POST",
               headers: {
-                "Authorization": "Bearer " + gmailToken,
+                "Authorization": "Bearer " + ytToken,
                 "Content-Type": "application/json; charset=UTF-8",
                 "X-Upload-Content-Type": file.type || "video/mp4",
                 "X-Upload-Content-Length": String(file.size)
               },
-              body: JSON.stringify({ snippet: snippet, status: { privacyStatus: "public" } })
+              body: JSON.stringify({ snippet: snippet, status: { privacyStatus: ytPrivacy } })
             });
           }
           function doUpload() {
             return startSession().then(function (r) {
               if ((r.status === 401 || r.status === 403) && !retried) {
                 retried = true;
-                gmailToken = "";
+                ytToken = "";
                 updateGmailButton();
                 return new Promise(function (resolve) {
-                  requestGmailToken(function (tok) {
+                  requestYtToken(function (tok) {
                     if (!tok) { resolve(null); return; }
                     doUpload().then(resolve, function () { resolve(null); });
                   });
@@ -4074,7 +4749,38 @@
               if (!r.ok) throw new Error("http " + r.status);
               var loc = r.headers.get("Location") || r.headers.get("location");
               if (!loc) throw new Error("no_upload_url");
-              return fetch(loc, { method: "PUT", headers: { "Content-Type": file.type || "video/mp4" }, body: file });
+              return ytPutWithProgress(loc);
+            });
+          }
+          // Flaw 21 fix: fetch ki jagah XMLHttpRequest — upload ka progress % dikhta hai.
+          // Jawab fetch-jaisa shim hai ({ok, status, json()}) taaki aage ki chain waisi hi chale.
+          function ytPutWithProgress(loc) {
+            return new Promise(function (resolve, reject) {
+              var xhr = new XMLHttpRequest();
+              xhr.open("PUT", loc, true);
+              xhr.setRequestHeader("Content-Type", file.type || "video/mp4");
+              var lastPct = -1;
+              if (xhr.upload) {
+                xhr.upload.onprogress = function (ev) {
+                  if (!ev.lengthComputable) return;
+                  var pct = Math.floor((ev.loaded / ev.total) * 100);
+                  if (pct !== lastPct) {
+                    lastPct = pct;
+                    progEl.textContent = "📤 Upload ho raha hai… " + pct + "%";
+                  }
+                };
+              }
+              xhr.onload = function () {
+                var txt = xhr.responseText || "";
+                resolve({
+                  ok: xhr.status >= 200 && xhr.status < 300,
+                  status: xhr.status,
+                  json: function () { try { return Promise.resolve(JSON.parse(txt)); } catch (e) { return Promise.resolve({}); } }
+                });
+              };
+              xhr.onerror = function () { reject(new Error("network")); };
+              xhr.onabort = function () { reject(new Error("network")); };
+              try { xhr.send(file); } catch (e) { reject(e); }
             });
           }
           doUpload()
@@ -4085,26 +4791,32 @@
             })
             .then(function (j) {
               removeTyping();
+              progEl.textContent = "📤 Upload: 100% ✓";
               var id = j && j.id ? String(j.id) : "";
+              var visWord = ytPrivacy === "public" ? "Public" : (ytPrivacy === "private" ? "Private" : "Unlisted");
+              var visNote = ytPrivacy === "public" ? "Video ab sabko dikh rahi hai." : (ytPrivacy === "private" ? "Video sirf tumhe dikhegi (Private hai)." : "Video sirf unhi ko dikhegi jinke paas ye link hai (Unlisted hai).");
+              var chNote = (ytChannelState === "ok" && ytChannelTitle) ? "\nChannel: **" + ytChannelTitle + "**" : "";
               var msg = id
-                ? "✅ YouTube par upload ho gaya (Public)! 🎉\nhttps://www.youtube.com/watch?v=" + id + "\n\nVideo ab sabko dikh rahi hai."
+                ? "✅ YouTube par upload ho gaya (" + visWord + ")! 🎉" + chNote + "\nhttps://www.youtube.com/watch?v=" + id + "\n\n" + visNote
                 : "📺 Upload to ho gaya, par video ka link nahi mila — YouTube app mein apne channel par check karo.";
               var row = addMessage("ai", msg);
               pushHist({ role: "assistant", content: msg });
               scrollToMessageTop(row);
               ytPendingFile = null; ytPendingMeta = null;
+              ytPrivacy = "public"; // agli video ke liye default par wapas
               ytPendingName = "";
               try { localStorage.removeItem("yt-pending-name"); } catch (e) {}
               busy = false;
             })
             .catch(function (err) {
               removeTyping();
+              progEl.textContent = "📤 Upload ruk gaya ✗";
               var em = (err && err.message) || "";
               var msg;
-              if (em.indexOf("http 403") >= 0) msg = "📺 Google ne upload mana kiya (403) — is Gmail par YouTube channel nahi mila. YouTube app mein apna channel check karo, phir dobara try karo.";
-              else if (em.indexOf("http 401") >= 0) msg = "📺 Google login purana ho gaya (401) — + menu mein 📧 Gmail jodo dobara dabakar Allow karo, phir dobara try karo.";
+              if (em.indexOf("http 403") >= 0) msg = "📺 Google ne upload mana kiya (403) — is Google khaate par YouTube channel nahi mila. YouTube app mein apna channel check karo, phir dobara try karo.";
+              else if (em.indexOf("http 401") >= 0) msg = "📺 Google login purana ho gaya (401) — dobara 'upload kar do' likho aur Google popup mein Allow karo, phir try karo.";
               else if (em === "no_upload_url") msg = "📺 Google se upload link nahi mila — browser ne link chhupa liya. Page reload karke dobara try karo.";
-              else if (em === "no_token") msg = "📺 Google login nahi mila — + menu mein 📧 Gmail jodo dobara dabakar Allow karo, phir dobara try karo.";
+              else if (em === "no_token") msg = "📺 Google login nahi mila — dobara 'upload kar do' likho aur Google popup mein Allow karo, phir try karo.";
               else if (em.indexOf("http ") === 0) msg = "📺 Google ne mana kiya (" + em + ") — dobara try karo.";
               else msg = "📺 YouTube upload nahi hua (network: " + (em || "pata nahi") + ") — internet check karke dobara try karo.";
               if (ytPendingFile) msg += "\n\nVideo abhi bhi chuni hui hai — dobara 'upload kar do' likho.";
@@ -4266,6 +4978,13 @@
             return;
           }
 
+          // Gmail poori-email pushti (flaw 23 fix): "haan, dikhao" par pending email khulti hai
+          if (gmailPendingRead) {
+            var gLow = userText.toLowerCase().trim();
+            if (/^(haan|ha|han|yes|ok|dikhao|dikha do|kholo|khol do)\b/.test(gLow)) { doGmailReadConfirmed(); return; }
+            if (/^(nahi|nahin|no|rehne do|mat)\b/.test(gLow)) { gmailPendingRead = null; replyLocal("Theek hai, email nahi kholi."); return; }
+          }
+
           // Gmail poori email padho — list ke baad number/pehli se
           if (gmailReadWanted(userText)) {
             doGmailRead(userText);
@@ -4324,7 +5043,7 @@
             return;
           }
 
-          // YouTube upload — video channel par chadhao (Public); search se pehle, kyunki "upload karo" mein "video" bhi hota hai
+          // YouTube upload — video channel par chadhao (visibility approval par chunti hai, default Public); search se pehle, kyunki "upload karo" mein "video" bhi hota hai
           if (ytUploadWanted(userText)) {
             ytUploadStart(userText);
             return;
@@ -4434,20 +5153,44 @@
           if (clearServer && serverChatOn()) {
             try { fetch("/api/freeai?fn=chat&action=clear", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code: getAdminCode() }) }).catch(function () {}); } catch (e) {}
           }
+          if (clearServer && fgUserToken) {
+            // Batch 5: saaf karna ho to khaate wali save chat bhi saaf karo,
+            // warna agle load par wahi purani chat wapas aa jayegi.
+            try { fetch("/api/freeai?fn=chat&action=clear", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ gtoken: fgUserToken }) }).catch(function () {}); } catch (e) {}
+          }
           if (!serverChatOn()) memories = [];
           history = [];
+          // User ke click se saaf ho raha ho to local save bhi saaf karo (flaw 13 fix).
+          // Page khulne par startFresh() bina argument ke chalti hai — woh stored chat nahi udati.
+          if (clearServer) clearLocalHist();
           messagesEl.innerHTML = "";
           setStatus(true, aiName + " ready — bina API key");
           scrollToBottom();
         }
 
         newChatBtn.addEventListener("click", startFresh);
-        document.getElementById("trayClear").addEventListener("click", startFresh);
+        // "Chat saaf karo" (flaw 32 fix): chat pehle se khaali ho to chat mein sandesh
+        // dikhao, aur tray har haal mein band karo — pehle kuch hota hi nahi tha.
+        document.getElementById("trayClear").addEventListener("click", function () {
+          trayEl.classList.remove("open");
+          plusBtn.classList.remove("open");
+          if (!history.length) {
+            if (!busy) { busy = true; replyLocal("Chat pehle se saaf hai 😊 — saaf karne ke liye kuch hai hi nahi."); }
+            return;
+          }
+          startFresh(true);
+        });
 
         loadModels();
+        // Refresh ke baad purani chat wapas lao (flaw 13 fix): stored copy startFresh()
+        // se pehle padh lo. Khaali history par page ki haalat pehle jaisi hi rehti hai.
+        // Owner wala server save iske upar hai — syncChatFromServer() use badal sakta hai.
+        var savedLocalChat = loadLocalHist();
         startFresh();
+        if (savedLocalChat && savedLocalChat.length) { history = savedLocalChat; renderHist(); }
         syncChatFromServer();
         loadMemories();
+        fgTrySilentSignIn(); // Batch 5: khaata-save pehle chalu tha to khamosh wapasi ki koshish
 
         // Instagram login se wapas aaye (?code=...) to token exchange karo
         try {

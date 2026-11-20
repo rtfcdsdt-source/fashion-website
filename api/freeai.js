@@ -4,12 +4,17 @@
 // + Instagram token exchange + YouTube search + music dhun) ek hi file mein hain.
 // Route ?fn= se:
 //   POST /api/freeai?fn=search {q} → {ok, results: [{title, snippet, link}]} (Serper Google Search)
-//   GET  /api/freeai?fn=chat&code=... → chat load karo (admin only)
-//   POST /api/freeai?fn=chat {code, messages} → chat save karo (admin only)
-//   POST /api/freeai?fn=chat&action=clear {code} → chat delete karo (admin only)
-//   GET  /api/freeai?fn=memory&code=... → yaadein load karo (admin only)
-//   POST /api/freeai?fn=memory {code, memories} → yaadein save karo (admin only)
-//   POST /api/freeai?fn=memory&action=clear {code} → yaadein delete karo (admin only).
+//   GET  /api/freeai?fn=chat&code=... → chat load karo (admin/owner)
+//   POST /api/freeai?fn=chat {code, messages} → chat save karo (admin/owner)
+//   POST /api/freeai?fn=chat&action=clear {code} → chat delete karo (admin/owner)
+//   GET  /api/freeai?fn=memory&code=... → yaadein load karo (admin/owner)
+//   POST /api/freeai?fn=memory {code, memories} → yaadein save karo (admin/owner)
+//   POST /api/freeai?fn=memory&action=clear {code} → yaadein delete karo (admin/owner).
+//   Chat/memory ka DUSRA raasta (har user ke liye): Google login ka access token
+//   bhejo — POST body mein {gtoken, ...} ya GET par "Authorization: Bearer <token>"
+//   header. Server token ko Google tokeninfo se jaanchta hai; sahi token par chat
+//   us user ki apni key "user:<google-sub>" par save/load hoti hai (har device par
+//   wahi chat). Galat/expire token par 401 — shared "main" chat par fallback NAHI.
 //   POST /api/freeai?fn=video {video: {mimeType, data}} → {ok, text} (Gemini video samajh, no admin code)
 //   POST /api/freeai?fn=photo {image: {mimeType, data}, question?} → {ok, text} (Gemini photo samajh, no admin code)
 //   POST /api/freeai?fn=ig-exchange {code, redirect_uri} → {ok, access_token, user_id, expires_in} (Instagram Login token, no admin code)
@@ -19,10 +24,12 @@
 // Storage: Neon Postgres over its raw HTTP /sql endpoint (no npm packages).
 // Chat limit: max 100 messages, har message max 4000 chars, total max ~200,000 chars.
 // Memory limit: max 30 yaadein, har yaad max 500 chars, total max ~50,000 chars.
-// NOTE: Mera AI (meraai-chat.js / meraai-memory.js) jaisa hi hai — farq sirf itna hai ki
-// Free AI Chat mein koi email/login nahi hai, isliye fixed key ("main") use hoti hai.
+// NOTE: Mera AI (meraai-chat.js / meraai-memory.js) jaisa hi bunyadi dhancha hai.
+// Chat/memory ki pehchan ke do raaste hain: (1) Google login — har user ki chat
+// uski apni key "user:<sub>" par (neeche resolveStoreKey dekho); (2) owner ka
+// admin code — purani fixed key ("main") par, bilkul pehle jaisa.
 // Search mein koi admin code nahi chahiye (Mera AI ki live search ki tarah public feature);
-// chat/memory bina admin code ke padh/save nahi ho sakte.
+// chat/memory bina Google token ya admin code ke padh/save nahi ho sakte.
 
 function getConnString() {
   return (
@@ -106,21 +113,80 @@ function cleanMemories(memories) {
 
 const KEY = "main";
 
+// ---- Google login wali pehchan (chat/memory ka per-user save, batch 5) ----
+// Client Google Identity Services se access token laata hai (scope: sirf
+// openid email profile). Server us token ko Google ke tokeninfo se jaanchta
+// hai — token isi site ke OAuth client ke liye bana ho (audience/issued_to
+// ka milan) aur expire na hua ho, tabhi uske Google sub ko pehchan mana jata
+// hai aur chat "user:<sub>" key par save hoti hai. Client ID public hai
+// (page ke GIS config mein bhi wahi dikhta hai) — secret nahi hai.
+const GOOGLE_CLIENT_ID = "463015858598-mhp99at2ecutc0b81r24afica9c06p04.apps.googleusercontent.com";
+
+async function verifyGoogleToken(token) {
+  if (!token || typeof token !== "string") return null;
+  try {
+    const r = await fetch("https://oauth2.googleapis.com/tokeninfo?access_token=" + encodeURIComponent(token.trim()), { signal: AbortSignal.timeout(5000) });
+    if (!r || !r.ok) return null;
+    const j = await r.json().catch(function () { return null; });
+    if (!j || typeof j !== "object") return null;
+    const aud = typeof j.audience === "string" ? j.audience : (typeof j.issued_to === "string" ? j.issued_to : "");
+    if (aud !== GOOGLE_CLIENT_ID) return null;
+    const expIn = parseInt(j.expires_in, 10);
+    if (!isNaN(expIn) && expIn <= 0) return null;
+    const sub = (typeof j.user_id === "string" && j.user_id) ? j.user_id : (typeof j.sub === "string" ? j.sub : "");
+    if (!sub) return null;
+    return { sub: sub, email: typeof j.email === "string" ? j.email : "" };
+  } catch (e) { return null; }
+}
+
+function googleTokenFromReq(req, body) {
+  let tok = "";
+  try {
+    const auth = (req && req.headers && (req.headers.authorization || req.headers.Authorization)) || "";
+    if (typeof auth === "string" && auth.toLowerCase().indexOf("bearer ") === 0) tok = auth.slice(7).trim();
+  } catch (e) { tok = ""; }
+  if (!tok && body && typeof body.gtoken === "string") tok = body.gtoken.trim();
+  return tok;
+}
+
+// Chat/Memory ke liye storage key tay karo:
+//  - Google token diya gaya ho → use jaancho; sahi ho to "user:<sub>",
+//    galat/expire ho to 401 (shared "main" chat par KABHI chup-chaap fallback nahi).
+//  - Token na ho → purana owner raasta: admin code sahi ho to "main", warna 401.
+// Key mile to wahi return hoti hai; 401 bhej diya ho to null.
+async function resolveStoreKey(req, res, body, codeParam) {
+  const gtok = googleTokenFromReq(req, body);
+  if (gtok) {
+    const who = await verifyGoogleToken(gtok);
+    if (!who) {
+      send(res, 401, { ok: false, error: "Google login ki jaanch nahi ho payi — token galat hai ya expire ho gaya hai. Dobara Google se login karo." });
+      return null;
+    }
+    return "user:" + who.sub;
+  }
+  const codeOk = req.method === "GET" ? checkAdminCode(codeParam) : checkAdminCode(body && body.code);
+  if (!codeOk) {
+    send(res, 401, { ok: false, error: "Admin code galat hai ya diya hi nahi gaya." });
+    return null;
+  }
+  return KEY;
+}
+
 // ---- Live search (Serper.dev; key na ho ya fail ho → khaali results, chat kabhi nahi rukta) ----
 async function handleSearch(req, res) {
   if (req.method !== "POST") {
-    send(res, 405, { ok: false, error: "method_not_allowed" });
+    send(res, 405, { ok: false, error: "Sirf POST chalega." });
     return;
   }
   const body = await readBody(req);
   const q = typeof (body && body.q) === "string" ? body.q.trim().slice(0, 200) : "";
   if (!q) {
-    send(res, 400, { ok: false, error: "bad_query" });
+    send(res, 400, { ok: false, error: "Kya dhoondhna hai, wo likho." });
     return;
   }
   const key = process.env.SERPER_API_KEY;
   if (!key || !String(key).trim()) {
-    send(res, 200, { ok: true, results: [] });
+    send(res, 200, { ok: true, results: [], note: "Live search band hai — server par search ki chaabi (SERPER_API_KEY) set nahi hai." });
     return;
   }
   try {
@@ -131,13 +197,13 @@ async function handleSearch(req, res) {
       signal: AbortSignal.timeout(3000)
     });
     if (!r || !r.ok) {
-      send(res, 200, { ok: true, results: [] });
+      send(res, 200, { ok: true, results: [], note: "Search service ne mana kiya" + (r ? " (HTTP " + r.status + ")" : "") + " — is baar live results nahi mile." });
       return;
     }
     let d = null;
     try { d = await r.json(); } catch (e) { d = null; }
     if (!d || typeof d !== "object") {
-      send(res, 200, { ok: true, results: [] });
+      send(res, 200, { ok: true, results: [], note: "Search se kharab jawab aaya — is baar live results nahi mile." });
       return;
     }
     const out = [];
@@ -154,17 +220,24 @@ async function handleSearch(req, res) {
     }
     send(res, 200, { ok: true, results: out });
   } catch (e) {
-    send(res, 200, { ok: true, results: [] });
+    const note = (e && e.name === "TimeoutError")
+      ? "Search mein samay khatm ho gaya (timeout) — is baar live results nahi mile."
+      : "Search se jod nahi paya (network) — is baar live results nahi mile.";
+    send(res, 200, { ok: true, results: [], note: note });
   }
 }
 
 // ---- Permanent chat (table freeai_chats) ----
+// Pehchan: Google token → key "user:<sub>"; warna admin code → key "main" (owner).
 async function handleChat(req, res, action, codeParam) {
   const connString = getConnString();
   if (!connString) {
-    send(res, 503, { ok: false, error: "not_configured" });
+    send(res, 503, { ok: false, error: "Server par database set nahi hai — ye suvidha abhi band hai." });
     return;
   }
+  const body = req.method === "POST" ? await readBody(req) : null;
+  const storeKey = await resolveStoreKey(req, res, body, codeParam);
+  if (!storeKey) return; // 401 jawab resolveStoreKey ne bhej diya hai
   try {
     await neonQuery(
       connString,
@@ -173,14 +246,10 @@ async function handleChat(req, res, action, codeParam) {
     );
 
     if (req.method === "GET" && action === "") {
-      if (!checkAdminCode(codeParam)) {
-        send(res, 401, { ok: false, error: "bad_code" });
-        return;
-      }
       const rows = await neonQuery(
         connString,
         "SELECT messages FROM freeai_chats WHERE key = $1",
-        [KEY]
+        [storeKey]
       );
       let messages = [];
       if (rows[0] && typeof rows[0].messages === "string") {
@@ -194,58 +263,54 @@ async function handleChat(req, res, action, codeParam) {
     }
 
     if (req.method === "POST" && action === "") {
-      const body = await readBody(req);
-      if (!checkAdminCode(body && body.code)) {
-        send(res, 401, { ok: false, error: "bad_code" });
-        return;
-      }
-      const cleaned = cleanMessages(body.messages);
+      const cleaned = cleanMessages(body && body.messages);
       if (cleaned === null) {
-        send(res, 400, { ok: false, error: "bad_messages" });
+        send(res, 400, { ok: false, error: "Messages sahi roop mein nahi aaye." });
         return;
       }
       const json = JSON.stringify(cleaned);
       if (json.length > 200000) {
-        send(res, 400, { ok: false, error: "too_big" });
+        send(res, 400, { ok: false, error: "Data bahut bada hai — seema se zyada hai." });
         return;
       }
       await neonQuery(
         connString,
         "INSERT INTO freeai_chats (key, messages, updated_at) VALUES ($1,$2,now()) ON CONFLICT (key) DO UPDATE SET messages = EXCLUDED.messages, updated_at = now()",
-        [KEY, json]
+        [storeKey, json]
       );
       send(res, 200, { ok: true, count: cleaned.length });
       return;
     }
 
     if (req.method === "POST" && action === "clear") {
-      const body = await readBody(req);
-      if (!checkAdminCode(body && body.code)) {
-        send(res, 401, { ok: false, error: "bad_code" });
-        return;
-      }
       await neonQuery(
         connString,
         "DELETE FROM freeai_chats WHERE key = $1",
-        [KEY]
+        [storeKey]
       );
       send(res, 200, { ok: true });
       return;
     }
 
-    send(res, 405, { ok: false, error: "method_not_allowed" });
+    send(res, 405, { ok: false, error: "Ye tareeka (method) nahi chalta — GET ya POST bhejo." });
   } catch (err) {
-    send(res, 500, { ok: false, error: "server_error" });
+    send(res, 500, { ok: false, error: "Database se jod nahi paya — chat save/load nahi ho paya. Dobara try karo." });
   }
 }
 
 // ---- Permanent memory (table freeai_memory) ----
+// Pehchan chat wali hi hai (resolveStoreKey): Google token → "user:<sub>",
+// warna admin code → "main". Dono handler ek hi storage/key pattern par hain,
+// isliye per-user keying yahan bhi waisa hi lagaya gaya hai (batch 5).
 async function handleMemory(req, res, action, codeParam) {
   const connString = getConnString();
   if (!connString) {
-    send(res, 503, { ok: false, error: "not_configured" });
+    send(res, 503, { ok: false, error: "Server par database set nahi hai — ye suvidha abhi band hai." });
     return;
   }
+  const body = req.method === "POST" ? await readBody(req) : null;
+  const storeKey = await resolveStoreKey(req, res, body, codeParam);
+  if (!storeKey) return; // 401 jawab resolveStoreKey ne bhej diya hai
   try {
     await neonQuery(
       connString,
@@ -254,14 +319,10 @@ async function handleMemory(req, res, action, codeParam) {
     );
 
     if (req.method === "GET" && action === "") {
-      if (!checkAdminCode(codeParam)) {
-        send(res, 401, { ok: false, error: "bad_code" });
-        return;
-      }
       const rows = await neonQuery(
         connString,
         "SELECT memories FROM freeai_memory WHERE key = $1",
-        [KEY]
+        [storeKey]
       );
       let memories = [];
       if (rows[0] && typeof rows[0].memories === "string") {
@@ -275,48 +336,38 @@ async function handleMemory(req, res, action, codeParam) {
     }
 
     if (req.method === "POST" && action === "") {
-      const body = await readBody(req);
-      if (!checkAdminCode(body && body.code)) {
-        send(res, 401, { ok: false, error: "bad_code" });
-        return;
-      }
-      const cleaned = cleanMemories(body.memories);
+      const cleaned = cleanMemories(body && body.memories);
       if (cleaned === null) {
-        send(res, 400, { ok: false, error: "bad_memories" });
+        send(res, 400, { ok: false, error: "Yaadein sahi roop mein nahi aayi." });
         return;
       }
       const json = JSON.stringify(cleaned);
       if (json.length > 50000) {
-        send(res, 400, { ok: false, error: "too_big" });
+        send(res, 400, { ok: false, error: "Data bahut bada hai — seema se zyada hai." });
         return;
       }
       await neonQuery(
         connString,
         "INSERT INTO freeai_memory (key, memories, updated_at) VALUES ($1,$2,now()) ON CONFLICT (key) DO UPDATE SET memories = EXCLUDED.memories, updated_at = now()",
-        [KEY, json]
+        [storeKey, json]
       );
       send(res, 200, { ok: true, count: cleaned.length });
       return;
     }
 
     if (req.method === "POST" && action === "clear") {
-      const body = await readBody(req);
-      if (!checkAdminCode(body && body.code)) {
-        send(res, 401, { ok: false, error: "bad_code" });
-        return;
-      }
       await neonQuery(
         connString,
         "DELETE FROM freeai_memory WHERE key = $1",
-        [KEY]
+        [storeKey]
       );
       send(res, 200, { ok: true });
       return;
     }
 
-    send(res, 405, { ok: false, error: "method_not_allowed" });
+    send(res, 405, { ok: false, error: "Ye tareeka (method) nahi chalta — GET ya POST bhejo." });
   } catch (err) {
-    send(res, 500, { ok: false, error: "server_error" });
+    send(res, 500, { ok: false, error: "Database se jod nahi paya — yaadein save/load nahi ho payin. Dobara try karo." });
   }
 }
 
@@ -329,10 +380,25 @@ const VIDEO_MIMES = { "video/mp4": 1, "video/webm": 1, "video/quicktime": 1 };
 const VIDEO_MODEL = "gemini-3.5-flash";
 const VIDEO_MAX_B64 = 3500000;
 
+// Gemini fetch, EK retry ke saath — pehli koshish timeout/network par fail ho
+// to ek baar aur try (flaw 18). Har koshish 4.5s ki hai taaki do koshish mil
+// kar bhi Vercel Hobby ki ~10s function deewar ke andar rahen; purani ek hi
+// 9s wali koshish mein retry ki koi jagah hi nahi bachi thi. HTTP jawab mil
+// jaye (kisi bhi status ka) to wahi asal jawab hai — us par retry nahi hota,
+// uski wajah handler mein status ke saath naam se aati hai.
+async function fetchGeminiRetry(url, payload) {
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      return await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload), signal: AbortSignal.timeout(4500) });
+    } catch (e) { /* timeout / network — dusri koshish, phir null */ }
+  }
+  return null;
+}
+
 async function handleVideo(req, res) {
   if (req.method !== "POST") { res.setHeader("Allow", "POST"); return send(res, 405, { ok: false, error: "Sirf POST chalega." }); }
   const key = process.env.GEMINI_API_KEY || "";
-  if (!key.trim()) return send(res, 503, { ok: false, error: "Video samajh abhi set nahi hua hai." });
+  if (!key.trim()) return send(res, 503, { ok: false, error: "Video samajh abhi set nahi hua hai — server par AI ki chaabi (GEMINI_API_KEY) set nahi hai." });
   const body = await readBody(req);
   const v = body && body.video;
   if (!v || typeof v !== "object" || typeof v.mimeType !== "string" || typeof v.data !== "string") {
@@ -354,15 +420,12 @@ async function handleVideo(req, res) {
     ] }],
     generationConfig: { temperature: 0.7, maxOutputTokens: 1024 }
   };
-  let upstream = null;
-  try {
-    upstream = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload), signal: AbortSignal.timeout(9000) });
-  } catch (e) { upstream = null; }
-  if (!upstream) return send(res, 504, { ok: false, error: "Gemini se jod nahi paya. Thodi der baad dobara try karo." });
+  const upstream = await fetchGeminiRetry(url, payload);
+  if (!upstream) return send(res, 504, { ok: false, error: "Gemini se samay par jawab nahi aaya — do koshishon mein bhi samay khatm ho gaya (timeout). Dobara try karo." });
   if (upstream.status === 429) return send(res, 429, { ok: false, error: "Free limit poori ho gayi hai. Thodi der ruk kar dobara try karo." });
   if (!upstream.ok) {
-    if (upstream.status === 400 || upstream.status === 403) return send(res, 502, { ok: false, error: "AI key ya setting mein gadbad hai." });
-    return send(res, 502, { ok: false, error: "Gemini se jawab nahi mila. Thodi der baad dobara try karo." });
+    if (upstream.status === 400 || upstream.status === 403) return send(res, 502, { ok: false, error: "AI ki chaabi ya setting mein gadbad hai (HTTP " + upstream.status + ")." });
+    return send(res, 502, { ok: false, error: "Upar wali service (Gemini) ne mana kiya — HTTP " + upstream.status + ". Thodi der baad dobara try karo." });
   }
   let parsed = null;
   try { parsed = await upstream.json(); } catch (e) { parsed = null; }
@@ -387,7 +450,7 @@ const PHOTO_MAX_B64 = 3500000;
 async function handlePhoto(req, res) {
   if (req.method !== "POST") { res.setHeader("Allow", "POST"); return send(res, 405, { ok: false, error: "Sirf POST chalega." }); }
   const key = process.env.GEMINI_API_KEY || "";
-  if (!key.trim()) return send(res, 503, { ok: false, error: "Photo samajh abhi set nahi hua hai." });
+  if (!key.trim()) return send(res, 503, { ok: false, error: "Photo samajh abhi set nahi hua hai — server par AI ki chaabi (GEMINI_API_KEY) set nahi hai." });
   const body = await readBody(req);
   const v = body && body.image;
   if (!v || typeof v !== "object" || typeof v.mimeType !== "string" || typeof v.data !== "string") {
@@ -410,15 +473,12 @@ async function handlePhoto(req, res) {
     ] }],
     generationConfig: { temperature: 0.7, maxOutputTokens: 1024 }
   };
-  let upstream = null;
-  try {
-    upstream = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload), signal: AbortSignal.timeout(9000) });
-  } catch (e) { upstream = null; }
-  if (!upstream) return send(res, 504, { ok: false, error: "Gemini se jod nahi paya. Thodi der baad dobara try karo." });
+  const upstream = await fetchGeminiRetry(url, payload);
+  if (!upstream) return send(res, 504, { ok: false, error: "Gemini se samay par jawab nahi aaya — do koshishon mein bhi samay khatm ho gaya (timeout). Dobara try karo." });
   if (upstream.status === 429) return send(res, 429, { ok: false, error: "Free limit poori ho gayi hai. Thodi der ruk kar dobara try karo." });
   if (!upstream.ok) {
-    if (upstream.status === 400 || upstream.status === 403) return send(res, 502, { ok: false, error: "AI key ya setting mein gadbad hai." });
-    return send(res, 502, { ok: false, error: "Gemini se jawab nahi mila. Thodi der baad dobara try karo." });
+    if (upstream.status === 400 || upstream.status === 403) return send(res, 502, { ok: false, error: "AI ki chaabi ya setting mein gadbad hai (HTTP " + upstream.status + ")." });
+    return send(res, 502, { ok: false, error: "Upar wali service (Gemini) ne mana kiya — HTTP " + upstream.status + ". Thodi der baad dobara try karo." });
   }
   let parsed = null;
   try { parsed = await upstream.json(); } catch (e) { parsed = null; }
@@ -455,7 +515,8 @@ async function handleIgExchange(req, res) {
     if (!r1.ok || !j1 || !j1.access_token) return send(res, 502, { ok: false, error: "Instagram se token nahi mila — code galat ya expire ho gaya. Dobara jodo dabao." });
     shortTok = j1.access_token; userId = String(j1.user_id || "");
   } catch (e) {
-    return send(res, 504, { ok: false, error: "Instagram se jod nahi paya. Thodi der baad dobara try karo." });
+    if (e && e.name === "TimeoutError") return send(res, 504, { ok: false, error: "Instagram se samay par jod nahi paya — samay khatm ho gaya (timeout). Dobara try karo." });
+    return send(res, 504, { ok: false, error: "Instagram se jod nahi paya (network). Thodi der baad dobara try karo." });
   }
   try {
     const url2 = "https://graph.instagram.com/access_token?grant_type=ig_exchange_token&client_secret=" + encodeURIComponent(appSecret) + "&access_token=" + encodeURIComponent(shortTok);
@@ -480,7 +541,14 @@ async function handleYoutube(req, res) {
     const url = "https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=5&q=" + encodeURIComponent(q) + "&key=" + encodeURIComponent(key);
     const r = await fetch(url, { signal: AbortSignal.timeout(9000) });
     const j = await r.json().catch(function () { return null; });
-    if (!r.ok || !j || !Array.isArray(j.items)) return send(res, 502, { ok: false, error: "YouTube se jawab nahi mila — thodi der baad dobara try karo." });
+    if (!j) return send(res, 502, { ok: false, error: "YouTube se kharab jawab aaya — dobara try karo." });
+    if (!r.ok) {
+      const reasons = (j.error && Array.isArray(j.error.errors)) ? j.error.errors : [];
+      const quota = r.status === 429 || reasons.some(function (x) { return x && (x.reason === "quotaExceeded" || x.reason === "dailyLimitExceeded"); });
+      if (quota) return send(res, 429, { ok: false, error: "YouTube ka kota khatm ho gaya hai — thodi der ya kal dobara try karo." });
+      return send(res, 502, { ok: false, error: "Upar wali service (YouTube) ne mana kiya — HTTP " + r.status + ". Dobara try karo." });
+    }
+    if (!Array.isArray(j.items)) return send(res, 502, { ok: false, error: "YouTube se kharab jawab aaya — dobara try karo." });
     const results = j.items.map(function (it) {
       var id = it && it.id && it.id.videoId ? String(it.id.videoId) : "";
       var sn = (it && it.snippet) || {};
@@ -488,7 +556,8 @@ async function handleYoutube(req, res) {
     }).filter(function (x) { return !!x.videoId; });
     return send(res, 200, { ok: true, results: results });
   } catch (e) {
-    return send(res, 504, { ok: false, error: "YouTube se jod nahi paya — thodi der baad dobara try karo." });
+    if (e && e.name === "TimeoutError") return send(res, 504, { ok: false, error: "YouTube se samay par jod nahi paya — samay khatm ho gaya (timeout). Dobara try karo." });
+    return send(res, 504, { ok: false, error: "YouTube se jod nahi paya (network) — thodi der baad dobara try karo." });
   }
 }
 
@@ -518,23 +587,25 @@ async function handleMusic(req, res) {
       try { const j = await r.clone().json(); if (j && j.estimated_time) est = Math.ceil(Number(j.estimated_time) || 20); } catch (e) {}
       return send(res, 503, { ok: false, error: "loading", retry_after: Math.min(Math.max(est, 5), 60) });
     }
-    if (!r.ok) return send(res, 502, { ok: false, error: "MusicGen se jawab nahi mila — thodi der baad dobara try karo." });
+    if (!r.ok) return send(res, 502, { ok: false, error: "MusicGen ne mana kiya (HTTP " + r.status + ") — thodi der baad dobara try karo." });
     const buf = Buffer.from(await r.arrayBuffer());
     if (!buf.length) return send(res, 502, { ok: false, error: "MusicGen se khaali jawab mila — dobara try karo." });
     if (buf.length > 4000000) return send(res, 502, { ok: false, error: "Dhun bahut badi ban gayi — chhoti prompt se dobara try karo." });
     return send(res, 200, { ok: true, audio: "data:audio/wav;base64," + buf.toString("base64"), duration: 10 });
   } catch (e) {
-    return send(res, 504, { ok: false, error: "MusicGen se jod nahi paya — thodi der baad dobara try karo." });
+    if (e && e.name === "TimeoutError") return send(res, 504, { ok: false, error: "MusicGen se samay par jod nahi paya — samay khatm ho gaya (timeout). Dobara try karo." });
+    return send(res, 504, { ok: false, error: "MusicGen se jod nahi paya (network) — thodi der baad dobara try karo." });
   }
 }
 
 module.exports = async (req, res) => {
   // CORS: the standalone Free AI Chat app (own Vercel project / origin) calls
-  // this endpoint cross-origin. No cookies/credentials are used (the admin
-  // code travels in the POST body), so a permissive origin is safe here.
+  // this endpoint cross-origin. No cookies are used (the admin code / Google
+  // token travels in the POST body or the Authorization header), so a
+  // permissive origin is safe here.
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
   if (req.method === "OPTIONS") { res.status(200).end(); return; }
     let fn = "";
   let action = "";
@@ -554,5 +625,5 @@ module.exports = async (req, res) => {
   if (fn === "ig-exchange") return handleIgExchange(req, res);
   if (fn === "youtube") return handleYoutube(req, res);
   if (fn === "music") return handleMusic(req, res);
-  send(res, 400, { ok: false, error: "bad_fn" });
+  send(res, 400, { ok: false, error: "Ye kaam (fn) pehchana nahi gaya." });
 };
