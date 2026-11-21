@@ -1520,6 +1520,23 @@
             .catch(function () { clearTimeout(timer); return []; });
         }
 
+        // Server backup — Pollinations ke saare raaste fail ho jayein to apne
+        // server se Groq/Gemini/OpenRouter wala backup jawab (fn=answer)
+        function callServerBackup(msgs) {
+          return fetch("/api/freeai?fn=answer", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ messages: msgs })
+          }).then(function (res) { return res.json().catch(function () { return null; }); })
+          .then(function (d) {
+            if (d && d.ok && typeof d.text === "string" && d.text.trim()) {
+              if (looksLikeRefusal(d.text)) throw new Error("refusal");
+              return d.text.trim();
+            }
+            throw new Error("backup-fail");
+          });
+        }
+
         function askFreeAI(userText, onChunk) {
           var searchP = needsLiveInfo(userText) ? searchLive(userText) : Promise.resolve([]);
           return searchP.then(function (sources) {
@@ -1537,11 +1554,13 @@
             function next() {
               if (i >= chain.length) {
                 // sab plain mode fail — aakhri koshish JSON mode se (wahi 20s seema;
-                // iska khaali/mana wala jawab bhi fail hi mana jayega, taaki aakhir
-                // mein offline wala sandesh hi dikhe)
+                // iska khaali/mana wala jawab bhi fail hi mana jayega), phir server
+                // backup (Groq/Gemini/OpenRouter) — wo bhi fail ho to offline sandesh
                 return callModel(msgs, "openai", true, 20000).then(function (r) {
                   if (looksLikeRefusal(r)) throw new Error("refusal");
                   return r;
+                }).catch(function () {
+                  return callServerBackup(msgs);
                 });
               }
               var m = chain[i++];

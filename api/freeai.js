@@ -21,7 +21,8 @@
 //   POST /api/freeai?fn=youtube {q} → {ok, results: [{videoId, title, channel, link}]} (YouTube search, no admin code)
 //   POST /api/freeai?fn=music {prompt} → {ok, audio: "data:audio/wav;base64,...", duration: 10} (MusicGen dhun, no admin code)
 //   POST /api/freeai?fn=tts {text} → {ok, audio: "data:audio/flac;base64,...", mime: "audio/flac"} (MMS-TTS Hindi awaaz, no admin code)
-// Env: SERPER_API_KEY (search) + DATABASE_URL (ya POSTGRES_URL / NEON_DATABASE_URL) + REELS_ADMIN_CODE + GEMINI_API_KEY (video + photo) + IG_APP_ID + IG_APP_SECRET (Instagram exchange) + YOUTUBE_API_KEY (YouTube search) + HF_API_TOKEN (MusicGen dhun + Awaaz banao TTS — Hugging Face ka free token).
+//   POST /api/freeai?fn=answer {messages} → {ok, text, via} (jawab ka backup: Groq → Gemini → OpenRouter, no admin code)
+// Env: SERPER_API_KEY (search) + DATABASE_URL (ya POSTGRES_URL / NEON_DATABASE_URL) + REELS_ADMIN_CODE + GEMINI_API_KEY (video + photo + jawab backup) + IG_APP_ID + IG_APP_SECRET (Instagram exchange) + YOUTUBE_API_KEY (YouTube search) + HF_API_TOKEN (MusicGen dhun + Awaaz banao TTS — Hugging Face ka free token) + GROQ_API_KEY (jawab backup, optional) + OPENROUTER_API_KEY (jawab backup, optional).
 // Storage: Neon Postgres over its raw HTTP /sql endpoint (no npm packages).
 // Chat limit: max 100 messages, har message max 4000 chars, total max ~200,000 chars.
 // Memory limit: max 30 yaadein, har yaad max 500 chars, total max ~50,000 chars.
@@ -648,6 +649,85 @@ async function handleTts(req, res) {
   return send(res, 200, { ok: true, audio: "data:audio/flac;base64," + buf.toString("base64"), mime: "audio/flac" });
 }
 
+// Jawab ka backup — Pollinations band/slow ho to client yahan aata hai.
+// Chain: Groq (chaabi ho tabhi) → Gemini → OpenRouter. Har koshish ki chhoti
+// seema hai aur kul samay Vercel Hobby ki ~10s deewar ke andar rakha hai.
+// POST /api/freeai?fn=answer {messages:[{role,content}]} → {ok, text, via}
+async function handleAnswer(req, res) {
+  if (req.method !== "POST") { res.setHeader("Allow", "POST"); return send(res, 405, { ok: false, error: "Sirf POST chalega." }); }
+  const body = await readBody(req);
+  let msgs = (body && Array.isArray(body.messages)) ? body.messages : [];
+  msgs = msgs.filter(function (m) { return m && typeof m.content === "string" && m.content.trim(); }).slice(-24)
+    .map(function (m) { return { role: (m.role === "assistant" || m.role === "system") ? m.role : "user", content: String(m.content).slice(0, 8000) }; });
+  if (!msgs.length) return send(res, 400, { ok: false, error: "Sawal nahi mila." });
+  const t0 = Date.now();
+  const tries = [];
+
+  // 1) Groq — sabse tez (chaabi Vercel mein GROQ_API_KEY ho tabhi)
+  const gkey = (process.env.GROQ_API_KEY || "").trim();
+  if (gkey) {
+    try {
+      const r = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: { "Authorization": "Bearer " + gkey, "Content-Type": "application/json" },
+        body: JSON.stringify({ model: "llama-3.3-70b-versatile", messages: msgs, temperature: 0.7, max_tokens: 1024 }),
+        signal: AbortSignal.timeout(3500)
+      });
+      if (r.ok) {
+        const j = await r.json().catch(function () { return null; });
+        const t = j && j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content;
+        if (typeof t === "string" && t.trim()) return send(res, 200, { ok: true, text: t.trim(), via: "groq" });
+        tries.push("groq:empty");
+      } else tries.push("groq:http-" + r.status);
+    } catch (e) { tries.push("groq:timeout"); }
+  } else tries.push("groq:no-key");
+
+  // 2) Gemini — wahi chaabi jo photo/video mein lagti hai
+  const gemKey = (process.env.GEMINI_API_KEY || "").trim();
+  if (gemKey && (Date.now() - t0) < 6000) {
+    try {
+      const sys = msgs.filter(function (m) { return m.role === "system"; }).map(function (m) { return m.content; }).join("\n\n");
+      const contents = msgs.filter(function (m) { return m.role !== "system"; }).map(function (m) { return { role: m.role === "assistant" ? "model" : "user", parts: [{ text: m.content }] }; });
+      const payload = { contents: contents, generationConfig: { maxOutputTokens: 1024, temperature: 0.7 } };
+      if (sys) payload.systemInstruction = { parts: [{ text: sys }] };
+      const r = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=" + encodeURIComponent(gemKey), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+        signal: AbortSignal.timeout(3500)
+      });
+      if (r.ok) {
+        const j = await r.json().catch(function () { return null; });
+        const parts = j && j.candidates && j.candidates[0] && j.candidates[0].content && j.candidates[0].content.parts;
+        const t = Array.isArray(parts) ? parts.map(function (p) { return (p && p.text) || ""; }).join("") : "";
+        if (typeof t === "string" && t.trim()) return send(res, 200, { ok: true, text: t.trim(), via: "gemini" });
+        tries.push("gemini:empty");
+      } else tries.push("gemini:http-" + r.status);
+    } catch (e) { tries.push("gemini:timeout"); }
+  } else tries.push(gemKey ? "gemini:no-time" : "gemini:no-key");
+
+  // 3) OpenRouter — free Nemotron model
+  const okey = (process.env.OPENROUTER_API_KEY || "").trim();
+  if (okey && (Date.now() - t0) < 7000) {
+    try {
+      const r = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": "Bearer " + okey, "HTTP-Referer": "https://free-ai-chat-silk.vercel.app/", "X-Title": "Free AI Chat" },
+        body: JSON.stringify({ model: "nvidia/nemotron-3.5-lightning:free", messages: msgs, temperature: 0.7, max_tokens: 1024 }),
+        signal: AbortSignal.timeout(2500)
+      });
+      if (r.ok) {
+        const j = await r.json().catch(function () { return null; });
+        const t = j && j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content;
+        if (typeof t === "string" && t.trim()) return send(res, 200, { ok: true, text: t.trim(), via: "openrouter" });
+        tries.push("openrouter:empty");
+      } else tries.push("openrouter:http-" + r.status);
+    } catch (e) { tries.push("openrouter:timeout"); }
+  } else tries.push(okey ? "openrouter:no-time" : "openrouter:no-key");
+
+  return send(res, 502, { ok: false, error: "Backup AI se bhi jawab nahi aaya — thodi der baad dobara try karo.", tries: tries });
+}
+
 module.exports = async (req, res) => {
   // CORS: the standalone Free AI Chat app (own Vercel project / origin) calls
   // this endpoint cross-origin. No cookies are used (the admin code / Google
@@ -676,5 +756,6 @@ module.exports = async (req, res) => {
   if (fn === "youtube") return handleYoutube(req, res);
   if (fn === "music") return handleMusic(req, res);
   if (fn === "tts") return handleTts(req, res);
+  if (fn === "answer") return handleAnswer(req, res);
   send(res, 400, { ok: false, error: "Ye kaam (fn) pehchana nahi gaya." });
 };
