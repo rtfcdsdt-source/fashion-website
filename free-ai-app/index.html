@@ -687,6 +687,7 @@
         <button class="chip" type="button" id="trayIg">📸 Instagram jodo</button>
         <button class="chip" type="button" id="trayIgPost">📸 Instagram post</button>
         <button class="chip" type="button" id="trayYtUpload">📺 YouTube upload</button>
+        <button class="chip" type="button" id="trayYtManage">🎬 Channel manage</button>
         <button class="chip" type="button" id="trayMusic">🎵 Gaana banao</button>
         <button class="chip" type="button" id="trayInstallApp" style="display:none">📲 App install karo</button>
         <button class="chip" type="button" id="traySettings">🎨 Naam / Rang</button>
@@ -711,6 +712,7 @@
       <input type="file" id="photoInput" accept="image/jpeg,image/png,image/webp,image/gif" hidden />
       <input type="file" id="igPhotoInput" accept="image/jpeg,image/png" hidden />
       <input type="file" id="ytVideoInput" accept="video/mp4,video/webm,video/quicktime" hidden />
+      <input type="file" id="ytThumbInput" accept="image/jpeg,image/png" hidden />
 
       <div class="composer-wrap">
         <div class="skill-chip" id="skillChip" hidden>
@@ -2493,6 +2495,24 @@
           pushHist({ role: "user", content: "youtube par video upload karo" });
           ytUploadStart("youtube par video upload karo");
         });
+        document.getElementById("trayYtManage").addEventListener("click", function () {
+          trayEl.classList.remove("open");
+          plusBtn.classList.remove("open");
+          if (busy) return;
+          busy = true;
+          addMessage("user", "meri videos dikhao");
+          pushHist({ role: "user", content: "meri videos dikhao" });
+          ytListMyVideos();
+        });
+        var ytThumbInput = document.getElementById("ytThumbInput");
+        ytThumbInput.addEventListener("change", function () {
+          var f = ytThumbInput.files && ytThumbInput.files[0];
+          ytThumbInput.value = "";
+          if (!f) return;
+          if (!/^image\//i.test(f.type)) { busy = true; replyLocal("🎬 Ye photo nahi lagti — JPG/PNG photo chuno."); return; }
+          if (f.size > 2 * 1024 * 1024) { busy = true; replyLocal("🎬 Photo 2 MB se badi hai — chhoti photo chuno (YouTube ki limit 2 MB hai)."); return; }
+          ytSetThumbnail(f);
+        });
         document.getElementById("trayMusic").addEventListener("click", function () {
           trayEl.classList.remove("open");
           plusBtn.classList.remove("open");
@@ -3447,7 +3467,8 @@
           } catch (e) { cb(null); }
         }
         // ---- YouTube token (flaw 22 fix): Gmail wale se bilkul alag client ----
-        // Scope sirf youtube.upload + youtube.readonly (channel ka naam padhne ke liye).
+        // Scope: youtube.upload + youtube.readonly + youtube.force-ssl
+        // (force-ssl = playlist banana, comment ka jawab — channel manage ke liye).
         function ytHasToken() { return !!ytToken; }
         function requestYtToken(cb) {
           if (!window.google || !window.google.accounts || !window.google.accounts.oauth2) { cb(null); return; }
@@ -3455,7 +3476,7 @@
             if (!ytTokenClient) {
               ytTokenClient = window.google.accounts.oauth2.initTokenClient({
                 client_id: GMAIL_CLIENT_ID,
-                scope: "https://www.googleapis.com/auth/youtube.upload https://www.googleapis.com/auth/youtube.readonly",
+                scope: "https://www.googleapis.com/auth/youtube.upload https://www.googleapis.com/auth/youtube.readonly https://www.googleapis.com/auth/youtube.force-ssl",
                 callback: function (resp) {
                   var f = ytTokenCb; ytTokenCb = null;
                   if (ytTokenTimer) { clearTimeout(ytTokenTimer); ytTokenTimer = null; }
@@ -4392,6 +4413,154 @@
           if (ytPendingMeta && /(badlo|change|dobara|dubara|phir se|fir se)/.test(low)) return true;
           return false;
         }
+        // ---- YouTube channel manage: meri videos, comments, playlist, thumbnail ----
+        var ytLastVideos = [];   // [{id, title}] — taaza videos ki list (comments/thumbnail ke liye)
+        var ytLastComments = []; // [{id, author, text}] — jawab dene ke liye
+        var ytThumbVideoId = "";
+        function ytManageWanted(text) {
+          if (!text) return false;
+          var low = String(text).toLowerCase();
+          if (/kaise|kya hota|kya hai|kya chahiye|tarika|tareeka|steps|step by step|sikhao|samjhao|matlab kya/.test(low)) return false;
+          if (/(upload|chadhao)/.test(low)) return false; // upload wala kaam ytUploadWanted ka hai
+          if (/(thumbnail)/.test(low)) return true;
+          if (/(photo|tasveer|image|instagram|email|mail)/.test(low)) return false;
+          if (/(playlist)/.test(low)) return true;
+          if (/(comment)/.test(low)) return true;
+          if (/(subscriber|subscribers|channel ki jaankari|channel ki jankari|channel stats)/.test(low)) return true;
+          if (/(meri|mere|mera|my)\b/.test(low) && /(video|videos|channel)/.test(low)) return true;
+          return false;
+        }
+        function ytErrText(err) {
+          if (err === "login") return "YouTube login nahi hua. Dobara try karo — Google wala Allow dabana hoga.";
+          if (err === "net") return "net se jod nahi paya — thodi der baad dobara try karo.";
+          return String(err || "kuch gadbad hui — dobara try karo.");
+        }
+        function ytSay(msg) {
+          removeTyping();
+          var row = addMessage("ai", msg);
+          pushHist({ role: "assistant", content: msg });
+          scrollToMessageTop(row);
+          busy = false;
+        }
+        // YouTube API call — token na ho to pehle login, 401/403 par ek baar naya token
+        function ytApiCall(method, url, body, isUpload, cb) {
+          function go(tok, retried) {
+            var opts = { method: method, headers: { Authorization: "Bearer " + tok } };
+            if (body !== null && body !== undefined) {
+              if (isUpload) { opts.body = body; opts.headers["Content-Type"] = body.type || "image/jpeg"; }
+              else { opts.headers["Content-Type"] = "application/json"; opts.body = JSON.stringify(body); }
+            }
+            fetch(url, opts)
+              .then(function (r) {
+                if ((r.status === 401 || r.status === 403) && !retried) {
+                  ytToken = "";
+                  requestYtToken(function (t2) { if (t2) go(t2, true); else cb(null, "login"); });
+                  return null;
+                }
+                return r.json().catch(function () { return {}; }).then(function (j) {
+                  cb(r.ok ? j : null, r.ok ? null : ((j && j.error && j.error.message) || ("HTTP " + r.status)));
+                });
+              })
+              .catch(function () { cb(null, "net"); });
+          }
+          if (ytToken) go(ytToken, false);
+          else requestYtToken(function (t) { if (t) go(t, false); else cb(null, "login"); });
+        }
+        function ytLatestVideoId(cb) {
+          if (ytLastVideos.length && ytLastVideos[0].id) { cb(ytLastVideos[0].id, null); return; }
+          ytApiCall("GET", "https://www.googleapis.com/youtube/v3/channels?part=contentDetails&mine=true", null, false, function (j, err) {
+            var upId = j && j.items && j.items[0] && j.items[0].contentDetails && j.items[0].contentDetails.relatedPlaylists && j.items[0].contentDetails.relatedPlaylists.uploads;
+            if (!upId) { cb(null, err); return; }
+            ytApiCall("GET", "https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=1&playlistId=" + encodeURIComponent(upId), null, false, function (j2, err2) {
+              var vid = j2 && j2.items && j2.items[0] && j2.items[0].snippet && j2.items[0].snippet.resourceId && j2.items[0].snippet.resourceId.videoId;
+              cb(vid || null, err2);
+            });
+          });
+        }
+        function ytListMyVideos() {
+          addTyping();
+          ytApiCall("GET", "https://www.googleapis.com/youtube/v3/channels?part=snippet,statistics,contentDetails&mine=true", null, false, function (j, err) {
+            if (!j || !j.items || !j.items.length) { ytSay("🎬 Channel nahi mila — " + ytErrText(err)); return; }
+            var ch = j.items[0];
+            var head = "🎬 **" + ((ch.snippet && ch.snippet.title) || "Mera channel") + "**";
+            if (ch.statistics) head += "\nSubscribers: " + (ch.statistics.subscriberCount || "0") + " · Kul views: " + (ch.statistics.viewCount || "0") + " · Videos: " + (ch.statistics.videoCount || "0");
+            var upId = ch.contentDetails && ch.contentDetails.relatedPlaylists && ch.contentDetails.relatedPlaylists.uploads;
+            if (!upId) { ytSay(head); return; }
+            ytApiCall("GET", "https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=10&playlistId=" + encodeURIComponent(upId), null, false, function (j2, err2) {
+              if (!j2 || !j2.items) { ytSay(head + "\n\nVideos nahi mili — " + ytErrText(err2)); return; }
+              ytLastVideos = j2.items.map(function (it) { return { id: (it.snippet && it.snippet.resourceId && it.snippet.resourceId.videoId) || "", title: (it.snippet && it.snippet.title) || "" }; });
+              var list = ytLastVideos.map(function (v, i) { return (i + 1) + ". " + v.title + "\nhttps://youtu.be/" + v.id; }).join("\n\n");
+              ytSay(head + "\n\n**Meri taaza videos:**\n\n" + (list || "Abhi koi video nahi hai.") + "\n\nAur kaam: `comments dikhao` · `playlist banao: naam` · `thumbnail badlo`");
+            });
+          });
+        }
+        function ytShowComments() {
+          addTyping();
+          ytLatestVideoId(function (vid, err) {
+            if (!vid) { ytSay("🎬 Koi video nahi mili — " + ytErrText(err)); return; }
+            ytApiCall("GET", "https://www.googleapis.com/youtube/v3/commentThreads?part=snippet&maxResults=10&order=time&videoId=" + encodeURIComponent(vid), null, false, function (j, err2) {
+              if (!j || !j.items) { ytSay("🎬 Comments nahi mile — " + ytErrText(err2)); return; }
+              ytLastComments = j.items.map(function (it) {
+                var c = it.snippet && it.snippet.topLevelComment && it.snippet.topLevelComment.snippet;
+                return { id: (it.snippet && it.snippet.topLevelComment && it.snippet.topLevelComment.id) || "", author: (c && c.authorDisplayName) || "", text: (c && c.textOriginal) || "" };
+              });
+              if (!ytLastComments.length) { ytSay("🎬 Is video par abhi koi comment nahi hai."); return; }
+              var list = ytLastComments.map(function (c, i) { return (i + 1) + ". **" + c.author + "**: " + c.text; }).join("\n\n");
+              ytSay("🎬 **Taaza comments:**\n\n" + list + "\n\nJawab dene ke liye likho: `comment 1 ka jawab do: tumhara jawab`");
+            });
+          });
+        }
+        function ytThumbStart() {
+          ytLatestVideoId(function (vid, err) {
+            if (!vid) { busy = true; replyLocal("🎬 Koi video nahi mili — " + ytErrText(err)); return; }
+            ytThumbVideoId = vid;
+            busy = true;
+            replyLocal("🎬 Thumbnail ke liye photo chuno — gallery khul rahi hai. (Taaza video par lagegi, photo 2 MB se chhoti ho)");
+            var inp = document.getElementById("ytThumbInput");
+            if (inp) inp.click();
+          });
+        }
+        function ytSetThumbnail(file) {
+          if (!ytThumbVideoId) { busy = true; replyLocal("🎬 Pehle likho: `thumbnail badlo`"); return; }
+          busy = true;
+          addTyping();
+          ytApiCall("POST", "https://www.googleapis.com/upload/youtube/v3/thumbnails/set?videoId=" + encodeURIComponent(ytThumbVideoId) + "&uploadType=media", file, true, function (j, err) {
+            if (!j) { ytSay("🎬 Thumbnail nahi laga — " + ytErrText(err)); return; }
+            ytSay("🎬 Thumbnail lag gaya! YouTube par dikhne mein thoda samay lag sakta hai.");
+          });
+        }
+        function ytManageStart(userText) {
+          var low = String(userText).toLowerCase();
+          // playlist banao: <naam>
+          if (/(playlist)/.test(low) && /(banao|bana do|banado|create|bana)/.test(low)) {
+            var pname = String(userText).replace(/.*?playlist\s*(banao|bana do|banado|create|bana)?\s*[:\-–—]?\s*/i, "").trim();
+            if (!pname) { replyLocal("🎬 Playlist ka naam likho — jaise: `playlist banao: Dance Videos`"); return; }
+            addTyping();
+            ytApiCall("POST", "https://www.googleapis.com/youtube/v3/playlists?part=snippet,status", { snippet: { title: pname.slice(0, 150) }, status: { privacyStatus: "public" } }, false, function (j, err) {
+              if (!j) { ytSay("🎬 Playlist nahi bani — " + ytErrText(err)); return; }
+              ytSay("🎬 Playlist ban gayi: **" + pname + "**\nhttps://www.youtube.com/playlist?list=" + (j.id || ""));
+            });
+            return;
+          }
+          // comment ka jawab
+          if (/(comment)/.test(low) && /(jawab|reply)/.test(low)) {
+            var m = String(userText).match(/[:\-–—]\s*(.+)$/);
+            var rtext = m ? m[1].trim() : "";
+            var numM = low.match(/comment\s*(\d+)/);
+            var idx = numM ? parseInt(numM[1], 10) - 1 : 0;
+            if (!rtext) { replyLocal("🎬 Jawab ka text likho — jaise: `comment 1 ka jawab do: Dhanyavaad!`"); return; }
+            if (!ytLastComments.length || !ytLastComments[idx]) { replyLocal("🎬 Pehle comments dikhao — likho: `comments dikhao`"); return; }
+            addTyping();
+            ytApiCall("POST", "https://www.googleapis.com/youtube/v3/comments?part=snippet", { snippet: { parentId: ytLastComments[idx].id, textOriginal: rtext.slice(0, 1000) } }, false, function (j, err) {
+              if (!j) { ytSay("🎬 Jawab nahi gaya — " + ytErrText(err)); return; }
+              ytSay("🎬 Jawab bhej diya: \"" + rtext + "\"");
+            });
+            return;
+          }
+          if (/(comment)/.test(low)) { ytShowComments(); return; }
+          if (/(thumbnail)/.test(low)) { ytThumbStart(); return; }
+          ytListMyVideos();
+        }
         function ytCleanName(name) {
           var s = String(name || "").replace(/\.[^.]+$/, "")
             .replace(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi, " ")
@@ -5040,6 +5209,13 @@
               return;
             }
             ytUploadVideo(ytPendingFile);
+            return;
+          }
+
+          // YouTube channel manage — meri videos/comments/playlist/thumbnail (upload/search se pehle,
+          // kyunki "meri videos dikhao" mein "video"+"dikhao" dono hain)
+          if (ytManageWanted(userText)) {
+            ytManageStart(userText);
             return;
           }
 
