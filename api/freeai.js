@@ -20,7 +20,8 @@
 //   POST /api/freeai?fn=ig-exchange {code, redirect_uri} → {ok, access_token, user_id, expires_in} (Instagram Login token, no admin code)
 //   POST /api/freeai?fn=youtube {q} → {ok, results: [{videoId, title, channel, link}]} (YouTube search, no admin code)
 //   POST /api/freeai?fn=music {prompt} → {ok, audio: "data:audio/wav;base64,...", duration: 10} (MusicGen dhun, no admin code)
-// Env: SERPER_API_KEY (search) + DATABASE_URL (ya POSTGRES_URL / NEON_DATABASE_URL) + REELS_ADMIN_CODE + GEMINI_API_KEY (video + photo) + IG_APP_ID + IG_APP_SECRET (Instagram exchange) + YOUTUBE_API_KEY (YouTube search) + HF_API_TOKEN (MusicGen dhun — Hugging Face ka free token).
+//   POST /api/freeai?fn=tts {text} → {ok, audio: "data:audio/flac;base64,...", mime: "audio/flac"} (MMS-TTS Hindi awaaz, no admin code)
+// Env: SERPER_API_KEY (search) + DATABASE_URL (ya POSTGRES_URL / NEON_DATABASE_URL) + REELS_ADMIN_CODE + GEMINI_API_KEY (video + photo) + IG_APP_ID + IG_APP_SECRET (Instagram exchange) + YOUTUBE_API_KEY (YouTube search) + HF_API_TOKEN (MusicGen dhun + Awaaz banao TTS — Hugging Face ka free token).
 // Storage: Neon Postgres over its raw HTTP /sql endpoint (no npm packages).
 // Chat limit: max 100 messages, har message max 4000 chars, total max ~200,000 chars.
 // Memory limit: max 30 yaadein, har yaad max 500 chars, total max ~50,000 chars.
@@ -598,6 +599,55 @@ async function handleMusic(req, res) {
   }
 }
 
+// Awaaz banao (Hugging Face MMS-TTS Hindi) — likha hua text Hindi awaaz mein.
+// POST /api/freeai?fn=tts {text} → {ok, audio: "data:audio/flac;base64,...", mime: "audio/flac"}
+// Model facebook/mms-tts-hin (VITS) — MusicGen wali hi chaabi (HF_API_TOKEN).
+// Text seema 500 akshar (client bhi rokta hai). Model thanda (cold) ho to HF
+// 503 deta hai — thoda ruk kar EK retry, phir saaf Hindi wajah. Dhun ki tarah
+// jawab data-URL audio mein aata hai taaki client seedha player + download
+// dono mein use kar sake. Har koshish 4s ki hai — do koshish + intezaar mil
+// kar bhi Vercel Hobby ki ~10s function deewar ke andar rahe.
+async function handleTts(req, res) {
+  if (req.method !== "POST") { res.setHeader("Allow", "POST"); return send(res, 405, { ok: false, error: "Sirf POST chalega." }); }
+  const key = (process.env.HF_API_TOKEN || "").trim();
+  if (!key) return send(res, 503, { ok: false, error: "Awaaz banao abhi set nahi hua hai — server par Hugging Face ki chaabi (HF_API_TOKEN) set nahi hai." });
+  const body = await readBody(req);
+  const text = typeof (body && body.text) === "string" ? body.text.trim() : "";
+  if (!text) return send(res, 400, { ok: false, error: "Jo bulwana hai, wo text likho." });
+  if (text.length > 500) return send(res, 400, { ok: false, error: "Text bahut lamba hai — ek baar mein 500 akshar se zyada nahi chalega. Chhota karke bhejo." });
+  const url = "https://router.huggingface.co/hf-inference/models/facebook/mms-tts-hin";
+  function callHf() {
+    return fetch(url, {
+      method: "POST",
+      headers: { "Authorization": "Bearer " + key, "Content-Type": "application/json" },
+      body: JSON.stringify({ inputs: text }),
+      signal: AbortSignal.timeout(4000)
+    });
+  }
+  let r = null;
+  try {
+    r = await callHf();
+    if (r && r.status === 503) {
+      await new Promise(function (resolve) { setTimeout(resolve, 1500); });
+      r = await callHf();
+    }
+  } catch (e) {
+    if (e && e.name === "TimeoutError") return send(res, 504, { ok: false, error: "Awaaz wali service se samay par jod nahi paya — samay khatm ho gaya (timeout). Dobara try karo." });
+    return send(res, 504, { ok: false, error: "Awaaz wali service se jod nahi paya (network) — thodi der baad dobara try karo." });
+  }
+  if (!r) return send(res, 504, { ok: false, error: "Awaaz wali service se jod nahi paya — dobara try karo." });
+  if (r.status === 503) return send(res, 503, { ok: false, error: "Awaaz wala model abhi taiyaar ho raha hai — 1 minute baad dobara try karo." });
+  if (r.status === 401 || r.status === 403) return send(res, 401, { ok: false, error: "Hugging Face ki chaabi (HF_API_TOKEN) galat lagti hai — server par sahi token daalna hoga." });
+  if (r.status === 429) return send(res, 429, { ok: false, error: "Awaaz banane ki free limit abhi poori ho gayi hai — thodi der baad dobara try karo." });
+  if (!r.ok) return send(res, 502, { ok: false, error: "Awaaz wali service ne mana kiya (HTTP " + r.status + ") — thodi der baad dobara try karo." });
+  const ctype = (r.headers && typeof r.headers.get === "function") ? (r.headers.get("content-type") || "") : "";
+  if (ctype.indexOf("application/json") !== -1) return send(res, 502, { ok: false, error: "Awaaz wali service se ajeeb jawab aaya — dobara try karo." });
+  const buf = Buffer.from(await r.arrayBuffer());
+  if (!buf.length) return send(res, 502, { ok: false, error: "Awaaz wali service se khaali jawab mila — dobara try karo." });
+  if (buf.length > 4000000) return send(res, 502, { ok: false, error: "Awaaz bahut badi ban gayi — chhota text bhejkar dobara try karo." });
+  return send(res, 200, { ok: true, audio: "data:audio/flac;base64," + buf.toString("base64"), mime: "audio/flac" });
+}
+
 module.exports = async (req, res) => {
   // CORS: the standalone Free AI Chat app (own Vercel project / origin) calls
   // this endpoint cross-origin. No cookies are used (the admin code / Google
@@ -625,5 +675,6 @@ module.exports = async (req, res) => {
   if (fn === "ig-exchange") return handleIgExchange(req, res);
   if (fn === "youtube") return handleYoutube(req, res);
   if (fn === "music") return handleMusic(req, res);
+  if (fn === "tts") return handleTts(req, res);
   send(res, 400, { ok: false, error: "Ye kaam (fn) pehchana nahi gaya." });
 };

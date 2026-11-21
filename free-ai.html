@@ -689,6 +689,7 @@
         <button class="chip" type="button" id="trayYtUpload">📺 YouTube upload</button>
         <button class="chip" type="button" id="trayYtManage">🎬 Channel manage</button>
         <button class="chip" type="button" id="trayMusic">🎵 Gaana banao</button>
+        <button class="chip" type="button" id="trayTts">🔊 Awaaz banao</button>
         <button class="chip" type="button" id="trayInstallApp" style="display:none">📲 App install karo</button>
         <button class="chip" type="button" id="traySettings">🎨 Naam / Rang</button>
         <button class="chip" type="button" id="trayBrain">🧠 Dimaag</button>
@@ -2681,6 +2682,126 @@
             busy = false;
           });
         }
+
+        /* ---------------- awaaz banao (likha hua text → Hindi awaaz) ---------------- */
+
+        // Awaaz ka status wala AI bubble — pehle "ban rahi hai", galti par
+        // usi bubble mein server ki wajah aa jati hai.
+        function addTtsStatusRow() {
+          var row = document.createElement("div");
+          row.className = "row ai";
+          var bubble = document.createElement("div");
+          bubble.className = "bubble";
+          bubble.textContent = "🔊 Awaaz ban rahi hai...";
+          row.appendChild(bubble);
+          messagesEl.appendChild(row);
+          scrollToMessageTop(row);
+          return { row: row, bubble: bubble };
+        }
+
+        // Awaaz taiyar: audio player wala AI bubble (download link ke saath)
+        function addTtsBubble(text, dataUrl) {
+          var row = document.createElement("div");
+          row.className = "row ai";
+          var bubble = document.createElement("div");
+          bubble.className = "bubble";
+          var t = document.createElement("div");
+          t.textContent = "🔊 Tumhari awaaz taiyar hai:";
+          bubble.appendChild(t);
+          var q = document.createElement("div");
+          q.textContent = text;
+          q.style.cssText = "margin-top:2px;font-size:.9em;opacity:.85";
+          bubble.appendChild(q);
+          var a = document.createElement("audio");
+          a.src = dataUrl;
+          a.controls = true;
+          a.preload = "metadata";
+          a.style.width = "100%";
+          a.style.marginTop = "8px";
+          bubble.appendChild(a);
+          var dl = document.createElement("a");
+          dl.href = dataUrl;
+          dl.download = "free-ai-awaaz.flac";
+          dl.textContent = "⬇️ Download";
+          dl.style.display = "inline-block";
+          dl.style.marginTop = "6px";
+          bubble.appendChild(dl);
+          row.appendChild(bubble);
+          messagesEl.appendChild(row);
+          scrollToMessageTop(row);
+          return row;
+        }
+
+        // "Awaaz banao" → POST /api/freeai?fn=tts → audio player
+        function doTts(text) {
+          var status = addTtsStatusRow();
+          fetch("/api/freeai?fn=tts", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ text: text })
+          }).then(function (res) { return res.json().then(function (d) { return { status: res.status, d: d }; }); })
+          .then(function (r) {
+            if (r.d && r.d.ok && r.d.audio) {
+              if (status.row.parentNode) status.row.parentNode.removeChild(status.row);
+              var row = addTtsBubble(text, r.d.audio);
+              pushHist({ role: "assistant", content: "🔊 Tumhari awaaz taiyar hai: " + text });
+              scrollToMessageTop(row);
+              busy = false;
+              return;
+            }
+            var reply = (r.d && r.d.error) ? String(r.d.error) : "Awaaz nahi ban payi — dobara try karo.";
+            status.bubble.textContent = reply;
+            pushHist({ role: "assistant", content: reply });
+            scrollToMessageTop(status.row);
+            busy = false;
+          }).catch(function () {
+            var reply = "Awaaz banane mein dikkat aayi — net check karke dobara try karo.";
+            status.bubble.textContent = reply;
+            pushHist({ role: "assistant", content: reply });
+            scrollToMessageTop(status.row);
+            busy = false;
+          });
+        }
+
+        function openTtsDialog() {
+          trayEl.classList.remove("open");
+          plusBtn.classList.remove("open");
+          var body = openOverlay("🔊 Awaaz banao", false);
+
+          var l1 = document.createElement("div");
+          l1.className = "set-label";
+          l1.textContent = "Jo bulwana hai, wo yahan likho:";
+          body.appendChild(l1);
+          var ta = document.createElement("textarea");
+          ta.className = "tool-input";
+          ta.rows = 4;
+          ta.maxLength = 500;
+          ta.placeholder = "Jo bulwana hai, yahan likho...";
+          ta.style.width = "100%";
+          body.appendChild(ta);
+
+          var note = document.createElement("div");
+          note.className = "set-label";
+          note.textContent = "Note: Hindi text sabse achha chalega (zyada se zyada 500 akshar). Awaaz free Hindi model ki hai — thodi machine-jaisi lag sakti hai.";
+          body.appendChild(note);
+
+          var go = document.createElement("button");
+          go.type = "button";
+          go.className = "tool-add set-apply";
+          go.textContent = "🔊 Awaaz banao";
+          go.addEventListener("click", function () {
+            var text = ta.value.trim();
+            if (!text) { return; }
+            closeOverlay();
+            if (busy) return;
+            busy = true;
+            addMessage("user", "🔊 Awaaz banao: " + text);
+            pushHist({ role: "user", content: "🔊 Awaaz banao: " + text });
+            doTts(text);
+          });
+          body.appendChild(go);
+        }
+        document.getElementById("trayTts").addEventListener("click", openTtsDialog);
 
         function handlePhotoFile(file) {
           if (busy) return;
