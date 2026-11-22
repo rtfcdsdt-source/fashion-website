@@ -4529,7 +4529,7 @@
           // "youtube kaise chalate hain" jaisa SAWAL search nahi karta — AI guide deta hai
           if (/kaise|kya hota|kya hai|kya chahiye|tarika|tareeka|steps|step by step|sikhao|samjhao|matlab kya/.test(low)) return false;
           if (low.indexOf("youtube") < 0 && low.indexOf("youtu.be") < 0) return false;
-          return /(dhoondho|dhundo|khojo|search|dekho|dikhao|video|song|gaana|gana)/.test(low);
+          return /(dhoondho|dhundho|dhundo|dhundh|khojo|search|dekho|dikhao|video|song|gaana|gana|gane)/.test(low);
         }
         function ytUploadWanted(text) {
           if (!text) return false;
@@ -4943,7 +4943,7 @@
           ytMakeMeta();
         }
         function ytSearchQuery(userText) {
-          var q = String(userText || "").replace(/youtube|youtu\.be/gi, "").replace(/\b(par|pe|mein|me)\b\s*(dhoondho|dhundo|khojo|search|dekho|dikhao)\b/gi, "").replace(/\b(dhoondho|dhundo|khojo|search|dekho|dikhao)\b/gi, "").replace(/^\s*(par|pe|mein|me)\b\s*/gi, "").trim().replace(/\s+/g, " ").slice(0, 200);
+          var q = String(userText || "").replace(/youtube|youtu\.be/gi, "").replace(/\b(par|pe|mein|me)\b\s*(dhoondho|dhundho|dhundo|dhundh|khojo|search|dekho|dikhao)\b/gi, "").replace(/\b(dhoondho|dhundho|dhundo|dhundh|khojo|search|dekho|dikhao)\b/gi, "").replace(/^\s*(par|pe|mein|me)\b\s*/gi, "").trim().replace(/\s+/g, " ").slice(0, 200);
           return q;
         }
         function doYouTubeSearch(userText) {
