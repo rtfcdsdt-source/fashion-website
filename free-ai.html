@@ -225,6 +225,7 @@
       }
       .bubble p { margin: 0 0 10px; }
       .bubble p:last-child { margin-bottom: 0; }
+      .bubble a { color: #2563eb; text-decoration: underline; word-break: break-all; }
       .bubble ul, .bubble ol { margin: 4px 0 10px; padding-left: 22px; }
       .bubble li { margin: 2px 0; }
       .bubble code {
@@ -977,6 +978,24 @@
           var html = escapeHtml(work);
           html = html.replace(/`([^`\n]+)`/g, "<code>$1</code>");
           html = html.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+          // Bare URL ko neela clickable link banao (code ke andar wale URL chhodo).
+          // Upload/search wale jawabon ke link isi se dabne par khulenge.
+          html = html.split(/(<code>[\s\S]*?<\/code>)/g).map(function (seg) {
+            if (seg.indexOf("<code>") === 0) return seg;
+            seg = seg.replace(/(https?:\/\/[^\s<"]+)/g, function (m) {
+              var trail = "";
+              while (/[.,;:!?)\]]$/.test(m)) { trail = m.slice(-1) + trail; m = m.slice(0, -1); }
+              if (!m) return trail;
+              return '<a href="' + m + '" target="_blank" rel="noopener noreferrer">' + m + "</a>" + trail;
+            });
+            seg = seg.replace(/(^|[\s(])(www\.[^\s<"]+)/g, function (m, pre, url) {
+              var trail = "";
+              while (/[.,;:!?)\]]$/.test(url)) { trail = url.slice(-1) + trail; url = url.slice(0, -1); }
+              if (!url) return m;
+              return pre + '<a href="https://' + url + '" target="_blank" rel="noopener noreferrer">' + url + "</a>" + trail;
+            });
+            return seg;
+          }).join("");
           var lines = html.split("\n");
           var out = [];
           var listType = null;
