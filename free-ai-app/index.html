@@ -691,6 +691,7 @@
         <button class="chip" type="button" id="trayYtManage">🎬 Channel manage</button>
         <button class="chip" type="button" id="trayMusic">🎵 Gaana banao</button>
         <button class="chip" type="button" id="trayTts">🔊 Awaaz banao</button>
+        <button class="chip" type="button" id="trayQr">🔳 QR banao</button>
         <button class="chip" type="button" id="trayInstallApp" style="display:none">📲 App install karo</button>
         <button class="chip" type="button" id="traySettings">🎨 Naam / Rang</button>
         <button class="chip" type="button" id="trayBrain">🧠 Dimaag</button>
@@ -2840,6 +2841,85 @@
           body.appendChild(go);
         }
         document.getElementById("trayTts").addEventListener("click", openTtsDialog);
+
+        function openQrDialog() {
+          trayEl.classList.remove("open");
+          plusBtn.classList.remove("open");
+          var body = openOverlay("🔳 QR banao", false);
+
+          var l1 = document.createElement("div");
+          l1.className = "set-label";
+          l1.textContent = "Link ya koi bhi text likho:";
+          body.appendChild(l1);
+          var inp = document.createElement("input");
+          inp.className = "tool-input";
+          inp.type = "text";
+          inp.maxLength = 500;
+          inp.placeholder = "https://... ya koi bhi text";
+          inp.style.width = "100%";
+          body.appendChild(inp);
+
+          var hint = document.createElement("div");
+          hint.className = "set-label";
+          hint.textContent = "QR code phone ke camera se scan hota hai — link, naam, number, kuch bhi daalo.";
+          body.appendChild(hint);
+
+          var go = document.createElement("button");
+          go.type = "button";
+          go.className = "tool-add set-apply";
+          go.textContent = "🔳 QR banao";
+          body.appendChild(go);
+
+          var out = document.createElement("div");
+          out.style.textAlign = "center";
+          out.style.marginTop = "14px";
+          out.hidden = true;
+          body.appendChild(out);
+
+          var img = document.createElement("img");
+          img.alt = "QR code";
+          img.style.maxWidth = "100%";
+          img.style.border = "1px solid #e5e7eb";
+          img.style.borderRadius = "12px";
+          out.appendChild(img);
+
+          var dl = document.createElement("a");
+          dl.className = "tool-add set-apply";
+          dl.style.display = "inline-block";
+          dl.style.marginTop = "10px";
+          dl.style.textDecoration = "none";
+          dl.textContent = "⬇️ QR download karo";
+          out.appendChild(dl);
+
+          var again = document.createElement("button");
+          again.type = "button";
+          again.className = "tool-add";
+          again.style.display = "block";
+          again.style.margin = "10px auto 0";
+          again.textContent = "🔄 Naya banao";
+          out.appendChild(again);
+
+          go.addEventListener("click", function () {
+            var text = inp.value.trim();
+            if (!text) {
+              hint.textContent = "Pehle kuch likho — link ya text, phir QR banao.";
+              return;
+            }
+            var url = "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=" + encodeURIComponent(text);
+            img.src = url;
+            dl.href = url;
+            dl.setAttribute("download", "qr-code.png");
+            dl.target = "_blank";
+            out.hidden = false;
+            hint.textContent = "QR ban gaya — camera se scan karo ya download karo.";
+          });
+          again.addEventListener("click", function () {
+            inp.value = "";
+            out.hidden = true;
+            hint.textContent = "QR code phone ke camera se scan hota hai — link, naam, number, kuch bhi daalo.";
+          });
+        }
+        document.getElementById("trayQr").addEventListener("click", openQrDialog);
 
         function handlePhotoFile(file) {
           if (busy) return;
