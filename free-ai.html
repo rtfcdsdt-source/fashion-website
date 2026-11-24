@@ -1700,6 +1700,7 @@
           return sheetBody;
         }
         function closeOverlay() {
+          stopToolTimer();
           overlayEl.hidden = true;
           sheetBody.innerHTML = "";
         }
@@ -2018,7 +2019,20 @@
           [
             ["✅", "To-Do List", "Kaam ki list banao — ho jaye to tap karke tick karo", showTodo],
             ["💰", "Kharcha Tracker", "Roz ka kharcha note karo, chart ke saath", showKharcha],
-            ["🧠", "Quiz Khelo", "10 aasan sawal — dekho kitne sahi hote hain", showQuiz]
+            ["🧠", "Quiz Khelo", "10 aasan sawal — dekho kitne sahi hote hain", showQuiz],
+            ["🧮", "EMI Calculator", "Loan ki kist, kul byaaj aur kul rakam nikalo", showEmi],
+            ["📱", "UPI QR Banao", "UPI ID se payment QR banao", showUpiQr],
+            ["🧾", "Bill Baanto", "Kul kharcha doston mein barabar baanto", showBillSplit],
+            ["🔐", "Password Banao", "Mazboot password ek tap mein", showPassword],
+            ["🎂", "Umar Nikalo", "Janm tarikh se umar saal-mahine-din mein", showAge],
+            ["⏱️", "Timer / Stopwatch", "Timer lagao ya stopwatch chalao", showTimer],
+            ["🔤", "Shabd Gino", "Shabd, akshar aur line gino", showWordCount],
+            ["🖼️", "Photo Chhoti Karo", "Badi photo ko compress karke download karo", showPhotoCompress],
+            ["🔍", "Photo Se Text", "Photo mein likha text padh kar dikhao", showPhotoText],
+            ["📄", "PDF Banao", "Text likho, PDF download karo", showPdfMake],
+            ["💭", "Aaj Ka Vichaar", "Roz ek naya motivational vichaar", showVichaar],
+            ["🧩", "Paheli Khelo", "Mazedaar paheliyaan, jawab bhi", showPaheli],
+            ["👤", "Naam Ka Matlab", "Naam ka matlab jaano", showNaamMatlab]
           ].forEach(function (t) {
             var b = document.createElement("button");
             b.type = "button";
@@ -2030,6 +2044,7 @@
         }
 
         function toolHead(body, title) {
+          stopToolTimer();
           sheetTitle.textContent = title;
           body.innerHTML = "";
           var back = document.createElement("button");
@@ -2275,6 +2290,746 @@
             body.appendChild(b);
           });
         }
+
+/* ---------------- 13 chhote tools (2026-11-24) ---------------- */
+
+var toolTimerId = null;
+function stopToolTimer() { if (toolTimerId) { clearInterval(toolTimerId); toolTimerId = null; } }
+
+function toolResult(body) {
+  var d = document.createElement("div");
+  d.style.cssText = "margin-top:12px;background:#f6f6f6;border:1px solid #e5e5e5;border-radius:10px;padding:10px 12px;font-size:15px;line-height:1.7;white-space:pre-wrap;word-break:break-word";
+  d.hidden = true;
+  body.appendChild(d);
+  return d;
+}
+function toolLabel(body, text) {
+  var l = document.createElement("div");
+  l.className = "set-label";
+  l.textContent = text;
+  body.appendChild(l);
+  return l;
+}
+function toolTextInput(body, placeholder, type) {
+  var inp = document.createElement("input");
+  inp.className = "tool-input";
+  inp.type = type || "text";
+  inp.placeholder = placeholder || "";
+  inp.style.width = "100%";
+  inp.style.marginBottom = "8px";
+  body.appendChild(inp);
+  return inp;
+}
+function toolNumInput(body, placeholder) {
+  var inp = toolTextInput(body, placeholder, "number");
+  inp.min = "0";
+  return inp;
+}
+function toolGoButton(body, text) {
+  var b = document.createElement("button");
+  b.type = "button";
+  b.className = "tool-add set-apply";
+  b.textContent = text;
+  body.appendChild(b);
+  return b;
+}
+function fmtRupee(n) { return "₹" + Math.round(n).toLocaleString("en-IN"); }
+function fmtSize(bytes) {
+  if (bytes >= 1048576) return (bytes / 1048576).toFixed(2) + " MB";
+  if (bytes >= 1024) return (bytes / 1024).toFixed(1) + " KB";
+  return bytes + " bytes";
+}
+
+/* Photo ko fn=photo server route se samjhao — ek hi fetch call
+   (handlePhotoFile aur Photo-Se-Text dono isi ko bulate hain,
+   isliye shell-sync fetch count 21 barkarar rehta hai). */
+function fetchPhotoReply(img, question) {
+  return fetch("/api/freeai?fn=photo", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ image: { mimeType: img.mimeType, data: img.data }, question: question || undefined })
+  }).then(function (res) { return res.json().then(function (d) { return { status: res.status, d: d }; }); })
+  .then(function (r) {
+    if (r.d && r.d.ok && r.d.text) return r.d.text;
+    if (r.status === 429) return "⚠️ Photo samajhne wali free limit abhi poori ho gayi hai — dopahar ~1:30 ke baad dobara try karo.";
+    return (r.d && r.d.error) ? r.d.error : null;
+  }).catch(function () { return null; });
+}
+
+var __tessPromise = null;
+function ensureTesseract() {
+  if (window.Tesseract) return Promise.resolve();
+  if (__tessPromise) return __tessPromise;
+  __tessPromise = new Promise(function (resolve, reject) {
+    var s = document.createElement("script");
+    s.src = "https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js";
+    s.onload = function () { if (window.Tesseract) resolve(); else reject(new Error("tess missing")); };
+    s.onerror = function () { reject(new Error("tess load fail")); };
+    document.head.appendChild(s);
+    setTimeout(function () { if (!window.Tesseract) reject(new Error("tess timeout")); }, 25000);
+  });
+  return __tessPromise;
+}
+
+var __jspdfPromise = null;
+function ensureJsPdf() {
+  if (window.jspdf && window.jspdf.jsPDF) return Promise.resolve();
+  if (__jspdfPromise) return __jspdfPromise;
+  __jspdfPromise = new Promise(function (resolve, reject) {
+    var s = document.createElement("script");
+    s.src = "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js";
+    s.onload = function () { if (window.jspdf && window.jspdf.jsPDF) resolve(); else reject(new Error("jspdf missing")); };
+    s.onerror = function () { reject(new Error("jspdf load fail")); };
+    document.head.appendChild(s);
+    setTimeout(function () { if (!(window.jspdf && window.jspdf.jsPDF)) reject(new Error("jspdf timeout")); }, 20000);
+  });
+  return __jspdfPromise;
+}
+
+var VICHAAR = [
+  "Mehnat kabhi bekar nahi jaati — der ho sakti hai, haar nahi.",
+  "Chhota kadam bhi kadam hota hai — roz ek kadam aage badho.",
+  "Jo seekhna band kar de, woh peeche reh jaata hai.",
+  "Sapna bada rakho, shuruaat chhoti se karo.",
+  "Waqt sabko barabar milta hai — farq use karne mein hai.",
+  "Galti karna bura nahi, galti se seekhna bhoolna bura hai.",
+  "Aaj ka kaam kal par mat talo.",
+  "Jo khud par bharosa karta hai, use koi hara nahi sakta.",
+  "Mushkil waqt hi asli taakat dikhata hai.",
+  "Paise se zyada keemti hai waqt — use sambhal kar kharch karo.",
+  "Har din ek naya mauka hai — kal se behtar bano.",
+  "Log kya kahenge, ye soch kar sapne mat chhodo.",
+  "Sehat sabse badi daulat hai — roz thoda chalo, thoda hanso.",
+  "Sach bolna mushkil hai, par sukoon deta hai.",
+  "Jo doosron ki madad karta hai, uski madad khud ho jaati hai.",
+  "Dheere chalo, par rukna mat.",
+  "Padhai hi ek aisi cheez hai jo koi chheen nahi sakta.",
+  "Apne kaam se pehchan banao, naam se nahi.",
+  "Gussa aaye to chup raho — jawab waqt dega.",
+  "Chhoti jeet bhi jeet hoti hai — use manao.",
+  "Sapne woh nahi jo neend mein aayein, sapne woh hain jo neend uda dein.",
+  "Jo aaj mehnat karega, kal aaram se rahega.",
+  "Zindagi mein risk lo — bina risk ke kuch bada nahi hota.",
+  "Achhe dost hi asli daulat hain.",
+  "Har subah ek nayi shuruaat hai.",
+  "Khud ko doosron se mat compare karo — apni race khud banao.",
+  "Seekhne ki koi umar nahi hoti.",
+  "Jo haar maan le, wohi haarta hai.",
+  "Dhan se bada hai maan — izzat kamao.",
+  "Aaj jo kar sakte ho, woh kal par mat chhodo."
+];
+
+var PAHELI = [
+  { q: "Bina pair ke chalta hai, bina munh ke bolta hai — kya hai?", a: "Ghadi (waqt)" },
+  { q: "Mere paas chabiyan hain, par koi taala nahi khulta — kya hoon main?", a: "Keyboard" },
+  { q: "Din mein chhup jaata hoon, raat ko dikhta hoon — kya hoon?", a: "Chand" },
+  { q: "Jitna khodo, utna bada hota hai — kya hai?", a: "Gaddha" },
+  { q: "Bina khaye-piye jalta hoon, hawa se darta hoon — kya hoon?", a: "Diya" },
+  { q: "Mere daant hain, par kha nahi sakti — kya hoon?", a: "Kanghi" },
+  { q: "Sirf aage badhti hai, kabhi peeche nahi — kya hai?", a: "Umar" },
+  { q: "Chaar pair hain, phir bhi chal nahi sakti — kya hai?", a: "Mez (table)" },
+  { q: "Bina bulaye roz aati hoon, subah chali jaati hoon — kya hoon?", a: "Neend" },
+  { q: "Jitna sookhta hoon, utna geela hota hoon — kya hoon?", a: "Tauliya (towel)" },
+  { q: "Band karo to andhera, kholo to roshni — kya hoon?", a: "Aankh" },
+  { q: "Na khidki, na darwaza — phir bhi ghar mein rehta hoon — kya hoon?", a: "Anda (egg)" },
+  { q: "Rang badalta hoon, par rang nahi hoon — kya hoon?", a: "Girgit" },
+  { q: "Bina bijli, bina tel — roz jalta hoon — kya hoon?", a: "Suraj" },
+  { q: "Duniya bhar ghoomta hoon, ghar se nikle bina — kya hoon?", a: "Daak ticket" },
+  { q: "Jitna baanto, utna badhta hoon — kya hoon?", a: "Gyaan" },
+  { q: "Ek pair par khada hoon, baarish mein kaam aata hoon — kya hoon?", a: "Chhata (umbrella)" },
+  { q: "Khane mein milta hoon, khana nahi hoon — kya hoon?", a: "Namak" },
+  { q: "Paani mein rehta hoon, machhli nahi hoon — kya hoon?", a: "Kamal (lotus)" },
+  { q: "Bina pankh ke udta hoon, bina pair ke bhaagta hoon — kya hoon?", a: "Badal" }
+];
+
+var NAAM_MEANING = {
+  "aarav": "Shanti, sukh", "aarushi": "Subah ki pehli kiran", "aisha": "Zinda-dil, khush",
+  "aman": "Shanti", "amit": "Anant, jiska ant na ho", "ananya": "Jis jaisa koi aur nahi",
+  "ankit": "Chihn, nishani", "arjun": "Safed, ujla; mahaan dhanurdhar", "aryan": "Shreshth, nek",
+  "asha": "Umeed", "deepak": "Diya, roshni", "diya": "Deepak, roshni",
+  "divya": "Divya, pavitra roshni", "farhan": "Khush, prasann", "gauri": "Gori, devi ka naam",
+  "harsh": "Khushi", "ishaan": "Suraj; Shiv ka naam", "kabir": "Mahaan, bada",
+  "karan": "Daanveer, karne wala", "kavya": "Kavita", "kiran": "Kiran, roshni ki dhaar",
+  "krishna": "Shyam, akarshak", "lakshmi": "Dhan ki devi", "madhav": "Krishna ka naam",
+  "manish": "Buddhi, dimaag", "meera": "Krishna ki bhakt", "mohit": "Moh lene wala, akarshak",
+  "neha": "Sneh, pyaar", "nikhil": "Poora, sampoorna", "nisha": "Raat",
+  "pooja": "Prarthana, ibadat", "priya": "Pyaari", "rahul": "Sahi raah dikhane wala",
+  "raj": "Raja, shasak", "riya": "Geet, sundar awaaz", "rohan": "Upar uthne wala",
+  "rohit": "Lal; suraj ki pehli kiran", "ritu": "Mausam, ritu", "sahil": "Kinara",
+  "sana": "Roshni, chamak", "sanjay": "Vijayi", "shiv": "Shiv, kalyan",
+  "simran": "Yaad, dhyaan", "sneha": "Sneh, pyaar", "sonu": "Sona, keemti",
+  "varun": "Paani ke devta", "vikram": "Veer, sahasi", "vivek": "Buddhi, samajh"
+};
+
+function showEmi() {
+  var body = sheetBody;
+  toolHead(body, "🧮 EMI Calculator");
+  toolLabel(body, "Loan ki rashi (₹):");
+  var pInp = toolNumInput(body, "Jaise 100000");
+  toolLabel(body, "Byaaj % (saal ka):");
+  var rInp = toolNumInput(body, "Jaise 10");
+  toolLabel(body, "Mahine (kitne mahine mein chukana hai):");
+  var nInp = toolNumInput(body, "Jaise 24");
+  var res = toolResult(body);
+  toolGoButton(body, "🧮 EMI nikalo").addEventListener("click", function () {
+    var P = parseFloat(pInp.value), r = parseFloat(rInp.value), n = parseInt(nInp.value, 10);
+    if (!(P > 0) || !(n > 0) || isNaN(r) || r < 0) {
+      res.hidden = false;
+      res.textContent = "Sahi rakam, byaaj aur mahine daalo.";
+      return;
+    }
+    var mr = r / 1200, emi;
+    if (mr === 0) emi = P / n;
+    else { var f = Math.pow(1 + mr, n); emi = P * mr * f / (f - 1); }
+    var total = emi * n, interest = total - P;
+    res.hidden = false;
+    res.textContent = "Mahine ki kist (EMI): " + fmtRupee(emi) + "\nKul byaaj: " + fmtRupee(interest) + "\nKul rakam (loan + byaaj): " + fmtRupee(total);
+  });
+}
+
+function showUpiQr() {
+  var body = sheetBody;
+  toolHead(body, "📱 UPI QR Banao");
+  toolLabel(body, "UPI ID (jaise naam@okhdfcbank):");
+  var idInp = toolTextInput(body, "tumhara-naam@upi");
+  toolLabel(body, "Naam (optional):");
+  var nmInp = toolTextInput(body, "Jaise Shiva");
+  toolLabel(body, "Rashi ₹ (optional):");
+  var amInp = toolNumInput(body, "Jaise 100");
+  var hint = document.createElement("div");
+  hint.className = "set-label";
+  hint.textContent = "QR banne ke baad koi bhi UPI app se scan karke paise bhej sakta hai.";
+  body.appendChild(hint);
+  var out = document.createElement("div");
+  out.style.textAlign = "center";
+  out.style.marginTop = "14px";
+  out.hidden = true;
+  body.appendChild(out);
+  var img = document.createElement("img");
+  img.alt = "UPI QR code";
+  img.style.maxWidth = "100%";
+  img.style.border = "1px solid #e5e7eb";
+  img.style.borderRadius = "12px";
+  out.appendChild(img);
+  var dl = document.createElement("a");
+  dl.className = "tool-add set-apply";
+  dl.style.display = "inline-block";
+  dl.style.marginTop = "10px";
+  dl.style.textDecoration = "none";
+  dl.textContent = "⬇️ QR download karo";
+  out.appendChild(dl);
+  toolGoButton(body, "📱 UPI QR banao").addEventListener("click", function () {
+    var id = idInp.value.trim();
+    if (!id || id.indexOf("@") === -1) {
+      hint.textContent = "Sahi UPI ID daalo — usme @ hona chahiye (jaise naam@okhdfcbank).";
+      return;
+    }
+    var upi = "upi://pay?pa=" + encodeURIComponent(id) + "&cu=INR";
+    var nm = nmInp.value.trim();
+    if (nm) upi += "&pn=" + encodeURIComponent(nm);
+    var am = parseFloat(amInp.value);
+    if (am > 0) upi += "&am=" + am;
+    var url = "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=" + encodeURIComponent(upi);
+    img.src = url;
+    dl.href = url;
+    dl.setAttribute("download", "upi-qr.png");
+    dl.target = "_blank";
+    out.hidden = false;
+    hint.textContent = "UPI QR ban gaya — koi bhi UPI app se scan karke bhej sakta hai.";
+  });
+}
+
+function showBillSplit() {
+  var body = sheetBody;
+  toolHead(body, "🧾 Bill Baanto");
+  toolLabel(body, "Kul kharcha (₹):");
+  var totInp = toolNumInput(body, "Jaise 1200");
+  toolLabel(body, "Kitne log hain:");
+  var pplInp = toolNumInput(body, "Jaise 4");
+  var res = toolResult(body);
+  toolGoButton(body, "🧾 Hissa nikalo").addEventListener("click", function () {
+    var total = parseFloat(totInp.value), n = parseInt(pplInp.value, 10);
+    if (!(total > 0) || !(n > 0)) {
+      res.hidden = false;
+      res.textContent = "Sahi kharcha aur logon ki ginti daalo.";
+      return;
+    }
+    var share = total / n;
+    res.hidden = false;
+    res.textContent = "Kul kharcha: " + fmtRupee(total) + "\nLog: " + n + "\nHar ek ka hissa: ₹" + share.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  });
+}
+
+function showPassword() {
+  var body = sheetBody;
+  toolHead(body, "🔐 Password Banao");
+  toolLabel(body, "Password kitna lamba ho:");
+  var sel = document.createElement("select");
+  sel.className = "tool-input";
+  sel.style.width = "100%";
+  sel.style.marginBottom = "8px";
+  [["8", "8 akshar"], ["12", "12 akshar"], ["16", "16 akshar"]].forEach(function (o) {
+    var op = document.createElement("option");
+    op.value = o[0];
+    op.textContent = o[1];
+    if (o[0] === "12") op.selected = true;
+    sel.appendChild(op);
+  });
+  body.appendChild(sel);
+  var out = document.createElement("input");
+  out.className = "tool-input";
+  out.type = "text";
+  out.readOnly = true;
+  out.placeholder = "Yahan password aayega...";
+  out.style.width = "100%";
+  out.style.marginBottom = "8px";
+  out.style.fontWeight = "700";
+  body.appendChild(out);
+  var row = document.createElement("div");
+  row.className = "tool-row";
+  body.appendChild(row);
+  var go = document.createElement("button");
+  go.type = "button";
+  go.className = "tool-add set-apply";
+  go.textContent = "🔐 Password banao";
+  row.appendChild(go);
+  var cp = document.createElement("button");
+  cp.type = "button";
+  cp.className = "tool-add";
+  cp.textContent = "📋 Copy karo";
+  row.appendChild(cp);
+  go.addEventListener("click", function () {
+    var len = parseInt(sel.value, 10) || 12;
+    var chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$%&*";
+    var pw = "";
+    if (window.crypto && window.crypto.getRandomValues) {
+      var arr = new Uint32Array(len);
+      window.crypto.getRandomValues(arr);
+      for (var i = 0; i < len; i++) pw += chars[arr[i] % chars.length];
+    } else {
+      for (var j = 0; j < len; j++) pw += chars[Math.floor(Math.random() * chars.length)];
+    }
+    out.value = pw;
+  });
+  cp.addEventListener("click", function () {
+    if (!out.value) return;
+    copyText(out.value, cp);
+  });
+}
+
+function showAge() {
+  var body = sheetBody;
+  toolHead(body, "🎂 Umar Nikalo");
+  toolLabel(body, "Janm tarikh chuno:");
+  var dInp = toolTextInput(body, "", "date");
+  var res = toolResult(body);
+  toolGoButton(body, "🎂 Umar nikalo").addEventListener("click", function () {
+    if (!dInp.value) {
+      res.hidden = false;
+      res.textContent = "Pehle janm tarikh chuno.";
+      return;
+    }
+    var b = new Date(dInp.value + "T00:00:00");
+    var t = new Date();
+    if (isNaN(b.getTime()) || b > t) {
+      res.hidden = false;
+      res.textContent = "Ye tarikh aaj se aage ki hai — sahi janm tarikh chuno.";
+      return;
+    }
+    var y = t.getFullYear() - b.getFullYear();
+    var m = t.getMonth() - b.getMonth();
+    var d = t.getDate() - b.getDate();
+    if (d < 0) { m--; var pm = new Date(t.getFullYear(), t.getMonth(), 0).getDate(); d += pm; }
+    if (m < 0) { y--; m += 12; }
+    res.hidden = false;
+    res.textContent = "Tumhari umar: " + y + " saal, " + m + " mahine, " + d + " din";
+  });
+}
+
+function showTimer() {
+  var body = sheetBody;
+  toolHead(body, "⏱️ Timer / Stopwatch");
+  var tabs = document.createElement("div");
+  tabs.className = "tool-row";
+  body.appendChild(tabs);
+  var tabT = document.createElement("button");
+  tabT.type = "button";
+  tabT.className = "tool-add";
+  tabT.textContent = "⏱️ Timer";
+  tabs.appendChild(tabT);
+  var tabS = document.createElement("button");
+  tabS.type = "button";
+  tabS.className = "tool-add";
+  tabS.textContent = "⏲️ Stopwatch";
+  tabs.appendChild(tabS);
+  var pane = document.createElement("div");
+  body.appendChild(pane);
+  function fmtClock(s) {
+    var mm = Math.floor(s / 60), ss = s % 60;
+    return (mm < 10 ? "0" : "") + mm + ":" + (ss < 10 ? "0" : "") + ss;
+  }
+  function renderTimerTab() {
+    stopToolTimer();
+    pane.innerHTML = "";
+    toolLabel(pane, "Kitne minute ka timer:");
+    var minInp = toolNumInput(pane, "Jaise 5");
+    var disp = document.createElement("div");
+    disp.style.cssText = "text-align:center;font-size:44px;font-weight:800;margin:14px 0";
+    disp.textContent = "00:00";
+    pane.appendChild(disp);
+    var row = document.createElement("div");
+    row.className = "tool-row";
+    pane.appendChild(row);
+    var left = 0, running = false;
+    function mkBtn(txt) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "tool-add";
+      b.textContent = txt;
+      row.appendChild(b);
+      return b;
+    }
+    mkBtn("▶️ Start").addEventListener("click", function () {
+      if (running) return;
+      if (left <= 0) {
+        var mins = parseFloat(minInp.value);
+        if (!(mins > 0)) { disp.style.fontSize = "18px"; disp.textContent = "Pehle minute daalo."; return; }
+        left = Math.round(mins * 60);
+      }
+      disp.style.fontSize = "44px";
+      disp.textContent = fmtClock(left);
+      running = true;
+      toolTimerId = setInterval(function () {
+        left--;
+        disp.textContent = fmtClock(Math.max(0, left));
+        if (left <= 0) { stopToolTimer(); running = false; disp.style.fontSize = "22px"; disp.textContent = "⏰ Samay khatm!"; }
+      }, 1000);
+    });
+    mkBtn("⏸️ Ruko").addEventListener("click", function () { stopToolTimer(); running = false; });
+    mkBtn("🔄 Reset").addEventListener("click", function () { stopToolTimer(); running = false; left = 0; disp.style.fontSize = "44px"; disp.textContent = "00:00"; });
+  }
+  function renderStopTab() {
+    stopToolTimer();
+    pane.innerHTML = "";
+    var disp = document.createElement("div");
+    disp.style.cssText = "text-align:center;font-size:44px;font-weight:800;margin:14px 0";
+    disp.textContent = "00:00";
+    pane.appendChild(disp);
+    var row = document.createElement("div");
+    row.className = "tool-row";
+    pane.appendChild(row);
+    var secs = 0, running = false;
+    function mkBtn(txt) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "tool-add";
+      b.textContent = txt;
+      row.appendChild(b);
+      return b;
+    }
+    mkBtn("▶️ Start").addEventListener("click", function () {
+      if (running) return;
+      running = true;
+      toolTimerId = setInterval(function () { secs++; disp.textContent = fmtClock(secs); }, 1000);
+    });
+    mkBtn("⏸️ Stop").addEventListener("click", function () { stopToolTimer(); running = false; });
+    mkBtn("🔄 Reset").addEventListener("click", function () { stopToolTimer(); running = false; secs = 0; disp.textContent = "00:00"; });
+  }
+  tabT.addEventListener("click", renderTimerTab);
+  tabS.addEventListener("click", renderStopTab);
+  renderTimerTab();
+}
+
+function showWordCount() {
+  var body = sheetBody;
+  toolHead(body, "🔤 Shabd Gino");
+  toolLabel(body, "Text likho ya paste karo:");
+  var ta = document.createElement("textarea");
+  ta.className = "tool-input";
+  ta.rows = 6;
+  ta.placeholder = "Yahan likho...";
+  ta.style.width = "100%";
+  ta.style.marginBottom = "8px";
+  body.appendChild(ta);
+  var res = toolResult(body);
+  res.hidden = false;
+  res.textContent = "Shabd: 0\nAkshar: 0\nLine: 0";
+  ta.addEventListener("input", function () {
+    var text = ta.value;
+    var words = text.trim() ? text.trim().split(/\s+/).length : 0;
+    var lines = text ? text.split("\n").length : 0;
+    res.textContent = "Shabd: " + words + "\nAkshar: " + text.length + "\nLine: " + lines;
+  });
+}
+
+function showPhotoCompress() {
+  var body = sheetBody;
+  toolHead(body, "🖼️ Photo Chhoti Karo");
+  var fileInp = document.createElement("input");
+  fileInp.type = "file";
+  fileInp.accept = "image/*";
+  fileInp.style.display = "none";
+  body.appendChild(fileInp);
+  var hint = document.createElement("div");
+  hint.className = "set-label";
+  hint.textContent = "Photo phone mein hi chhoti hoti hai — kahin upload nahi hoti.";
+  body.appendChild(hint);
+  var info = toolResult(body);
+  var dl = document.createElement("a");
+  dl.className = "tool-add set-apply";
+  dl.style.display = "none";
+  dl.style.marginTop = "10px";
+  dl.style.textDecoration = "none";
+  dl.textContent = "⬇️ Chhoti photo download karo";
+  body.appendChild(dl);
+  toolGoButton(body, "📷 Photo chuno").addEventListener("click", function () { fileInp.click(); });
+  fileInp.addEventListener("change", function () {
+    var file = fileInp.files && fileInp.files[0];
+    if (!file) return;
+    if (!/^image\//.test(file.type)) {
+      info.hidden = false;
+      info.textContent = "Ye photo file nahi hai — sirf image chuno.";
+      return;
+    }
+    info.hidden = false;
+    info.textContent = "Photo padhi ja rahi hai...";
+    var reader = new FileReader();
+    reader.onload = function () {
+      var img = new Image();
+      img.onload = function () {
+        try {
+          var w = img.naturalWidth || img.width, h = img.naturalHeight || img.height;
+          var scale = Math.min(1, 1024 / Math.max(w, h));
+          var cw = Math.max(1, Math.round(w * scale)), ch = Math.max(1, Math.round(h * scale));
+          var cv = document.createElement("canvas");
+          cv.width = cw; cv.height = ch;
+          var ctx = cv.getContext("2d");
+          if (!ctx) { info.textContent = "Photo chhoti nahi ho payi — dobara try karo."; return; }
+          ctx.drawImage(img, 0, 0, cw, ch);
+          var url = cv.toDataURL("image/jpeg", 0.8);
+          var compBytes = Math.round((url.length - 23) * 3 / 4);
+          var saved = file.size > 0 ? Math.max(0, Math.round((1 - compBytes / file.size) * 100)) : 0;
+          info.textContent = "Pehle: " + fmtSize(file.size) + " (" + w + "×" + h + ")\nAb: " + fmtSize(compBytes) + " (" + cw + "×" + ch + ")\nBachat: " + saved + "%";
+          dl.href = url;
+          dl.setAttribute("download", "photo-chhoti.jpg");
+          dl.style.display = "inline-block";
+        } catch (e) { info.textContent = "Photo chhoti nahi ho payi — dobara try karo."; }
+      };
+      img.onerror = function () { info.textContent = "Photo khul nahi payi — koi aur photo try karo."; };
+      img.src = reader.result;
+    };
+    reader.onerror = function () { info.textContent = "Photo padhi nahi gayi — dobara try karo."; };
+    reader.readAsDataURL(file);
+  });
+}
+
+function showPhotoText() {
+  var body = sheetBody;
+  toolHead(body, "🔍 Photo Se Text");
+  var fileInp = document.createElement("input");
+  fileInp.type = "file";
+  fileInp.accept = "image/*";
+  fileInp.style.display = "none";
+  body.appendChild(fileInp);
+  var hint = document.createElement("div");
+  hint.className = "set-label";
+  hint.textContent = "Photo chuno — usme likha text padh kar dikha dunga. Pehli baar thoda waqt lagega.";
+  body.appendChild(hint);
+  var prev = document.createElement("img");
+  prev.alt = "Photo";
+  prev.style.maxWidth = "100%";
+  prev.style.borderRadius = "10px";
+  prev.style.display = "none";
+  prev.style.marginTop = "8px";
+  body.appendChild(prev);
+  var status = toolResult(body);
+  var resBox = document.createElement("div");
+  resBox.style.cssText = "margin-top:12px;background:#fff;border:1px solid #e5e5e5;border-radius:10px;padding:10px 12px;font-size:15px;line-height:1.7;white-space:pre-wrap;word-break:break-word";
+  resBox.hidden = true;
+  body.appendChild(resBox);
+  var cp = document.createElement("button");
+  cp.type = "button";
+  cp.className = "tool-add";
+  cp.style.marginTop = "8px";
+  cp.style.display = "none";
+  cp.textContent = "📋 Text copy karo";
+  body.appendChild(cp);
+  var pickedFile = null, pickedUrl = null;
+  toolGoButton(body, "📷 Photo chuno").addEventListener("click", function () { fileInp.click(); });
+  var go = toolGoButton(body, "🔍 Text nikalo");
+  go.style.marginTop = "8px";
+  fileInp.addEventListener("change", function () {
+    var file = fileInp.files && fileInp.files[0];
+    if (!file) return;
+    pickedFile = file;
+    var reader = new FileReader();
+    reader.onload = function () {
+      pickedUrl = reader.result;
+      prev.src = pickedUrl;
+      prev.style.display = "block";
+      status.hidden = false;
+      status.textContent = "Photo mil gayi — ab 'Text nikalo' dabao.";
+    };
+    reader.readAsDataURL(file);
+  });
+  function showText(t) {
+    resBox.hidden = false;
+    resBox.textContent = t;
+    cp.style.display = "inline-block";
+    status.hidden = true;
+  }
+  function fallbackServer() {
+    status.hidden = false;
+    status.textContent = "Phone par text padhna nahi ho paya — server se padh raha hoon...";
+    downscalePhoto(pickedFile).then(function (img) {
+      return fetchPhotoReply(img, "Is photo mein jo text likha hai, use bilkul waisa hi likh kar batao. Agar koi text nahi hai to 'koi text nahi mila' likho.");
+    }).then(function (reply) {
+      if (!reply) { status.textContent = "Photo se text nahi nikal paya — dobara try karo."; return; }
+      showText("🤖 AI se padha gaya:\n" + reply);
+    });
+  }
+  go.addEventListener("click", function () {
+    if (!pickedFile || !pickedUrl) {
+      status.hidden = false;
+      status.textContent = "Pehle photo chuno.";
+      return;
+    }
+    status.hidden = false;
+    status.textContent = "⏳ Photo padhi ja rahi hai — thoda waqt lagega...";
+    ensureTesseract().then(function () {
+      return window.Tesseract.recognize(pickedUrl, "eng+hin");
+    }).then(function (r) {
+      var t = (r && r.data && r.data.text ? r.data.text : "").trim();
+      if (!t) { status.textContent = "Is photo mein koi saaf text nahi mila."; return; }
+      showText(t);
+    }).catch(function () { fallbackServer(); });
+  });
+  cp.addEventListener("click", function () { if (resBox.textContent) copyText(resBox.textContent, cp); });
+}
+
+function showPdfMake() {
+  var body = sheetBody;
+  toolHead(body, "📄 PDF Banao");
+  toolLabel(body, "Text likho — wahi PDF mein aayega:");
+  var ta = document.createElement("textarea");
+  ta.className = "tool-input";
+  ta.rows = 8;
+  ta.placeholder = "Yahan likho...";
+  ta.style.width = "100%";
+  ta.style.marginBottom = "8px";
+  body.appendChild(ta);
+  var status = toolResult(body);
+  toolGoButton(body, "📄 PDF banao").addEventListener("click", function () {
+    var text = ta.value.trim();
+    if (!text) {
+      status.hidden = false;
+      status.textContent = "Pehle kuch likho.";
+      return;
+    }
+    status.hidden = false;
+    status.textContent = "⏳ PDF ban rahi hai...";
+    ensureJsPdf().then(function () {
+      try {
+        var doc = new window.jspdf.jsPDF();
+        doc.setFontSize(12);
+        var lines = doc.splitTextToSize(text, 170);
+        doc.text(lines, 15, 15);
+        doc.save("free-ai-text.pdf");
+        status.textContent = "✅ PDF download ho gayi — Downloads mein dekho.";
+      } catch (e) { printFallback(); }
+    }).catch(function () { printFallback(); });
+    function printFallback() {
+      var w = null;
+      try { w = window.open("", "_blank"); } catch (e) { w = null; }
+      if (!w) {
+        status.textContent = "PDF nahi ban payi — popup allow karke dobara try karo.";
+        return;
+      }
+      w.document.write("<html><head><title>Free AI PDF</title></head><body style='font-family:sans-serif;white-space:pre-wrap;font-size:15px;line-height:1.6'>" + escapeHtml(text) + "</body></html>");
+      w.document.close();
+      try { w.print(); } catch (e) {}
+      status.textContent = "Print window khul gayi — usme 'Save as PDF' chuno.";
+    }
+  });
+}
+
+function showVichaar() {
+  var body = sheetBody;
+  toolHead(body, "💭 Aaj Ka Vichaar");
+  var now = new Date();
+  var doy = Math.floor((now - new Date(now.getFullYear(), 0, 0)) / 86400000);
+  var box = document.createElement("div");
+  box.style.cssText = "margin:12px 0;background:#f6f6f6;border:1px solid #e5e5e5;border-radius:10px;padding:16px 14px;font-size:17px;line-height:1.7;text-align:center";
+  body.appendChild(box);
+  var lastIdx = -1;
+  function showIdx(i) {
+    lastIdx = i;
+    box.textContent = "“" + VICHAAR[i] + "”";
+  }
+  showIdx(doy % VICHAAR.length);
+  toolGoButton(body, "🔀 Naya dikhao").addEventListener("click", function () {
+    var i = Math.floor(Math.random() * VICHAAR.length);
+    if (i === lastIdx) i = (i + 1) % VICHAAR.length;
+    showIdx(i);
+  });
+}
+
+function showPaheli() {
+  var body = sheetBody;
+  toolHead(body, "🧩 Paheli Khelo");
+  var idx = Math.floor(Math.random() * PAHELI.length);
+  var qBox = document.createElement("div");
+  qBox.style.cssText = "margin:12px 0;font-size:17px;line-height:1.7;font-weight:600";
+  body.appendChild(qBox);
+  var aBox = toolResult(body);
+  var row = document.createElement("div");
+  row.className = "tool-row";
+  body.appendChild(row);
+  function render() {
+    qBox.textContent = "❓ " + PAHELI[idx].q;
+    aBox.hidden = true;
+    aBox.textContent = "";
+  }
+  var showBtn = document.createElement("button");
+  showBtn.type = "button";
+  showBtn.className = "tool-add";
+  showBtn.textContent = "🙈 Jawab dikhao";
+  row.appendChild(showBtn);
+  var nextBtn = document.createElement("button");
+  nextBtn.type = "button";
+  nextBtn.className = "tool-add";
+  nextBtn.textContent = "➡️ Agli paheli";
+  row.appendChild(nextBtn);
+  showBtn.addEventListener("click", function () {
+    aBox.hidden = false;
+    aBox.textContent = "Jawab: " + PAHELI[idx].a;
+  });
+  nextBtn.addEventListener("click", function () {
+    idx = (idx + 1) % PAHELI.length;
+    render();
+  });
+  render();
+}
+
+function showNaamMatlab() {
+  var body = sheetBody;
+  toolHead(body, "👤 Naam Ka Matlab");
+  toolLabel(body, "Naam likho:");
+  var inp = toolTextInput(body, "Jaise Aarav");
+  var res = toolResult(body);
+  toolGoButton(body, "👤 Matlab dekho").addEventListener("click", function () {
+    var name = inp.value.trim();
+    if (!name) {
+      res.hidden = false;
+      res.textContent = "Pehle naam likho.";
+      return;
+    }
+    var key = name.toLowerCase();
+    res.hidden = false;
+    if (NAAM_MEANING[key]) res.textContent = name + " — " + NAAM_MEANING[key];
+    else res.textContent = "Is naam ka matlab list mein nahi hai — list mein sirf aam naam hain.";
+  });
+}
 
         /* ---------------- Skills library (ECC ke 327 ready-made guides) ---------------- */
 
@@ -2944,26 +3699,10 @@
           inputEl.value = "";
           autoGrow();
           addTyping();
-          downscalePhoto(file).then(function (img) {
-            return fetch("/api/freeai?fn=photo", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ image: { mimeType: img.mimeType, data: img.data }, question: question || undefined })
-            });
-          }).then(function (res) { return res.json().then(function (d) { return { status: res.status, d: d }; }); })
-          .then(function (r) {
+          downscalePhoto(file).then(function (img) { return fetchPhotoReply(img, question); })
+          .then(function (reply) {
             removeTyping();
-            var reply;
-            if (r.d && r.d.ok && r.d.text) reply = r.d.text;
-            else if (r.status === 429) reply = "⚠️ Photo samajhne wali free limit abhi poori ho gayi hai — dopahar ~1:30 ke baad dobara try karo.";
-            else reply = (r.d && r.d.error) ? r.d.error : "Photo samajh nahi paya — dobara try karo.";
-            var row = addMessage("ai", reply);
-            pushHist({ role: "assistant", content: reply });
-            scrollToMessageTop(row);
-            busy = false;
-          }).catch(function () {
-            removeTyping();
-            var reply = "Photo bhejne mein dikkat aayi — net check karke dobara try karo.";
+            if (!reply) reply = "Photo bhejne mein dikkat aayi — net check karke dobara try karo.";
             var row = addMessage("ai", reply);
             pushHist({ role: "assistant", content: reply });
             scrollToMessageTop(row);
