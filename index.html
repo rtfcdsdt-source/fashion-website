@@ -861,13 +861,6 @@
       }
       .wish-btn .heart{color:#E7000C;font-size:16px;line-height:1}
       @media (max-width:560px){.wish-btn{min-height:38px;padding:8px 12px;font-size:14px}}
-      .rv-wish{
-        flex:none;border:1px solid #333;background:#171717;color:#fff;
-        border-radius:999px;padding:8px 13px;font-size:14px;font-weight:700;
-        font-family:inherit;cursor:pointer;white-space:nowrap;
-        -webkit-tap-highlight-color:transparent;
-      }
-      .rv-wish:active{background:#262626}
       .wish-backdrop{
         position:fixed;inset:0;background:var(--overlay);z-index:82;
         display:none;align-items:flex-end;justify-content:center;
@@ -984,7 +977,7 @@
       .reels-view.open{display:block}
       .rv-topbar{
         position:sticky;top:0;z-index:6;height:62px;background:#000;
-        display:flex;align-items:center;gap:12px;padding:0 76px 0 14px;
+        display:flex;align-items:center;gap:12px;padding:0 14px;
         transition:background .25s ease;
       }
       /* scrolled away (the same .rv-chips-away state the chips
@@ -1011,9 +1004,11 @@
          of the top bar — the one pinned bar every section
          shares (All, Dance, Movies, Trailers, Gym, Music),
          so the icon stands in the same place in all of
-         them, pushed to the bar's right corner by
-         margin-left:auto, clear of the Add-video logo
-         button's reserved corner beyond it. It wears the
+         them, pushed to the bar's far right corner by
+         margin-left:auto — the corner itself, fully inside
+         the screen (the owner's order); the Add-video logo
+         button's home sits just under the bar so the two
+         never overlap. It wears the
          Shop pill's own deep-black round style. Tapping it
          opens the SEARCH PAGE below: a separate full-screen
          page (fixed, above the reels view, below the
@@ -1031,13 +1026,15 @@
         transition:opacity .22s ease,visibility .22s ease;
       }
       .rv-searchbtn:active{background:#262626}
-      /* scrolled away: the SEARCH ICON goes with the chips and
-         the black strip — in the .rv-chips-away state it fades
-         out and cannot be tapped, leaving ONLY the ← Shop pill
-         at the top; scrolling back to the top brings it back
-         into the bar's right corner, exactly as before */
+      /* scrolled away: the SEARCH ICON STAYS pinned at the
+         top's right corner with the ← Shop pill (the owner's
+         order) — in the .rv-chips-away state the chips and the
+         bar's black strip go, but the icon stays, floating over
+         the content on its own deep-black ground with the same
+         soft shadow the Shop pill gains in that state, so it
+         stays readable over any video picture and tappable */
       .reels-view.rv-chips-away .rv-searchbtn{
-        opacity:0;visibility:hidden;pointer-events:none;
+        background:#171717;box-shadow:0 4px 16px rgba(0,0,0,.5);
       }
       .rv-searchbtn svg{width:19px;height:19px;display:block}
       .rv-searchview{
@@ -1145,12 +1142,12 @@
          script adds .rv-chips-away to the reels view (same
          scroll listener that fades the Add-video button) and
          the strip shrinks and fades out — and in that same
-         state the bar's black strip and the search icon go
-         too (see their rules above), so ONLY the ← Shop pill
-         stays at the top, floating over the content with no
-         black band behind it; scrolling back to the top
-         removes the class and the chips, the black strip and
-         the search icon all return to the row. Every chip wears the
+         state the bar's black strip goes too (see its rule
+         above), so ONLY the ← Shop pill and the search icon
+         stay at the top, floating over the content with no
+         black band behind them; scrolling back to the top
+         removes the class and the chips and the black strip
+         return to the row. Every chip wears the
          Shop button's own deep-black pill (same #171717
          ground, same #333 border, same white bold text); the
          chip for the category on screen keeps that black
@@ -1621,8 +1618,13 @@
         background:#090909;color:#fff;outline:none;font-size:14px;font-family:inherit;min-height:64px;
       }
       .rv-comments-box textarea:focus{border-color:#ff9900}
+      /* the logo's home is just UNDER the pinned top bar at
+         the right edge, fully inside the screen (the owner's
+         order): the bar's far right corner now belongs to the
+         search icon, so the logo no longer sits in — or half
+         off — that corner; it still drags anywhere from here */
       .rv-add{
-        position:fixed;top:12px;right:16px;width:60px;height:60px;
+        position:fixed;top:74px;right:14px;width:60px;height:60px;
         border:0;background:none;padding:0;
         cursor:grab;touch-action:none;z-index:75;
         -webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;
@@ -1630,7 +1632,7 @@
         transition:transform .15s ease,opacity .25s ease,visibility .25s ease;
       }
       /* scrolled away: the owner asked that on scroll ONLY the
-         ← Shop pill stays — so once the view leaves the top,
+         ← Shop pill and the search icon stay — so once the view leaves the top,
          the script adds .rv-away and this button fades out
          wherever it was dropped; scrolling back to the top
          removes the class and it is back in its place */
@@ -1803,16 +1805,15 @@
            and, at the row's far right corner, the SEARCH
            icon. One shared bar, so the row stands in the
            same place in every section. On scroll the chips
-           fade out of the row, the bar's black strip and the
-           search icon go with them, and only the ← Shop pill
-           stays, floating over the content; scrolling back to
-           the top brings everything back into the row. The
+           fade out of the row and the bar's black strip goes
+           with them, and only the ← Shop pill and the search
+           icon stay, floating over the content; scrolling back
+           to the top brings everything back into the row. The
            sub-genre row below the bar and the Add-video logo
            button scroll / fade away with the content and
            return when the visitor scrolls back, as before -->
       <div class="rv-topbar">
         <button class="rv-back" id="rvBack" type="button" aria-label="Back to Fashion Goals shop">← Shop</button>
-        <button class="rv-wish" id="wishBtnRv" type="button" aria-label="Open wishlist">♥ <span id="wishCountRv">0</span></button>
         <!-- category boxes in the SAME line as the Shop pill,
              inside the top bar. Every box is the Shop button's
              own deep-black pill. Tapping one filters the feed
@@ -2666,8 +2667,6 @@ const SHOP_PRODUCTS=[["76v4n1","Urban Style Men's Black Fleece Hoodie",600,"http
         var list = wishLoad();
         var c1 = document.getElementById("wishCount");
         if (c1) c1.textContent = String(list.length);
-        var c2 = document.getElementById("wishCountRv");
-        if (c2) c2.textContent = String(list.length);
         document.querySelectorAll(".m-item").forEach(function(sec){
           var btn = sec.querySelector(".m-wish");
           if (!btn) return;
@@ -2698,8 +2697,6 @@ const SHOP_PRODUCTS=[["76v4n1","Urban Style Men's Black Fleece Hoodie",600,"http
         wishBackdrop.setAttribute("aria-hidden", "true");
       }
       document.getElementById("wishBtn").addEventListener("click", openWish);
-      var wishBtnRvEl = document.getElementById("wishBtnRv");
-      if (wishBtnRvEl) wishBtnRvEl.addEventListener("click", openWish);
       document.getElementById("wishClose").addEventListener("click", closeWish);
       wishBackdrop.addEventListener("click", function(e){ if (e.target === wishBackdrop) closeWish(); });
       document.addEventListener("keydown", function(e){
@@ -3878,19 +3875,19 @@ const SHOP_PRODUCTS=[["76v4n1","Urban Style Men's Black Fleece Hoodie",600,"http
       /* the bottom clapperboard logo dock opens the reels view */
       document.getElementById("logoDock").addEventListener("click", rvOpenReels);
 
-      /* ----- scroll: ONLY the ← Shop pill stays -----
+      /* ----- scroll: ONLY the ← Shop pill + search icon stay -----
          The category chips now sit INSIDE the pinned top bar,
          in the same row as the ← Shop pill, so they cannot
          scroll away with the content by themselves — instead
          this listener adds .rv-chips-away to the view once it
          leaves the top and the chips shrink and fade out of
          the row (see the .rv-cats styles); in that same state
-         the bar's black strip turns transparent and the
-         search icon fades out too (see their styles), leaving
-         ONLY the ← Shop pill at the top, floating over the
-         content with no black band behind it; scrolling back
-         to the top removes the class and the chips, the black
-         strip and the search icon all return to the row. The Movies sub-genre row
+         the bar's black strip turns transparent too (see its
+         style), leaving ONLY the ← Shop pill and the search
+         icon at the top, floating over the content with no
+         black band behind them; scrolling back to the top
+         removes the class and the chips and the black strip
+         return to the row. The Movies sub-genre row
          sits in the normal flow below the bar, so it scrolls
          away with the content and returns by itself, as
          before. The Add-video logo button is position:fixed
@@ -14879,7 +14876,12 @@ const SHOP_PRODUCTS=[["76v4n1","Urban Style Men's Black Fleece Hoodie",600,"http
          the same way the reels videos are kept, so the logo
          stays where it was left on later visits. If storage is
          unavailable, dragging still works for the session. */
-      var RV_POS_KEY = "fgReelsLogoPosV1";
+      /* V2: the logo's home moved under the top bar when the
+         search icon took the bar's corner, so a spot saved
+         under V1 — up in that corner, possibly half off the
+         right edge — is forgotten once and the logo starts
+         from its new fully-on-screen home */
+      var RV_POS_KEY = "fgReelsLogoPosV2";
       function rvSaveLogoPos(){
         var rect = rvAddBtn.getBoundingClientRect();
         try{
