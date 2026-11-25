@@ -2025,6 +2025,11 @@
             <span class="rv-gname">Fruit Ninja</span>
             <span class="rv-gplay">▶ Play</span>
           </button>
+          <button class="rv-gcard" type="button" data-game="bubble">
+            <span class="rv-gicon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="14" r="5"/><circle cx="16.5" cy="8.5" r="4"/><circle cx="16" cy="18" r="2.5"/></svg></span>
+            <span class="rv-gname">Bubble Shooter</span>
+            <span class="rv-gplay">▶ Play</span>
+          </button>
         </div>
       </div>
       <!-- the GAME PLAY overlay: a full-screen layer like
@@ -12815,6 +12820,9 @@ const SHOP_PRODUCTS=[["76v4n1","Urban Style Men's Black Fleece Hoodie",600,"http
         /* Fruit Ninja also lives on its own full-screen page
            (canvas game), so tapping its card opens it. */
         if (name === "fruit"){ location.href = "fruit-ninja.html"; return; }
+        /* Bubble Shooter also lives on its own full-screen page
+           (canvas game), so tapping its card opens it. */
+        if (name === "bubble"){ location.href = "bubble-shooter.html"; return; }
         rvGameNow = name;
         if (rvGameTitleEl) rvGameTitleEl.textContent = RV_GAME_NAMES[name] || "Game";
         if (name === "snake"){ rvGameShowPanel("gpSnake"); gSnakeReset(); }
@@ -12841,7 +12849,7 @@ const SHOP_PRODUCTS=[["76v4n1","Urban Style Men's Black Fleece Hoodie",600,"http
       }
       (function(){
         /* per-visit shuffle (owner's order, 2026-11-25):
-           the six game cards change places on every page
+           the seven game cards change places on every page
            load, like every other Reels section — the cards
            themselves, their names and their games are
            untouched, only the arrangement differs per visit */

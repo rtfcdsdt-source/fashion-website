@@ -1,0 +1,786 @@
+<!doctype html>
+<html lang="hi">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="dark" />
+    <link rel="icon" href="data:," />
+    <title>Bubble Shooter</title>
+    <style>
+      :root {
+        --bg: #0d1526;
+        --panel: #16213a;
+        --panel-edge: #26355c;
+        --ink: #f2f5ff;
+        --ink-dim: #a9b6d8;
+        --accent: #ffc93c;
+        --accent-ink: #231a00;
+        --danger: #ff5d73;
+      }
+      * { box-sizing: border-box; }
+      html, body { height: 100%; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: "Segoe UI", system-ui, -apple-system, Roboto, "Noto Sans Devanagari", sans-serif;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        min-height: 100dvh;
+        overflow-x: hidden;
+      }
+      button, [role="button"] { min-height: 2.75rem; }
+      .wrap {
+        width: 100%;
+        max-width: 460px;
+        margin: 0 auto;
+        padding: 10px 12px calc(14px + env(safe-area-inset-bottom));
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        flex: 1;
+      }
+      .hud {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 8px;
+      }
+      .stat {
+        background: var(--panel);
+        border: 1px solid var(--panel-edge);
+        border-radius: 12px;
+        padding: 7px 10px 8px;
+        text-align: center;
+      }
+      .stat .label { font-size: 12px; color: var(--ink-dim); letter-spacing: .02em; }
+      .stat .value { font-size: 22px; font-weight: 800; line-height: 1.15; font-variant-numeric: tabular-nums; }
+      .stat .value.gold { color: var(--accent); }
+      .stage {
+        position: relative;
+        border-radius: 16px;
+        overflow: hidden;
+        border: 1px solid var(--panel-edge);
+        background: #101c36;
+        touch-action: none;
+        user-select: none;
+        -webkit-user-select: none;
+        -webkit-tap-highlight-color: transparent;
+      }
+      canvas { display: block; width: 100%; height: auto; }
+      .overlay {
+        position: absolute; inset: 0;
+        display: none;
+        align-items: center; justify-content: center;
+        background: rgba(7, 12, 24, .78);
+        backdrop-filter: blur(2px);
+        text-align: center;
+        padding: 20px;
+      }
+      .overlay.show { display: flex; }
+      .overlay .card { max-width: 300px; }
+      .overlay h2 { margin: 0 0 6px; font-size: 30px; font-weight: 800; }
+      .overlay p { margin: 0 0 16px; color: var(--ink-dim); font-size: 15px; line-height: 1.5; }
+      .overlay p b { color: var(--ink); }
+      .btn {
+        appearance: none;
+        border: 0;
+        border-radius: 999px;
+        background: var(--accent);
+        color: var(--accent-ink);
+        font: inherit;
+        font-weight: 800;
+        font-size: 16px;
+        padding: 10px 26px;
+        cursor: pointer;
+      }
+      .btn:active { transform: scale(.97); }
+      .controls {
+        display: flex;
+        gap: 8px;
+        align-items: stretch;
+      }
+      .ctl {
+        flex: 1;
+        appearance: none;
+        border: 1px solid var(--panel-edge);
+        background: var(--panel);
+        color: var(--ink);
+        border-radius: 12px;
+        font: inherit;
+        font-weight: 700;
+        font-size: 15px;
+        padding: 8px 6px;
+        cursor: pointer;
+        display: flex; align-items: center; justify-content: center; gap: 7px;
+      }
+      .ctl:active { transform: scale(.97); }
+      .ctl svg { width: 19px; height: 19px; flex: none; }
+      .hint {
+        text-align: center;
+        color: var(--ink-dim);
+        font-size: 13.5px;
+        line-height: 1.55;
+        margin: 0;
+      }
+      .hint b { color: var(--ink); }
+      @media (max-height: 640px) {
+        .stat .value { font-size: 19px; }
+        .hint { display: none; }
+      }
+
+      /* site back link (added for the website copy only) */
+      #backLink {
+        position: fixed;
+        top: 8px;
+        left: 8px;
+        z-index: 50;
+        display: inline-flex;
+        align-items: center;
+        min-height: 44px;
+        padding: 8px 14px;
+        background: rgba(22, 33, 58, 0.85);
+        border: 2px solid rgba(255, 201, 60, 0.45);
+        border-radius: 999px;
+        color: #ffe1a8;
+        font-weight: 700;
+        font-size: 16px;
+        text-decoration: none;
+        backdrop-filter: blur(2px);
+      }
+      #backLink:active { background: rgba(38, 53, 92, 0.9); }
+      .wrap { padding-top: 60px; }
+    </style>
+  </head>
+  <body>
+    <a id="backLink" href="https://fashion-website-theta-taupe.vercel.app/">← Wapas</a>
+    <div class="wrap">
+      <div class="hud" aria-label="खेल की जानकारी">
+        <div class="stat"><div class="label">स्कोर</div><div class="value gold" id="score">0</div></div>
+        <div class="stat"><div class="label">लेवल</div><div class="value" id="level">1</div></div>
+        <div class="stat"><div class="label">सबसे ज़्यादा</div><div class="value" id="best">0</div></div>
+      </div>
+
+      <div class="stage" id="stage">
+        <canvas id="game" width="420" height="600" aria-label="Bubble Shooter खेल का मैदान"></canvas>
+        <div class="overlay" id="overlay">
+          <div class="card">
+            <h2 id="ovTitle">खेल ख़त्म!</h2>
+            <p id="ovText"></p>
+            <button class="btn" id="ovBtn" type="button">फिर से खेलो</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="controls">
+        <button class="ctl" id="swapBtn" type="button" aria-label="गुब्बारा बदलो">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 4 3 8l4 4"/><path d="M3 8h13"/><path d="m17 20 4-4-4-4"/><path d="M21 16H8"/></svg>
+          बदलो
+        </button>
+        <button class="ctl" id="soundBtn" type="button" aria-label="आवाज़ चालू या बंद">
+          <svg id="soundOnIco" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.4 5.6a9 9 0 0 1 0 12.8"/></svg>
+          <svg id="soundOffIco" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:none"><path d="M11 5 6 9H3v6h3l5 4z"/><line x1="16" y1="9" x2="22" y2="15"/><line x1="22" y1="9" x2="16" y2="15"/></svg>
+          आवाज़
+        </button>
+        <button class="ctl" id="restartBtn" type="button" aria-label="खेल फिर से शुरू करो">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>
+          फिर से शुरू
+        </button>
+      </div>
+
+      <p class="hint">निशाना लगाने के लिए <b>उंगली या माउस घुमाओ</b>, छोड़ने पर गुब्बारा चलेगा।<br />एक ही रंग के <b>3 या ज़्यादा</b> गुब्बारे जोड़ो — सब फट जाएंगे!</p>
+    </div>
+
+    <script>
+      "use strict";
+      // ---------- Setup ----------
+      var canvas = document.getElementById("game");
+      var ctx = canvas.getContext("2d");
+      var W = 420, H = 600;              // logical playfield size
+      var COLS = 10;
+      var R = W / (COLS * 2);            // bubble radius = 21
+      var ROW_H = R * Math.sqrt(3);      // hex row height
+      var LINE_Y = H - 118;              // danger line
+      var SHOOTER_Y = H - 46;
+      var MAX_ANGLE = 1.32;              // radians from vertical
+
+      var PALETTE = [
+        { name: "red",    c1: "#ff8a8a", c2: "#e5323e", dark: "#8f1420" },
+        { name: "blue",   c1: "#8ec9ff", c2: "#2470e0", dark: "#0f3f86" },
+        { name: "green",  c1: "#9df0a8", c2: "#22a83e", dark: "#0f6423" },
+        { name: "yellow", c1: "#ffe98a", c2: "#f0a500", dark: "#8a5f00" },
+        { name: "pink",   c1: "#ffb1e3", c2: "#d63d9e", dark: "#7e1c5a" },
+        { name: "teal",   c1: "#8ff2e8", c2: "#0da5a0", dark: "#065e5a" }
+      ];
+
+      var grid = [];          // grid[row][col] = color index or -1
+      var score = 0, best = 0, level = 1;
+      var current = 0, next = 0;
+      var flying = null;      // {x,y,vx,vy,color}
+      var falling = [];       // {x,y,vy,color}
+      var particles = [];     // {x,y,vx,vy,life,max,color,r}
+      var floaters = [];      // {x,y,text,life}
+      var shotsSinceDrop = 0;
+      var gameState = "play"; // play | over | win
+      var aimAngle = 0;       // radians, 0 = straight up
+      var aiming = false;
+      var soundOn = true;
+      var shake = 0;
+      var audioCtx = null;
+
+      var scoreEl = document.getElementById("score");
+      var levelEl = document.getElementById("level");
+      var bestEl = document.getElementById("best");
+      var overlay = document.getElementById("overlay");
+      var ovTitle = document.getElementById("ovTitle");
+      var ovText = document.getElementById("ovText");
+      var ovBtn = document.getElementById("ovBtn");
+
+      // ---------- Sound (tiny synth, no files) ----------
+      function beep(freq, dur, type, vol, when) {
+        if (!soundOn) return;
+        try {
+          if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+          if (audioCtx.state === "suspended") audioCtx.resume();
+          var t = audioCtx.currentTime + (when || 0);
+          var o = audioCtx.createOscillator(), g = audioCtx.createGain();
+          o.type = type || "sine";
+          o.frequency.setValueAtTime(freq, t);
+          g.gain.setValueAtTime(vol || 0.12, t);
+          g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+          o.connect(g); g.connect(audioCtx.destination);
+          o.start(t); o.stop(t + dur);
+        } catch (e) { /* sound is optional */ }
+      }
+      function sndShoot() { beep(520, 0.09, "triangle", 0.10); }
+      function sndPop(n) {
+        for (var i = 0; i < Math.min(n, 6); i++) beep(620 + i * 110, 0.10, "sine", 0.11, i * 0.045);
+      }
+      function sndDrop(n) { beep(300, 0.16, "sine", 0.09); if (n > 3) beep(440, 0.16, "sine", 0.08, 0.07); }
+      function sndLose() { beep(320, 0.25, "sawtooth", 0.07); beep(210, 0.4, "sawtooth", 0.07, 0.18); }
+      function sndWin() { [523, 659, 784, 1046].forEach(function (f, i) { beep(f, 0.16, "triangle", 0.11, i * 0.11); }); }
+
+      // ---------- Grid helpers ----------
+      function rowOffset(row) { return (row % 2 === 1) ? R : 0; }
+      function cellCenter(row, col) {
+        return { x: R + col * 2 * R + rowOffset(row), y: R + row * ROW_H };
+      }
+      function rowCols(row) { return (row % 2 === 1) ? COLS - 1 : COLS; }
+      function colorsInPlay() {
+        var set = {}, out = [];
+        for (var r = 0; r < grid.length; r++)
+          for (var c = 0; c < grid[r].length; c++)
+            if (grid[r][c] >= 0 && !set[grid[r][c]]) { set[grid[r][c]] = 1; out.push(grid[r][c]); }
+        return out.length ? out : [0];
+      }
+      function pickColor() {
+        var cs = colorsInPlay();
+        return cs[Math.floor(Math.random() * cs.length)];
+      }
+      function neighbors(row, col) {
+        var odd = row % 2 === 1;
+        var d = odd
+          ? [[0, -1], [0, 1], [-1, 0], [-1, 1], [1, 0], [1, 1]]
+          : [[0, -1], [0, 1], [-1, -1], [-1, 0], [1, -1], [1, 0]];
+        var out = [];
+        for (var i = 0; i < d.length; i++) {
+          var nr = row + d[i][0], nc = col + d[i][1];
+          if (nr >= 0 && nr < grid.length && nc >= 0 && nc < rowCols(nr)) out.push([nr, nc]);
+        }
+        return out;
+      }
+
+      function buildLevel(lv) {
+        grid = [];
+        var colorCount = Math.min(3 + lv, PALETTE.length); // L1: 4 colors ... L3+: 6
+        var rows = Math.min(5 + lv, 9);
+        for (var r = 0; r < rows; r++) {
+          var row = [];
+          for (var c = 0; c < rowCols(r); c++) row.push(Math.floor(Math.random() * colorCount));
+          grid.push(row);
+        }
+        shotsSinceDrop = 0;
+        flying = null; falling = []; particles = []; floaters = [];
+        current = pickColor(); next = pickColor();
+      }
+
+      // ---------- Shooting ----------
+      function shoot() {
+        if (gameState !== "play" || flying) return;
+        var speed = 13;
+        flying = {
+          x: W / 2, y: SHOOTER_Y,
+          vx: Math.sin(aimAngle) * speed,
+          vy: -Math.cos(aimAngle) * speed,
+          color: current
+        };
+        current = next;
+        next = pickColor();
+        sndShoot();
+      }
+
+      function landBubble() {
+        // Find nearest empty cell to the flying bubble's position.
+        var bestCell = null, bestDist = Infinity;
+        for (var r = 0; r < grid.length + 1; r++) {
+          var cols = rowCols(r);
+          for (var c = 0; c < cols; c++) {
+            if (r < grid.length && grid[r][c] >= 0) continue;
+            var p = cellCenter(r, c);
+            var dx = p.x - flying.x, dy = p.y - flying.y;
+            var d = dx * dx + dy * dy;
+            if (d < bestDist) { bestDist = d; bestCell = [r, c]; }
+          }
+        }
+        if (!bestCell) { flying = null; return; }
+        var br = bestCell[0], bc = bestCell[1];
+        while (grid.length <= br) grid.push(new Array(rowCols(grid.length)).fill(-1));
+        grid[br][bc] = flying.color;
+        var placedColor = flying.color;
+        flying = null;
+        resolveMatches(br, bc, placedColor);
+        afterShot();
+      }
+
+      function resolveMatches(row, col, color) {
+        // Flood fill same color
+        var seen = {}, stack = [[row, col]], group = [];
+        seen[row + "," + col] = 1;
+        while (stack.length) {
+          var cell = stack.pop(); group.push(cell);
+          var ns = neighbors(cell[0], cell[1]);
+          for (var i = 0; i < ns.length; i++) {
+            var k = ns[i][0] + "," + ns[i][1];
+            if (!seen[k] && grid[ns[i][0]] && grid[ns[i][0]][ns[i][1]] === color) {
+              seen[k] = 1; stack.push(ns[i]);
+            }
+          }
+        }
+        if (group.length < 3) return;
+        // Pop them
+        var cx = 0, cy = 0;
+        for (var j = 0; j < group.length; j++) {
+          var p = cellCenter(group[j][0], group[j][1]);
+          cx += p.x; cy += p.y;
+          burst(p.x, p.y, color);
+          grid[group[j][0]][group[j][1]] = -1;
+        }
+        var pts = group.length * 10 + (group.length - 3) * 10;
+        addScore(pts, cx / group.length, cy / group.length);
+        sndPop(group.length);
+        shake = Math.min(4, group.length);
+        dropFloating();
+      }
+
+      function dropFloating() {
+        // Anything not connected to row 0 falls.
+        var anchored = {}, stack = [];
+        if (grid.length) {
+          for (var c = 0; c < grid[0].length; c++)
+            if (grid[0][c] >= 0) { anchored["0," + c] = 1; stack.push([0, c]); }
+        }
+        while (stack.length) {
+          var cell = stack.pop();
+          var ns = neighbors(cell[0], cell[1]);
+          for (var i = 0; i < ns.length; i++) {
+            var k = ns[i][0] + "," + ns[i][1];
+            if (!anchored[k] && grid[ns[i][0]] && grid[ns[i][0]][ns[i][1]] >= 0) {
+              anchored[k] = 1; stack.push(ns[i]);
+            }
+          }
+        }
+        var dropped = 0, dxSum = 0, dySum = 0;
+        for (var r = 0; r < grid.length; r++)
+          for (var cc = 0; cc < grid[r].length; cc++) {
+            if (grid[r][cc] >= 0 && !anchored[r + "," + cc]) {
+              var p = cellCenter(r, cc);
+              falling.push({ x: p.x, y: p.y, vy: 1 + Math.random() * 2, color: grid[r][cc] });
+              dxSum += p.x; dySum += p.y;
+              grid[r][cc] = -1; dropped++;
+            }
+          }
+        if (dropped) {
+          addScore(dropped * 20, dxSum / dropped, dySum / dropped);
+          sndDrop(dropped);
+        }
+      }
+
+      function afterShot() {
+        trimEmptyBottomRows();
+        if (colorsInPlayCount() === 0) { winLevel(); return; }
+        shotsSinceDrop++;
+        if (shotsSinceDrop >= 5) {
+          shotsSinceDrop = 0;
+          pushNewRow();
+        }
+        if (checkGameOver()) return;
+        // Keep current/next colors valid for what's on the board
+        var cs = colorsInPlay();
+        if (cs.indexOf(current) === -1) current = pickColor();
+        if (cs.indexOf(next) === -1) next = pickColor();
+      }
+      function colorsInPlayCount() {
+        var n = 0;
+        for (var r = 0; r < grid.length; r++)
+          for (var c = 0; c < grid[r].length; c++) if (grid[r][c] >= 0) n++;
+        return n;
+      }
+      function trimEmptyBottomRows() {
+        while (grid.length && grid[grid.length - 1].every(function (v) { return v < 0; })) grid.pop();
+      }
+      function pushNewRow() {
+        var colorCount = Math.min(3 + level, PALETTE.length);
+        var newRow = [];
+        // Parity flips for every existing row, so build with the new top row's parity (row 0 = even)
+        for (var c = 0; c < COLS; c++) newRow.push(Math.floor(Math.random() * colorCount));
+        grid.unshift(newRow);
+        // Rows below changed parity: their stored lengths may mismatch the new parity.
+        for (var r = 1; r < grid.length; r++) {
+          var want = rowCols(r);
+          while (grid[r].length > want) grid[r].pop();
+          while (grid[r].length < want) grid[r].push(-1);
+        }
+      }
+      function lowestBubbleBottom() {
+        var max = 0;
+        for (var r = 0; r < grid.length; r++)
+          for (var c = 0; c < grid[r].length; c++)
+            if (grid[r][c] >= 0) {
+              var p = cellCenter(r, c);
+              if (p.y + R > max) max = p.y + R;
+            }
+        return max;
+      }
+      function checkGameOver() {
+        if (lowestBubbleBottom() > LINE_Y) { gameOver(); return true; }
+        return false;
+      }
+
+      // ---------- Score / states ----------
+      function addScore(pts, x, y) {
+        score += pts;
+        if (score > best) best = score;
+        floaters.push({ x: x, y: y, text: "+" + pts, life: 1 });
+        updateHud();
+      }
+      function updateHud() {
+        scoreEl.textContent = score;
+        levelEl.textContent = level;
+        bestEl.textContent = best;
+      }
+      function gameOver() {
+        gameState = "over";
+        sndLose();
+        ovTitle.textContent = "खेल ख़त्म!";
+        ovText.innerHTML = "गुब्बारे नीचे वाली लाइन तक पहुँच गए।<br />तुम्हारा स्कोर: <b>" + score + "</b> · लेवल: <b>" + level + "</b>";
+        ovBtn.textContent = "फिर से खेलो";
+        overlay.classList.add("show");
+      }
+      function winLevel() {
+        gameState = "win";
+        score += 100;
+        if (score > best) best = score;
+        updateHud();
+        sndWin();
+        ovTitle.textContent = "लेवल " + level + " पूरा!";
+        ovText.innerHTML = "सारे गुब्बारे फोड़ दिए — <b>100</b> बोनस अंक मिले।<br />कुल स्कोर: <b>" + score + "</b>";
+        ovBtn.textContent = "अगला लेवल";
+        overlay.classList.add("show");
+      }
+      function startGame() {
+        score = 0; level = 1;
+        buildLevel(level);
+        gameState = "play";
+        overlay.classList.remove("show");
+        updateHud();
+      }
+      ovBtn.addEventListener("click", function () {
+        if (gameState === "win") {
+          level++;
+          buildLevel(level);
+          gameState = "play";
+          overlay.classList.remove("show");
+          updateHud();
+        } else {
+          startGame();
+        }
+      });
+      document.getElementById("restartBtn").addEventListener("click", startGame);
+      document.getElementById("swapBtn").addEventListener("click", function () {
+        if (gameState !== "play" || flying) return;
+        var t = current; current = next; next = t;
+        beep(700, 0.06, "triangle", 0.08);
+      });
+      var soundBtn = document.getElementById("soundBtn");
+      soundBtn.addEventListener("click", function () {
+        soundOn = !soundOn;
+        document.getElementById("soundOnIco").style.display = soundOn ? "" : "none";
+        document.getElementById("soundOffIco").style.display = soundOn ? "none" : "";
+        if (soundOn) beep(660, 0.08, "sine", 0.1);
+      });
+
+      // ---------- Particles ----------
+      function burst(x, y, color) {
+        var pal = PALETTE[color];
+        for (var i = 0; i < 9; i++) {
+          var a = Math.random() * Math.PI * 2, sp = 1 + Math.random() * 3.4;
+          particles.push({
+            x: x, y: y,
+            vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 1,
+            life: 1, max: 0.5 + Math.random() * 0.3,
+            color: pal.c2, r: 2 + Math.random() * 3.5
+          });
+        }
+      }
+
+      // ---------- Input ----------
+      function pointerPos(e) {
+        var rect = canvas.getBoundingClientRect();
+        return {
+          x: (e.clientX - rect.left) * (W / rect.width),
+          y: (e.clientY - rect.top) * (H / rect.height)
+        };
+      }
+      function setAim(e) {
+        var p = pointerPos(e);
+        var dx = p.x - W / 2, dy = SHOOTER_Y - p.y;
+        if (dy < 8) dy = 8;
+        var a = Math.atan2(dx, dy);
+        aimAngle = Math.max(-MAX_ANGLE, Math.min(MAX_ANGLE, a));
+      }
+      canvas.addEventListener("pointerdown", function (e) {
+        if (gameState !== "play") return;
+        aiming = true;
+        canvas.setPointerCapture(e.pointerId);
+        setAim(e);
+        if (audioCtx && audioCtx.state === "suspended") audioCtx.resume();
+      });
+      canvas.addEventListener("pointermove", function (e) {
+        if (aiming) setAim(e);
+        else if (gameState === "play" && e.pointerType === "mouse") setAim(e);
+      });
+      canvas.addEventListener("pointerup", function (e) {
+        if (!aiming) return;
+        aiming = false;
+        setAim(e);
+        shoot();
+      });
+      canvas.addEventListener("pointercancel", function () { aiming = false; });
+
+      // ---------- Update ----------
+      function step() {
+        if (flying) {
+          flying.x += flying.vx;
+          flying.y += flying.vy;
+          if (flying.x < R) { flying.x = R; flying.vx = Math.abs(flying.vx); beep(300, 0.04, "square", 0.04); }
+          if (flying.x > W - R) { flying.x = W - R; flying.vx = -Math.abs(flying.vx); beep(300, 0.04, "square", 0.04); }
+          var hit = flying.y <= R + 2;
+          if (!hit) {
+            outer:
+            for (var r = 0; r < grid.length; r++) {
+              for (var c = 0; c < grid[r].length; c++) {
+                if (grid[r][c] < 0) continue;
+                var p = cellCenter(r, c);
+                var dx = p.x - flying.x, dy = p.y - flying.y;
+                if (dx * dx + dy * dy < (2 * R - 3) * (2 * R - 3)) { hit = true; break outer; }
+              }
+            }
+          }
+          if (hit) landBubble();
+        }
+        for (var i = falling.length - 1; i >= 0; i--) {
+          var f = falling[i];
+          f.vy += 0.45; f.y += f.vy;
+          if (f.y - R > H) falling.splice(i, 1);
+        }
+        for (var j = particles.length - 1; j >= 0; j--) {
+          var pt = particles[j];
+          pt.x += pt.vx; pt.y += pt.vy; pt.vy += 0.08;
+          pt.life -= 0.03;
+          if (pt.life <= 0) particles.splice(j, 1);
+        }
+        for (var k = floaters.length - 1; k >= 0; k--) {
+          floaters[k].y -= 0.8;
+          floaters[k].life -= 0.016;
+          if (floaters[k].life <= 0) floaters.splice(k, 1);
+        }
+        if (shake > 0) shake *= 0.85; if (shake < 0.2) shake = 0;
+      }
+
+      // ---------- Drawing ----------
+      function drawBubble(x, y, color, r) {
+        var pal = PALETTE[color];
+        var g = ctx.createRadialGradient(x - r * 0.35, y - r * 0.4, r * 0.15, x, y, r);
+        g.addColorStop(0, pal.c1);
+        g.addColorStop(0.55, pal.c2);
+        g.addColorStop(1, pal.dark);
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0, Math.PI * 2);
+        ctx.fillStyle = g;
+        ctx.fill();
+        ctx.beginPath();
+        ctx.ellipse(x - r * 0.36, y - r * 0.44, r * 0.30, r * 0.18, -0.6, 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(255,255,255,0.75)";
+        ctx.fill();
+      }
+
+      function drawAimGuide() {
+        if (gameState !== "play" || flying) return;
+        var x = W / 2, y = SHOOTER_Y;
+        var vx = Math.sin(aimAngle), vy = -Math.cos(aimAngle);
+        ctx.save();
+        ctx.fillStyle = "rgba(255,255,255,0.55)";
+        var dist = 0, px = x, py = y, dirx = vx, diry = vy;
+        for (var i = 0; i < 26; i++) {
+          dist += 15;
+          px += dirx * 15; py += diry * 15;
+          if (px < R) { px = R; dirx = Math.abs(dirx); }
+          if (px > W - R) { px = W - R; dirx = -Math.abs(dirx); }
+          if (py < R) break;
+          if (i % 2 === 0) {
+            ctx.beginPath();
+            ctx.arc(px, py, 3, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          // stop the guide at the first bubble it would touch
+          var stop = false;
+          for (var r = 0; r < grid.length && !stop; r++)
+            for (var c = 0; c < grid[r].length; c++) {
+              if (grid[r][c] < 0) continue;
+              var p = cellCenter(r, c);
+              var dx = p.x - px, dy = p.y - py;
+              if (dx * dx + dy * dy < (2 * R) * (2 * R)) { stop = true; break; }
+            }
+          if (stop) break;
+        }
+        ctx.restore();
+      }
+
+      function draw() {
+        ctx.save();
+        ctx.clearRect(0, 0, W, H);
+        // background
+        var bg = ctx.createLinearGradient(0, 0, 0, H);
+        bg.addColorStop(0, "#132144");
+        bg.addColorStop(1, "#0b1526");
+        ctx.fillStyle = bg;
+        ctx.fillRect(0, 0, W, H);
+        if (shake) ctx.translate((Math.random() - 0.5) * shake, (Math.random() - 0.5) * shake);
+
+        // ceiling bar
+        ctx.fillStyle = "#1d2c52";
+        ctx.fillRect(0, 0, W, 8);
+
+        // danger line
+        ctx.save();
+        ctx.strokeStyle = "rgba(255,93,115,0.85)";
+        ctx.lineWidth = 2;
+        ctx.setLineDash([8, 6]);
+        ctx.beginPath(); ctx.moveTo(0, LINE_Y); ctx.lineTo(W, LINE_Y); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = "rgba(255,93,115,0.9)";
+        ctx.font = "700 11px sans-serif";
+        ctx.textAlign = "right";
+        ctx.fillText("ख़तरे की लाइन", W - 8, LINE_Y - 6);
+        ctx.restore();
+
+        // grid bubbles
+        for (var r = 0; r < grid.length; r++)
+          for (var c = 0; c < grid[r].length; c++)
+            if (grid[r][c] >= 0) {
+              var p = cellCenter(r, c);
+              drawBubble(p.x, p.y, grid[r][c], R - 1);
+            }
+
+        // falling bubbles
+        for (var i = 0; i < falling.length; i++)
+          drawBubble(falling[i].x, falling[i].y, falling[i].color, R - 1);
+
+        // particles
+        for (var j = 0; j < particles.length; j++) {
+          var pt = particles[j];
+          ctx.globalAlpha = Math.max(0, pt.life);
+          ctx.beginPath();
+          ctx.arc(pt.x, pt.y, pt.r, 0, Math.PI * 2);
+          ctx.fillStyle = pt.color;
+          ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+
+        drawAimGuide();
+
+        // shooter base
+        ctx.save();
+        ctx.translate(W / 2, SHOOTER_Y + 26);
+        ctx.rotate(aimAngle * 0.55);
+        ctx.fillStyle = "#2a3c68";
+        ctx.beginPath();
+        ctx.moveTo(-30, 16); ctx.lineTo(-13, -14); ctx.lineTo(13, -14); ctx.lineTo(30, 16);
+        ctx.closePath(); ctx.fill();
+        ctx.fillStyle = "#3b548c";
+        ctx.beginPath(); ctx.arc(0, 2, 13, 0, Math.PI * 2); ctx.fill();
+        ctx.restore();
+
+        // current + next bubble
+        if (gameState === "play") {
+          if (!flying) drawBubble(W / 2, SHOOTER_Y, current, R - 1);
+          // next bubble chip
+          ctx.beginPath();
+          ctx.arc(W / 2 + 52, SHOOTER_Y + 8, 15, 0, Math.PI * 2);
+          ctx.fillStyle = "rgba(255,255,255,0.10)";
+          ctx.fill();
+          ctx.strokeStyle = "rgba(255,255,255,0.25)";
+          ctx.stroke();
+          drawBubble(W / 2 + 52, SHOOTER_Y + 8, next, 11);
+          ctx.fillStyle = "rgba(255,255,255,0.65)";
+          ctx.font = "600 10px sans-serif";
+          ctx.textAlign = "center";
+          ctx.fillText("अगला", W / 2 + 52, SHOOTER_Y + 34);
+          // shots-until-drop pips
+          ctx.fillStyle = "rgba(255,255,255,0.65)";
+          ctx.font = "600 10px sans-serif";
+          ctx.textAlign = "left";
+          ctx.fillText("नई कतार:", 12, SHOOTER_Y + 34);
+          for (var s = 0; s < 5; s++) {
+            ctx.beginPath();
+            ctx.arc(58 + s * 13, SHOOTER_Y + 30, 4, 0, Math.PI * 2);
+            ctx.fillStyle = s < (5 - shotsSinceDrop) ? "#ffc93c" : "rgba(255,255,255,0.22)";
+            ctx.fill();
+          }
+        }
+        if (flying) drawBubble(flying.x, flying.y, flying.color, R - 1);
+
+        // floating score text
+        ctx.textAlign = "center";
+        ctx.font = "800 17px sans-serif";
+        for (var k = 0; k < floaters.length; k++) {
+          var fl = floaters[k];
+          ctx.globalAlpha = Math.max(0, fl.life);
+          ctx.fillStyle = "#ffc93c";
+          ctx.fillText(fl.text, fl.x, fl.y);
+        }
+        ctx.globalAlpha = 1;
+        ctx.restore();
+      }
+
+      function loop() {
+        step();
+        draw();
+        requestAnimationFrame(loop);
+      }
+
+      // ---------- Fit canvas to screen height ----------
+      function fitCanvas() {
+        var dpr = Math.min(window.devicePixelRatio || 1, 2);
+        canvas.width = W * dpr;
+        canvas.height = H * dpr;
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      }
+      window.addEventListener("resize", fitCanvas);
+
+      fitCanvas();
+      startGame();
+      loop();
+    </script>
+  </body>
+</html>
