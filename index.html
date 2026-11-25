@@ -1987,11 +1987,12 @@
         <div class="rv-tgrid" id="rvMusicGrid"></div>
       </div>
       <!-- the Games view: shown INSTEAD of the feed while
-           the Games box is selected — five playable game
+           the Games box is selected — six playable game
            cards; tapping one opens the play overlay below
            (see the GAMES block in the script). Four of the
            games run right here on the phone, no download;
-           Bike Race 3D opens its own full-screen page. -->
+           Bike Race 3D and Fruit Ninja open their own
+           full-screen pages. -->
       <div class="rv-catview" id="rvGamesView" hidden>
         <div class="rv-ggrid">
           <button class="rv-gcard" type="button" data-game="snake">
@@ -2017,6 +2018,11 @@
           <button class="rv-gcard" type="button" data-game="bike">
             <span class="rv-gicon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="5.5" cy="17.5" r="3.5"/><circle cx="18.5" cy="17.5" r="3.5"/><path d="M5.5 17.5 9 10h4l5.5 7.5"/><path d="M13 10l2-3.5h2.5"/><path d="M9 10 7.5 7h2.5"/></svg></span>
             <span class="rv-gname">Bike Race 3D</span>
+            <span class="rv-gplay">▶ Play</span>
+          </button>
+          <button class="rv-gcard" type="button" data-game="fruit">
+            <span class="rv-gicon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 3v18"/><path d="M12 8 7 6M12 8l5-2M12 14l-5 2M12 14l5 2"/><path d="M14 3c2-1.5 4-1 4.5 1"/></svg></span>
+            <span class="rv-gname">Fruit Ninja</span>
             <span class="rv-gplay">▶ Play</span>
           </button>
         </div>
@@ -12766,7 +12772,7 @@ const SHOP_PRODUCTS=[["76v4n1","Urban Style Men's Black Fleece Hoodie",600,"http
       /* ================= GAMES =================
          Four small games that run entirely on the phone —
          Snake, Car Race, Shooting and Puzzle (memory match),
-         plus Bike Race 3D on its own full-screen page.
+         plus Bike Race 3D and Fruit Ninja on their own full-screen pages.
          The Games chip shows the card grid (see the markup);
          tapping a card opens the play overlay — the bike card
          opens the game's own page instead. Opening a
@@ -12783,8 +12789,8 @@ const SHOP_PRODUCTS=[["76v4n1","Urban Style Men's Black Fleece Hoodie",600,"http
       var rvGameTitleEl = document.getElementById("rvGameTitle");
       var rvGameScoreEl = document.getElementById("rvGameScore");
       var rvGameStartBtn = document.getElementById("rvGameStart");
-      var rvGameNow = "";   /* "" | snake | car | shoot | puzzle | bike */
-      var RV_GAME_NAMES = { snake:"Snake", car:"Car Race", shoot:"Shooting", puzzle:"Puzzle", bike:"Bike Race 3D" };
+      var rvGameNow = "";   /* "" | snake | car | shoot | puzzle | bike | fruit */
+      var RV_GAME_NAMES = { snake:"Snake", car:"Car Race", shoot:"Shooting", puzzle:"Puzzle", bike:"Bike Race 3D", fruit:"Fruit Ninja" };
       function rvGameScore(t){ if (rvGameScoreEl) rvGameScoreEl.textContent = t; }
       function rvGameBtn(running){
         if (rvGameStartBtn) rvGameStartBtn.textContent = running ? "↻ Restart" : "▶ Start";
@@ -12806,6 +12812,9 @@ const SHOP_PRODUCTS=[["76v4n1","Urban Style Men's Black Fleece Hoodie",600,"http
            (Three.js — too big to inline here), so tapping
            its card opens that page directly. */
         if (name === "bike"){ location.href = "bike-race-3d.html"; return; }
+        /* Fruit Ninja also lives on its own full-screen page
+           (canvas game), so tapping its card opens it. */
+        if (name === "fruit"){ location.href = "fruit-ninja.html"; return; }
         rvGameNow = name;
         if (rvGameTitleEl) rvGameTitleEl.textContent = RV_GAME_NAMES[name] || "Game";
         if (name === "snake"){ rvGameShowPanel("gpSnake"); gSnakeReset(); }
@@ -12832,7 +12841,7 @@ const SHOP_PRODUCTS=[["76v4n1","Urban Style Men's Black Fleece Hoodie",600,"http
       }
       (function(){
         /* per-visit shuffle (owner's order, 2026-11-25):
-           the five game cards change places on every page
+           the six game cards change places on every page
            load, like every other Reels section — the cards
            themselves, their names and their games are
            untouched, only the arrangement differs per visit */
