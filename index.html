@@ -12451,6 +12451,20 @@ const SHOP_PRODUCTS=[["76v4n1","Urban Style Men's Black Fleece Hoodie",600,"http
         rvGameBtn(false);
       }
       (function(){
+        /* per-visit shuffle (owner's order, 2026-11-25):
+           the four game cards change places on every page
+           load, like every other Reels section — the cards
+           themselves, their names and their games are
+           untouched, only the arrangement differs per visit */
+        var ggrid = document.querySelector(".rv-ggrid");
+        if (ggrid){
+          var gc = Array.prototype.slice.call(ggrid.children);
+          for (var gi = gc.length - 1; gi > 0; gi--){
+            var gj = Math.floor(Math.random() * (gi + 1));
+            var gt = gc[gi]; gc[gi] = gc[gj]; gc[gj] = gt;
+          }
+          gc.forEach(function(c){ ggrid.appendChild(c); });
+        }
         var cards = document.querySelectorAll(".rv-gcard");
         for (var i = 0; i < cards.length; i++){
           (function(c){
@@ -13592,6 +13606,49 @@ const SHOP_PRODUCTS=[["76v4n1","Urban Style Men's Black Fleece Hoodie",600,"http
          included). The stage's live player is the only one
          in the view: switching category, closing the view
          or hiding the tab puts its facade back. */
+      /* ----- per-visit shuffle of the category grids
+         (owner's order, 2026-11-25) -----
+         Trailers, Gym and Music each weave their videos
+         into slots of a fixed rhythm — three tall cards,
+         then one wide card, all the way down — and the
+         stage above the grid opens on slot 0. On every
+         page load the videos are shuffled among the slots
+         OF THEIR OWN SHAPE (tall videos among the tall
+         slots, wide among the wide), so the rhythm and
+         every card's size stay exactly as they were and
+         only WHICH video sits in each slot changes —
+         a different arrangement on every visit, like the
+         shop's hoodies and the feed above. Slot 0 never
+         takes part: the stage's opening video stays the
+         one it always was (for Music, the newest song),
+         exactly as the feed's big frame keeps its newest
+         video. The lists themselves are the only thing
+         re-ordered — the grids render from them in chunks
+         as before, and search reads its own index, so
+         nothing else can tell the difference. */
+      function rvShuffleWoven(woven){
+        if (!woven || woven.length < 3) return;
+        var byFit = {}, fits = [], i, item;
+        for (i = 1; i < woven.length; i++){
+          item = woven[i];
+          if (!byFit[item.fit]){ byFit[item.fit] = []; fits.push(item.fit); }
+          byFit[item.fit].push(item);
+        }
+        fits.forEach(function(fit){
+          var arr = byFit[fit];
+          for (var i2 = arr.length - 1; i2 > 0; i2--){
+            var j = Math.floor(Math.random() * (i2 + 1));
+            var t = arr[i2]; arr[i2] = arr[j]; arr[j] = t;
+          }
+        });
+        var used = {};
+        for (i = 1; i < woven.length; i++){
+          var f2 = woven[i].fit;
+          var k = used[f2] || 0;
+          woven[i] = byFit[f2][k];
+          used[f2] = k + 1;
+        }
+      }
       var RV_TRAILER_WOVEN = (function(){
         var reels = RV_TRAILER_REEL_IDS.split(" ");
         var wide = RV_TRAILER_IDS.split(" ");
@@ -13605,6 +13662,7 @@ const SHOP_PRODUCTS=[["76v4n1","Urban Style Men's Black Fleece Hoodie",600,"http
         while (wi < wide.length){ out.push({ id: wide[wi], fit: "wide" }); wi++; }
         return out;
       })();
+      rvShuffleWoven(RV_TRAILER_WOVEN);
       var RV_TRAILER_CHUNK = 60;
       var rvTrailerBuilt = 0;      /* grid cards rendered so far */
       var rvTrailerPlaying = null; /* the grid card now holding the player */
@@ -13841,6 +13899,7 @@ const SHOP_PRODUCTS=[["76v4n1","Urban Style Men's Black Fleece Hoodie",600,"http
         while (wi < wide.length){ out.push({ id: wide[wi], fit: "wide" }); wi++; }
         return out;
       })();
+      rvShuffleWoven(RV_GYM_WOVEN);
       var RV_GYM_CHUNK = 60;
       var rvGymBuilt = 0;      /* grid cards rendered so far */
       var rvGymPlaying = null; /* the grid card now holding the player */
@@ -14009,6 +14068,10 @@ const SHOP_PRODUCTS=[["76v4n1","Urban Style Men's Black Fleece Hoodie",600,"http
         while (wi < wide.length){ out.push(wide[wi]); wi++; }
         return out;
       })();
+      /* per-visit shuffle (see rvShuffleWoven in the
+         Trailers block): slot 0 — the newest song — keeps
+         the stage, the rest change places every visit */
+      rvShuffleWoven(RV_MUSIC_WOVEN);
       var RV_MUSIC_CHUNK = 60;
       var rvMusicBuilt = 0;      /* grid cards rendered so far */
       /* the Music stage (see CATEGORY STAGES in the
@@ -14223,6 +14286,102 @@ const SHOP_PRODUCTS=[["76v4n1","Urban Style Men's Black Fleece Hoodie",600,"http
         rvLsSet(RV_PSHARED_KEY, null);
         rvLsSet(RV_PBUILTIN_KEY, null);
       }
+      /* ----- per-visit shuffle of the feed (owner's order,
+         2026-11-25) -----
+         The same shuffle the shop gives its hoodies, brought
+         to the reels: every time the feed is rebuilt — on
+         every page load, and again if a fresh shared list
+         lands — the flow below the big frame is re-ordered
+         at random, so no two visits show the videos in the
+         same arrangement, in All and in Movies alike (both
+         read this one list). What the owner pinned stays
+         pinned, exactly like the shop's featured six:
+           · Dil De Mohalle keeps the head of the list — it
+             stays FIRST in All, as it always was;
+           · the LAST card keeps the tail — the newest video
+             (or a remembered tap-promotion, which the rebuild
+             has just restored to the tail) keeps the big top
+             frame;
+           · inside Movies, the newest movie keeps the tail
+             of the movies, and the newest movie of each genre
+             keeps the tail of its genre — so the Movies big
+             frame, and every genre's big frame, also keep
+             their newest video, and only what flows below
+             them changes places.
+         Only the in-memory order moves: the saved lists are
+         never rewritten, so likes, views, deletes and the
+         tap-to-promote memory all keep working exactly as
+         before — a delete still never reshuffles anything
+         mid-visit; the new arrangement arrives with the
+         next visit, like the shop's. */
+      function rvShuffleFeedOrder(){
+        var n = rvOrder.length;
+        if (n < 3) return;
+        var head = (rvDilCardEl && rvOrder[0] === rvDilCardEl)
+          ? rvOrder[0] : null;
+        var tail = rvOrder[n - 1];
+        /* the big-frame holders of the Movies view and of
+           each genre sub-view, in the order they stand now */
+        var lastMovie = null, genreLast = {}, genreNames = [];
+        rvOrder.forEach(function(card){
+          var rec = card._rvRecord;
+          if (rec && rec.movie){
+            lastMovie = card;
+            var g = rec.genre || "";
+            if (!(g in genreLast)) genreNames.push(g);
+            genreLast[g] = card;
+          }
+        });
+        /* the movie pins: cards that must stay behind every
+           card of their group (null group = all movies). The
+           tail card needs no pin — the tail is its place —
+           and the newest movie overall is itself the newest
+           of its genre, so it stands for both. */
+        var pins = [];
+        genreNames.forEach(function(g){
+          var c = genreLast[g];
+          if (c && c !== head && c !== tail && c !== lastMovie){
+            pins.push({ card: c, genre: g });
+          }
+        });
+        var moviePin = (lastMovie && lastMovie !== head && lastMovie !== tail)
+          ? { card: lastMovie, genre: null } : null;
+        function isPinned(card){
+          if (card === head || card === tail) return true;
+          if (moviePin && card === moviePin.card) return true;
+          for (var i = 0; i < pins.length; i++){
+            if (pins[i].card === card) return true;
+          }
+          return false;
+        }
+        var pool = rvOrder.filter(function(card){ return !isPinned(card); });
+        for (var i = pool.length - 1; i > 0; i--){
+          var j = Math.floor(Math.random() * (i + 1));
+          var t = pool[i]; pool[i] = pool[j]; pool[j] = t;
+        }
+        /* put each pin back directly behind the last card
+           of its group in the shuffled pool — genre pins
+           first, then the newest movie behind the last
+           movie of all — then the pinned head and tail
+           close the list at both ends */
+        function isInGroup(card, genre){
+          var rec = card._rvRecord;
+          if (!rec || !rec.movie) return false;
+          return genre === null || (rec.genre || "") === genre;
+        }
+        function insertPin(pin){
+          var at = pool.length;
+          for (var i = pool.length - 1; i >= 0; i--){
+            if (isInGroup(pool[i], pin.genre)){ at = i + 1; break; }
+          }
+          pool.splice(at, 0, pin.card);
+        }
+        pins.forEach(insertPin);
+        if (moviePin) insertPin(moviePin);
+        if (head) pool.unshift(head);
+        if (tail) pool.push(tail);
+        rvOrder = pool;
+      }
       /* rebuild the whole feed from its four sources in
          merge order — Dil (oldest), built-ins, shared, local
          (newest) —
@@ -14233,7 +14392,10 @@ const SHOP_PRODUCTS=[["76v4n1","Urban Style Men's Black Fleece Hoodie",600,"http
          replay restores it by itself). Runs once on load —
          the shared list is still empty then, so the feed is
          Dil + built-ins + local — and again whenever
-         a fresh shared list actually changes the feed. */
+         a fresh shared list actually changes the feed.
+         Either way the finished order then goes through the
+         per-visit shuffle above, so every visit's feed is
+         arranged differently under the same big frame. */
       function rvRebuildFeed(){
         /* the adds below are replayed with the relayout
            suspended; the mixed flow is laid out once, at
@@ -14280,6 +14442,14 @@ const SHOP_PRODUCTS=[["76v4n1","Urban Style Men's Black Fleece Hoodie",600,"http
             if (pc && pc._rvZone !== "big") rvRearrange(pc);
           }
         }
+        /* the per-visit shuffle (see rvShuffleFeedOrder
+           above): the promotions are restored by now, so
+           the tail this shuffle preserves is the right
+           big-frame holder — newest video, or the promoted
+           one — and Dil still heads the list it came back
+           at the head of */
+        rvShuffleFeedOrder();
+        rvRelayout();
         rvSyncEmpty();
         rvSyncPromoteLayers();
       }
@@ -14838,10 +15008,12 @@ const SHOP_PRODUCTS=[["76v4n1","Urban Style Men's Black Fleece Hoodie",600,"http
          list (still empty at this point — it is fetched when
          the view opens) and the saved local videos through
          the rotation, so the feed comes back with the NEWEST
-         video in the big top frame and the rest in the mixed
-         flow below it — exactly the arrangement the
-         last add or delete left behind, and a deletion never
-         reshuffles the ones that remain. Every card is a
+         video in the big top frame — and the rest in the
+         mixed flow below it in this visit's fresh shuffle
+         (see rvShuffleFeedOrder): the same videos every
+         time, never in the same order twice, while a
+         deletion within a visit still never reshuffles the
+         ones that remain. Every card is a
          lightweight facade at this point, so nothing heavy
          loads while the shop is being browsed. */
       rvLoadSaved();
