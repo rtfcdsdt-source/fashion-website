@@ -4102,16 +4102,18 @@ const SHOP_PRODUCTS=[["76v4n1","Urban Style Men's Black Fleece Hoodie",600,"http
         if (card._rvType === "youtube" && card._rvYtId){
           var img = document.createElement("img");
           img.alt = "";
+          img.decoding = "async";
           img.setAttribute("loading", "lazy");
-          /* a BUILT-IN card shows the video's BIG, clear
-             thumbnail (maxresdefault) instead of the small
-             one; some Shorts have no maxres version, so when
-             the big image fails to load it swaps ONCE to the
-             always-present hqdefault — the listener is
-             attached before the src is set and fires only
-             once, so it can never loop and the card never
-             sits with a broken image. Other cards (Dil,
-             shared, local) keep hqdefault exactly as before. */
+          /* SCROLL FIX (2026-11-26, owner reported fast-scroll
+             loading lag): a built-in card's GRID facade loads
+             hqdefault, not maxresdefault — the maxres file is
+             ~5x heavier, so a fast scroll had to pull hundreds
+             of big images at once and cards sat blank. The grid
+             card is small (hq is 480px wide, plenty), and when
+             a card takes the big top frame the real player
+             replaces the facade anyway. The error listener
+             below stays as a one-time guard. Other cards (Dil,
+             shared, local) use hqdefault exactly as before. */
           var rvBuiltinFacade = !!(card._rvRecord && (card._rvRecord.builtin || card._rvRecord.movie || card._rvRecord.cartoon || card._rvRecord.trailer || card._rvRecord.music));
           if (rvBuiltinFacade){
             var rvHqSrc = "https://i.ytimg.com/vi/" + card._rvYtId + "/hqdefault.jpg";
@@ -4131,7 +4133,7 @@ const SHOP_PRODUCTS=[["76v4n1","Urban Style Men's Black Fleece Hoodie",600,"http
             img.addEventListener("load", function(){
               if (img.src === rvMaxSrc && img.naturalWidth <= 120) img.src = rvHqSrc;
             });
-            img.src = rvMaxSrc;
+            img.src = rvHqSrc;
           } else {
             img.src = "https://i.ytimg.com/vi/" + card._rvYtId + "/hqdefault.jpg";
           }
@@ -14220,7 +14222,7 @@ const SHOP_PRODUCTS=[["76v4n1","Urban Style Men's Black Fleece Hoodie",600,"http
         if ("IntersectionObserver" in window){
           var io = new IntersectionObserver(function(entries){
             if (entries[0].isIntersecting) rvTrailerRenderChunk();
-          }, { root: rvView, rootMargin: "800px 0px" });
+          }, { root: rvView, rootMargin: "1600px 0px" });
           io.observe(sentinel);
         } else {
           rvView.addEventListener("scroll", function(){
@@ -14368,7 +14370,7 @@ const SHOP_PRODUCTS=[["76v4n1","Urban Style Men's Black Fleece Hoodie",600,"http
         if ("IntersectionObserver" in window){
           var io = new IntersectionObserver(function(entries){
             if (entries[0].isIntersecting) rvGymRenderChunk();
-          }, { root: rvView, rootMargin: "800px 0px" });
+          }, { root: rvView, rootMargin: "1600px 0px" });
           io.observe(sentinel);
         } else {
           rvView.addEventListener("scroll", function(){
@@ -14550,7 +14552,7 @@ const SHOP_PRODUCTS=[["76v4n1","Urban Style Men's Black Fleece Hoodie",600,"http
         if ("IntersectionObserver" in window){
           var io = new IntersectionObserver(function(entries){
             if (entries[0].isIntersecting) rvMusicRenderChunk();
-          }, { root: rvView, rootMargin: "800px 0px" });
+          }, { root: rvView, rootMargin: "1600px 0px" });
           io.observe(sentinel);
         } else {
           rvView.addEventListener("scroll", function(){
