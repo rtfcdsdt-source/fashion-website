@@ -4096,63 +4096,29 @@ const SHOP_PRODUCTS=[["76v4n1","Urban Style Men's Black Fleece Hoodie",600,"http
          its facade — exactly one live player exists at any
          time. A card remembers everything needed to swap:
          _rvType, _rvSrc, _rvTitle, _rvYtId and _rvFit. */
-            /* QUALITY UPGRADE watcher (2026-11-26): a built-in facade
-         first shows the light hq thumbnail (fast scroll), and
-         once the card SETTLES on screen (~400ms still visible)
-         this watcher swaps in the big clear maxres thumbnail —
-         quality back, without paying the heavy download for
-         cards that only fly past during a fast scroll. */
-      var rvUpgradeIO = null;
-      function rvWatchUpgrade(img){
-        if (!("IntersectionObserver" in window)) return;
-        if (!rvUpgradeIO){
-          rvUpgradeIO = new IntersectionObserver(function(entries){
-            entries.forEach(function(en){
-              var im = en.target;
-              im._rvNear = en.isIntersecting;
-              if (en.isIntersecting && !im._rvUpDone && !im._rvUpTimer){
-                im._rvUpTimer = setTimeout(function(){
-                  im._rvUpTimer = null;
-                  if (im._rvNear && !im._rvUpDone){
-                    im._rvUpDone = true;
-                    rvUpgradeIO.unobserve(im);
-                    im.src = im._rvMaxSrc;
-                  }
-                }, 400);
-              }
-            });
-          }, { rootMargin: "0px" });
-        }
-        rvUpgradeIO.observe(img);
-      }
       function rvMakeFacade(card){
         var d = document.createElement("div");
         d.className = "rv-facade rv-fit-" + (card._rvFit || "wide");
         if (card._rvType === "youtube" && card._rvYtId){
           var img = document.createElement("img");
           img.alt = "";
-          img.decoding = "async";
           img.setAttribute("loading", "lazy");
-          /* SCROLL + QUALITY (2026-11-26): a built-in card's GRID
-             facade loads the LIGHT hqdefault first (~30KB vs the
-             maxres ~225KB), so a fast scroll no longer pulls
-             hundreds of heavy images at once and cards never sit
-             blank. The owner then found hq visibly softer, so
-             once a card settles on screen the upgrade watcher
-             (rvWatchUpgrade) swaps in the big clear maxres —
-             quality restored for everything actually looked at,
-             heavy downloads skipped for cards that fly past.
-             When a card takes the big top frame the real player
-             replaces the facade anyway. Other cards (Dil,
-             shared, local) use hqdefault exactly as before. */
+          /* a BUILT-IN card shows the video's BIG, clear
+             thumbnail (maxresdefault) instead of the small
+             one; some Shorts have no maxres version, so when
+             the big image fails to load it swaps ONCE to the
+             always-present hqdefault — the listener is
+             attached before the src is set and fires only
+             once, so it can never loop and the card never
+             sits with a broken image. Other cards (Dil,
+             shared, local) keep hqdefault exactly as before. */
           var rvBuiltinFacade = !!(card._rvRecord && (card._rvRecord.builtin || card._rvRecord.movie || card._rvRecord.cartoon || card._rvRecord.trailer || card._rvRecord.music));
           if (rvBuiltinFacade){
             var rvHqSrc = "https://i.ytimg.com/vi/" + card._rvYtId + "/hqdefault.jpg";
             var rvMaxSrc = "https://i.ytimg.com/vi/" + card._rvYtId + "/maxresdefault.jpg";
-            img._rvMaxSrc = rvMaxSrc;
             img.addEventListener("error", function(){
-              if (img.src === rvMaxSrc){ img._rvUpDone = true; img.src = rvHqSrc; }
-            });
+              if (img.src !== rvHqSrc) img.src = rvHqSrc;
+            }, { once:true });
             /* some videos have no maxres thumbnail at all, and
                for those YouTube answers with a valid 120x90
                grey placeholder JPEG instead of an error — the
@@ -4163,10 +4129,9 @@ const SHOP_PRODUCTS=[["76v4n1","Urban Style Men's Black Fleece Hoodie",600,"http
                and the src is still the maxres URL, swap ONCE to
                hqdefault (which those videos do have). */
             img.addEventListener("load", function(){
-              if (img.src === rvMaxSrc && img.naturalWidth <= 120){ img._rvUpDone = true; img.src = rvHqSrc; }
+              if (img.src === rvMaxSrc && img.naturalWidth <= 120) img.src = rvHqSrc;
             });
-            img.src = rvHqSrc;
-            rvWatchUpgrade(img);
+            img.src = rvMaxSrc;
           } else {
             img.src = "https://i.ytimg.com/vi/" + card._rvYtId + "/hqdefault.jpg";
           }
@@ -14255,7 +14220,7 @@ const SHOP_PRODUCTS=[["76v4n1","Urban Style Men's Black Fleece Hoodie",600,"http
         if ("IntersectionObserver" in window){
           var io = new IntersectionObserver(function(entries){
             if (entries[0].isIntersecting) rvTrailerRenderChunk();
-          }, { root: rvView, rootMargin: "1600px 0px" });
+          }, { root: rvView, rootMargin: "800px 0px" });
           io.observe(sentinel);
         } else {
           rvView.addEventListener("scroll", function(){
@@ -14403,7 +14368,7 @@ const SHOP_PRODUCTS=[["76v4n1","Urban Style Men's Black Fleece Hoodie",600,"http
         if ("IntersectionObserver" in window){
           var io = new IntersectionObserver(function(entries){
             if (entries[0].isIntersecting) rvGymRenderChunk();
-          }, { root: rvView, rootMargin: "1600px 0px" });
+          }, { root: rvView, rootMargin: "800px 0px" });
           io.observe(sentinel);
         } else {
           rvView.addEventListener("scroll", function(){
@@ -14585,7 +14550,7 @@ const SHOP_PRODUCTS=[["76v4n1","Urban Style Men's Black Fleece Hoodie",600,"http
         if ("IntersectionObserver" in window){
           var io = new IntersectionObserver(function(entries){
             if (entries[0].isIntersecting) rvMusicRenderChunk();
-          }, { root: rvView, rootMargin: "1600px 0px" });
+          }, { root: rvView, rootMargin: "800px 0px" });
           io.observe(sentinel);
         } else {
           rvView.addEventListener("scroll", function(){
