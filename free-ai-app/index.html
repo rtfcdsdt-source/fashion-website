@@ -691,6 +691,7 @@
         <button class="chip" type="button" id="trayYtManage">🎬 Channel manage</button>
         <button class="chip" type="button" id="trayMusic">🎵 Gaana banao</button>
         <button class="chip" type="button" id="trayTts">🔊 Awaaz banao</button>
+        <button class="chip" type="button" id="trayVoice">🎙️ Voice baat</button>
         <button class="chip" type="button" id="trayQr">🔳 QR banao</button>
         <button class="chip" type="button" id="trayInstallApp" style="display:none">📲 App install karo</button>
         <button class="chip" type="button" id="traySettings">🎨 Naam / Rang</button>
@@ -796,7 +797,7 @@
           "(7) If the user asks a follow-up change to code you already gave, return the FULL updated code again, not only the diff. " +
           "(8) If the request is unclear, make the most sensible complete version instead of asking many questions. " +
           "For non-coding questions, answer normally and helpfully — study, business, videos and daily questions included. Use simple markdown (bold, lists, code blocks) when it helps." +
-          " APP FEATURES: the app itself (not you) handles these — the user reaches them from the + tray at the bottom, from buttons the app adds itself, or by the exact chat commands written here; never invent other features or command formats. From the + tray: 'Photo banao' (or typing 'photo banao: ...') makes a photo from a written description; 'File padho' reads a PDF or text file the user attaches (the app extracts the file's text and sends it to you — then summarize it and answer questions about it); 'Video samjhao' understands a video file the user uploads (the server shows it to Gemini — max 2.5 MB, MP4/WebM/MOV); 'Photo samjhao' does the same for a photo (max 2.5 MB, JPEG/PNG/WebP/GIF; if the user typed a question before choosing the photo, answer that question about the photo); 'Gaana banao' only types 'gaana banao:' in the input — the user adds the topic and sends it, then the app makes a short instrumental tune (no vocals or lyrics, 10 seconds, free MusicGen model, plays in the chat with a download link; if the Hugging Face token is not set up yet, say so plainly); 'Tools' has a To-Do list, a Kharcha Tracker and a Quiz; 'Skills' is a library of 327 ready-made expert guides from the public ECC repo — the user picks one (or types 'skill <name>', e.g. 'skill seo') and you follow that guide until it is cleared (the ✕ on the skill chip above the input, or 'skill band karo'); only one skill at a time; 'Kya yaad hai' shows remembered facts — the app remembers facts for this chat when the user says 'yaad rakho'; 'Chat download' saves the whole chat as a file (it asks for confirmation first); 'Chat hamesha save karo' saves the chat and remembered facts on the server — the user signs in with Google and the chat is saved to their own Google account, so the same chat follows them to any device; the owner can instead (or also) turn on the older admin-code save; without sign-in the chat is saved only in this browser; 'Naam / Rang' lets the user rename you and change your theme colour; 'Dimaag' lets the user pick the AI model or turn on Deep mode; 'App install karo' installs this chat as a phone app (the button appears only when Chrome offers it, otherwise Chrome menu → 'Add to Home screen'); 'Gmail + YouTube alag karo' disconnects the Google accounts. Above every HTML code answer the app itself adds a '👁 Preview' button (the page runs inside the chat) and a '🌐 Live karo' button (publishes the page live — asks for the admin code once, then gives a live link); these two buttons exist only above HTML code answers, not in the tray. Under every answer there is a 'Sunao' button that reads the answer aloud, and the mic button takes voice dictation. For questions about current things (price, news, weather, gold rate...), the app searches Google itself and attaches the fresh results to your prompt — answer from those results; if no results are attached or they do not contain the answer, say honestly that fresh information was not found instead of guessing. When the user sends a link, the app checks it (name-based warnings instantly; it reads the page text through the free r.jina.ai reader when it can) and you then give a short Hinglish verdict — what the link looks like, what the danger is, what to do; NEVER say 'pakka safe' or '100% safe', it is only an estimate; if the page cannot be read, judge by the name only and say so clearly; never ask the user to send private or login links for checking. When the user sends a YouTube video link, the app reads the video's page text the same way and you summarise the video from its title and description ONLY — you cannot see the scenes or hear the audio, so never invent scene details; if the page cannot be read, say so honestly and do not guess. Gmail (the user connects their own Gmail with Google login from the + tray 'Gmail jodo' button): the app lists the latest emails (sender + subject + a short snippet), reads one email fully when asked, and sends an email when asked (step by step: who, subject, what to write — it shows the draft first and sends only after the user says 'bhej do'); the exact commands are 'email bhejo' to send, 'mere liye email likho: <topic>' to get a complete formal email written (subject + body — this does NOT send it; sending needs a separate 'email bhejo'), 'meri email dikhao' or 'unread email dikhao' to list emails, 'pehli email padho' or '2 number wali email padho' to read one fully — quote THESE commands in any how-to guide; the mail stays in the user's own account and nothing is saved on the server; if Gmail is not connected yet, say so plainly instead of guessing. Instagram (the user connects their own Professional account from the + tray 'Instagram jodo' button; the login token is kept in memory only): 'Instagram post' or 'instagram par post karo' posts a photo (the app uploads the photo to the user's own site first for a public link, then publishes it through the Instagram API; the caption is the text typed with the command); if Instagram is not connected yet, say so plainly and tell the user the Meta app setup is still needed. YouTube search: 'youtube par ... dhoondho' — the app asks the server, which searches YouTube and shows the top videos with links; if the YouTube key is not set up yet, say so plainly. YouTube upload (the + tray 'YouTube upload' button, or typing 'youtube par video upload karo', 'upload karo' or 'fir se upload karo'): the user picks a video file (max 100 MB, MP4/WebM/MOV); the video appears inside the chat and the app makes a title, description, hashtags and SEO tags for it (from the file's name, and for small files from the video's actual content) and shows them for approval — the approval message shows the channel name, the user can edit the title/description and pick the visibility (Public / Unlisted / Private — default Public), and 'Haan, pasand aaya' uploads it to the user's own YouTube channel with their Google login token, while 'Nahin, pasand nahi aaya' makes new suggestions; the user can also type 'haan' to upload, 'pasand nahi aaya' for new suggestions, or 'upload kar do' to upload straight away; if the account has no YouTube channel the app says so and does not upload; if Google login is not connected yet, say so plainly. The app handles those requests itself, so never claim you cannot make photos or remember things in this chat." +
+          " APP FEATURES: the app itself (not you) handles these — the user reaches them from the + tray at the bottom, from buttons the app adds itself, or by the exact chat commands written here; never invent other features or command formats. From the + tray: 'Photo banao' (or typing 'photo banao: ...') makes a photo from a written description; 'File padho' reads a PDF or text file the user attaches (the app extracts the file's text and sends it to you — then summarize it and answer questions about it); 'Video samjhao' understands a video file the user uploads (the server shows it to Gemini — max 2.5 MB, MP4/WebM/MOV); 'Photo samjhao' does the same for a photo (max 2.5 MB, JPEG/PNG/WebP/GIF; if the user typed a question before choosing the photo, answer that question about the photo); 'Gaana banao' only types 'gaana banao:' in the input — the user adds the topic and sends it, then the app makes a short instrumental tune (no vocals or lyrics, 10 seconds, free MusicGen model, plays in the chat with a download link; if the Hugging Face token is not set up yet, say so plainly); 'Tools' has a To-Do list, a Kharcha Tracker and a Quiz; 'Skills' is a library of 327 ready-made expert guides from the public ECC repo — the user picks one (or types 'skill <name>', e.g. 'skill seo') and you follow that guide until it is cleared (the ✕ on the skill chip above the input, or 'skill band karo'); only one skill at a time; 'Kya yaad hai' shows remembered facts — the app remembers facts for this chat when the user says 'yaad rakho'; 'Chat download' saves the whole chat as a file (it asks for confirmation first); 'Chat hamesha save karo' saves the chat and remembered facts on the server — the user signs in with Google and the chat is saved to their own Google account, so the same chat follows them to any device; the owner can instead (or also) turn on the older admin-code save; without sign-in the chat is saved only in this browser; 'Naam / Rang' lets the user rename you and change your theme colour; 'Dimaag' lets the user pick the AI model or turn on Deep mode; 'App install karo' installs this chat as a phone app (the button appears only when Chrome offers it, otherwise Chrome menu → 'Add to Home screen'); 'Gmail + YouTube alag karo' disconnects the Google accounts. Above every HTML code answer the app itself adds a '👁 Preview' button (the page runs inside the chat) and a '🌐 Live karo' button (publishes the page live — asks for the admin code once, then gives a live link); these two buttons exist only above HTML code answers, not in the tray. Under every answer there is a 'Sunao' button that reads the answer aloud, and the mic button takes voice dictation. 'Voice baat' (in the + tray) starts a hands-free voice conversation: the user speaks instead of typing, your answers are read aloud automatically, and the app keeps listening until the user stops it from the tray or says 'band karo'. For questions about current things (price, news, weather, gold rate...), the app searches Google itself and attaches the fresh results to your prompt — answer from those results; if no results are attached or they do not contain the answer, say honestly that fresh information was not found instead of guessing. When the user sends a link, the app checks it (name-based warnings instantly; it reads the page text through the free r.jina.ai reader when it can) and you then give a short Hinglish verdict — what the link looks like, what the danger is, what to do; NEVER say 'pakka safe' or '100% safe', it is only an estimate; if the page cannot be read, judge by the name only and say so clearly; never ask the user to send private or login links for checking. When the user sends a YouTube video link, the app reads the video's page text the same way and you summarise the video from its title and description ONLY — you cannot see the scenes or hear the audio, so never invent scene details; if the page cannot be read, say so honestly and do not guess. Gmail (the user connects their own Gmail with Google login from the + tray 'Gmail jodo' button): the app lists the latest emails (sender + subject + a short snippet), reads one email fully when asked, and sends an email when asked (step by step: who, subject, what to write — it shows the draft first and sends only after the user says 'bhej do'); the exact commands are 'email bhejo' to send, 'mere liye email likho: <topic>' to get a complete formal email written (subject + body — this does NOT send it; sending needs a separate 'email bhejo'), 'meri email dikhao' or 'unread email dikhao' to list emails, 'pehli email padho' or '2 number wali email padho' to read one fully — quote THESE commands in any how-to guide; the mail stays in the user's own account and nothing is saved on the server; if Gmail is not connected yet, say so plainly instead of guessing. Instagram (the user connects their own Professional account from the + tray 'Instagram jodo' button; the login token is kept in memory only): 'Instagram post' or 'instagram par post karo' posts a photo (the app uploads the photo to the user's own site first for a public link, then publishes it through the Instagram API; the caption is the text typed with the command); if Instagram is not connected yet, say so plainly and tell the user the Meta app setup is still needed. YouTube search: 'youtube par ... dhoondho' — the app asks the server, which searches YouTube and shows the top videos with links; if the YouTube key is not set up yet, say so plainly. YouTube upload (the + tray 'YouTube upload' button, or typing 'youtube par video upload karo', 'upload karo' or 'fir se upload karo'): the user picks a video file (max 100 MB, MP4/WebM/MOV); the video appears inside the chat and the app makes a title, description, hashtags and SEO tags for it (from the file's name, and for small files from the video's actual content) and shows them for approval — the approval message shows the channel name, the user can edit the title/description and pick the visibility (Public / Unlisted / Private — default Public), and 'Haan, pasand aaya' uploads it to the user's own YouTube channel with their Google login token, while 'Nahin, pasand nahi aaya' makes new suggestions; the user can also type 'haan' to upload, 'pasand nahi aaya' for new suggestions, or 'upload kar do' to upload straight away; if the account has no YouTube channel the app says so and does not upload; if Google login is not connected yet, say so plainly. The app handles those requests itself, so never claim you cannot make photos or remember things in this chat." +
           " THINKING RULES: before answering, think step by step silently. For maths, logic and code, double-check your result before replying. Never invent facts, names, numbers or links - if you are not sure, say so honestly and give your best guess clearly marked as a guess. Answer exactly what was asked, with no filler.";
 
         var history = []; // {role: 'user'|'assistant', content: string}
@@ -824,6 +825,11 @@
           }
           saveLocalHist();
           saveServerHist();
+          try {
+            var _vr = role && typeof role === "object" ? role.role : role;
+            var _vc = role && typeof role === "object" ? role.content : content;
+            if (_vr === "assistant" && _vc && typeof voiceAfterReply === "function") voiceAfterReply(String(_vc));
+          } catch (e) {}
         }
         // ---- Local save (flaw 13 fix): chat isi browser ke localStorage mein bhi
         // save hoti hai, taaki refresh ke baad bhi wapas aa jaye — bina admin code ke.
@@ -2362,7 +2368,7 @@ function ensureTesseract() {
   if (__tessPromise) return __tessPromise;
   __tessPromise = new Promise(function (resolve, reject) {
     var s = document.createElement("script");
-    s.src = "https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js";
+    s.src = "https://unpkg.com/tesseract.js@5/dist/tesseract.min.js";
     s.onload = function () { if (window.Tesseract) resolve(); else reject(new Error("tess missing")); };
     s.onerror = function () { reject(new Error("tess load fail")); };
     document.head.appendChild(s);
@@ -3951,6 +3957,167 @@ function showNaamMatlab() {
               micBtn.classList.add("rec");
             } catch (e2) { listening = false; micBtn.classList.remove("rec"); }
           }
+        });
+
+        /* ---------------- voice baat (hands-free baat-cheet) ----------------
+           + tray ka Voice baat button: user bolta hai, jawab awaaz mein
+           sunai deta hai, phir app khud dobara sunne lagta hai — jab tak
+           user band na kare (tray se ya "band karo" bol kar). Jawab ka
+           hook pushHist mein hai: har assistant jawab ke baad
+           voiceAfterReply chalta hai. */
+
+        var voiceMode = false;
+        var vRec = null;
+        var vListening = false;
+        var vSpeaking = false;
+        var vNetErr = 0;
+        var voiceStatusEl = null;
+
+        function voiceStatus(msg) {
+          if (!voiceStatusEl) {
+            voiceStatusEl = document.createElement("div");
+            voiceStatusEl.style.cssText = "text-align:center;font-size:.85rem;padding:6px 10px;color:#2563eb";
+            formEl.parentNode.insertBefore(voiceStatusEl, formEl);
+          }
+          voiceStatusEl.textContent = msg || "";
+          voiceStatusEl.style.display = msg ? "" : "none";
+        }
+
+        function voiceSupported() {
+          var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+          return !!(SR && ("speechSynthesis" in window));
+        }
+
+        function voiceClean(text) {
+          var clean = String(text || "")
+            .replace(/```[\s\S]*?```/g, " Code upar diya hai, dekh lo. ")
+            .replace(/`([^`]*)`/g, "$1")
+            .replace(/\*\*([^*]+)\*\*/g, "$1")
+            .replace(/https?:\/\/\S+/g, " link ")
+            .replace(/[#>*_~]/g, " ")
+            .replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2190}-\u{21FF}\u{FE0F}]/gu, "")
+            .replace(/\s+/g, " ")
+            .trim();
+          if (clean.length > 900) clean = clean.slice(0, 900);
+          return clean;
+        }
+
+        function voiceSpeak(text, thenListen) {
+          var clean = voiceClean(text);
+          if (!clean) { if (thenListen) voiceListen(); return; }
+          var u = new SpeechSynthesisUtterance(clean);
+          u.lang = /[\u0900-\u097F]/.test(text) ? "hi-IN" : "en-IN";
+          var done = false;
+          var timer = setTimeout(function () { adv(); }, Math.min(60000, clean.length * 120 + 5000));
+          function adv() {
+            if (done) return;
+            done = true;
+            clearTimeout(timer);
+            vSpeaking = false;
+            speaking = false;
+            resetSpeakLabels();
+            if (voiceMode && thenListen) voiceListen();
+          }
+          u.onend = adv;
+          u.onerror = adv;
+          vSpeaking = true;
+          speaking = true;
+          try { speechSynthesis.cancel(); } catch (e) {}
+          speechSynthesis.speak(u);
+        }
+
+        function voiceAfterReply(text) {
+          if (!voiceMode) return;
+          setTimeout(function () { if (voiceMode) voiceSpeak(text, true); }, 350);
+        }
+
+        function voiceListen() {
+          if (!voiceMode || vListening || vSpeaking) return;
+          if (speaking) { setTimeout(function () { voiceListen(); }, 900); return; }
+          var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+          if (!SR) { voiceStop(); return; }
+          stopListening();
+          var rec = new SR();
+          vRec = rec;
+          rec.interimResults = false;
+          rec.continuous = false;
+          rec.lang = "hi-IN";
+          var got = false;
+          rec.onresult = function (e) {
+            var txt = "";
+            for (var i = 0; i < e.results.length; i++) txt += e.results[i][0].transcript;
+            txt = (txt || "").trim();
+            if (!txt) return;
+            got = true;
+            vNetErr = 0;
+            if (/^(band karo|band kar do|stop|ruk jao|ruk ja)\b/i.test(txt)) {
+              voiceStop();
+              voiceSpeak("Theek hai, voice baat band kar di. Kuch aur chahiye to type karke bhejo!", false);
+              return;
+            }
+            handleSend(txt);
+          };
+          rec.onerror = function (e) {
+            vListening = false;
+            if (vRec === rec) vRec = null;
+            if (!voiceMode) return;
+            var err = e && e.error ? e.error : "";
+            if (err === "not-allowed" || err === "service-not-allowed" || err === "audio-capture") {
+              voiceStop();
+              replyLocal("🎙️ Mic ki anumati (permission) nahi mili — browser ki Settings mein jaakar is site ke liye Microphone Allow karo, phir Voice baat dobara shuru karo.");
+              return;
+            }
+            if (err === "network") {
+              vNetErr++;
+              if (vNetErr >= 3) {
+                voiceStop();
+                replyLocal("🎙️ Voice sunne wali service se net par jod nahi paya — net check karke Voice baat dobara shuru karo.");
+                return;
+              }
+            }
+          };
+          rec.onend = function () {
+            vListening = false;
+            if (vRec === rec) vRec = null;
+            if (voiceMode && !got && !busy && !vSpeaking) {
+              setTimeout(function () { voiceListen(); }, 450);
+            }
+          };
+          try {
+            rec.start();
+            vListening = true;
+            voiceStatus("🎙️ Sun raha hoon… bolo");
+          } catch (e2) {
+            vListening = false;
+          }
+        }
+
+        function voiceStop() {
+          voiceMode = false;
+          vListening = false;
+          if (vRec) { try { vRec.stop(); } catch (e) {} vRec = null; }
+          try { speechSynthesis.cancel(); } catch (e) {}
+          vSpeaking = false;
+          speaking = false;
+          resetSpeakLabels();
+          voiceStatus("");
+          var b = document.getElementById("trayVoice");
+          if (b) b.textContent = "🎙️ Voice baat";
+        }
+
+        document.getElementById("trayVoice").addEventListener("click", function () {
+          trayEl.classList.remove("open");
+          plusBtn.classList.remove("open");
+          if (voiceMode) { voiceStop(); return; }
+          if (!voiceSupported()) {
+            replyLocal("Is browser mein voice baat support nahi hai 😕 — Chrome browser mein khologe to chalega. Tab tak type karke bhejo, main yahin hoon!");
+            return;
+          }
+          voiceMode = true;
+          vNetErr = 0;
+          var b = document.getElementById("trayVoice");
+          if (b) b.textContent = "⏹️ Voice band karo";
+          replyLocal("🎙️ Voice baat shuru ho gayi hai! Ab bas bolo — main sun raha hoon, jawab bol kar dunga. Band karne ke liye 'band karo' bolo ya + tray se Voice band karo dabao.");
         });
 
         /* ---------------- naam / rang (settings) ---------------- */
