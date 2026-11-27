@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="color-scheme" content="dark" />
+<title>MiniHub — Shiva ka GitHub</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0d1117; color: #e6edf3; font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif; min-height: 100vh; }
+  a { color: #58a6ff; text-decoration: none; }
+  button { font-family: inherit; cursor: pointer; }
+  .topbar { background: #010409; border-bottom: 1px solid #30363d; padding: 10px 14px; display: flex; align-items: center; gap: 10px; position: sticky; top: 0; z-index: 20; }
+  .logo { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 18px; color: #e6edf3; }
+  .logo .mark { width: 30px; height: 30px; border-radius: 50%; background: #e6edf3; color: #0d1117; display: flex; align-items: center; justify-content: center; font-size: 17px; font-weight: 900; }
+  .topbar .sp { flex: 1; }
+  .btn { background: #21262d; color: #e6edf3; border: 1px solid #30363d; border-radius: 6px; padding: 6px 12px; font-size: 14px; }
+  .btn:active { background: #30363d; }
+  .btn.green { background: #238636; border-color: #2ea043; color: #fff; font-weight: 600; }
+  .btn.green:active { background: #2ea043; }
+  .btn.danger { color: #f85149; }
+  .btn.small { padding: 4px 10px; font-size: 13px; }
+  .wrap { max-width: 880px; margin: 0 auto; padding: 16px 14px 60px; }
+  .profile { display: flex; gap: 14px; align-items: center; padding: 8px 0 16px; }
+  .avatar { width: 64px; height: 64px; border-radius: 50%; background: #238636; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 30px; font-weight: 800; border: 2px solid #30363d; flex: none; }
+  .profile h1 { font-size: 22px; }
+  .profile .uname { color: #8b949e; font-size: 15px; }
+  .profile .bio { color: #c9d1d9; font-size: 14px; margin-top: 3px; }
+  .stats { display: flex; gap: 16px; color: #8b949e; font-size: 13px; margin-top: 5px; }
+  .stats b { color: #e6edf3; }
+  .searchrow { display: flex; gap: 8px; margin: 6px 0 14px; }
+  .searchrow input { flex: 1; }
+  input[type="text"], textarea { background: #0d1117; border: 1px solid #30363d; color: #e6edf3; border-radius: 6px; padding: 9px 12px; font-size: 15px; width: 100%; outline: none; }
+  input[type="text"]:focus, textarea:focus { border-color: #58a6ff; }
+  textarea { font-family: ui-monospace, Consolas, monospace; font-size: 13.5px; line-height: 1.55; resize: vertical; }
+  .repo { border: 1px solid #30363d; border-radius: 8px; padding: 14px; margin-bottom: 12px; background: #0d1117; }
+  .repo h3 { font-size: 17px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .repo .desc { color: #8b949e; font-size: 14px; margin-top: 5px; }
+  .repo .meta { display: flex; gap: 16px; color: #8b949e; font-size: 12.5px; margin-top: 9px; align-items: center; flex-wrap: wrap; }
+  .langdot { width: 11px; height: 11px; border-radius: 50%; display: inline-block; vertical-align: -1px; margin-right: 4px; }
+  .badge { font-size: 11px; border: 1px solid #30363d; color: #8b949e; border-radius: 20px; padding: 1px 8px; font-weight: 400; }
+  .starbtn { background: none; border: 1px solid #30363d; border-radius: 6px; color: #e6edf3; padding: 3px 10px; font-size: 13px; }
+  .starbtn.on { color: #e3b341; border-color: #e3b341; }
+  .crumbs { font-size: 16px; margin-bottom: 12px; display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
+  .crumbs .sep { color: #8b949e; }
+  .filetable { border: 1px solid #30363d; border-radius: 8px; overflow: hidden; }
+  .filerow { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-bottom: 1px solid #21262d; font-size: 14.5px; }
+  .filerow:last-child { border-bottom: none; }
+  .filerow .fname { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .filerow .fmeta { color: #8b949e; font-size: 12px; flex: none; }
+  .filerow.head { background: #161b22; color: #e6edf3; font-weight: 600; }
+  .card { border: 1px solid #30363d; border-radius: 8px; background: #0d1117; margin-top: 16px; }
+  .card .chead { background: #161b22; padding: 9px 14px; font-size: 13.5px; font-weight: 600; border-bottom: 1px solid #30363d; border-radius: 8px 8px 0 0; }
+  .card .cbody { padding: 14px; }
+  .readme { font-size: 15px; line-height: 1.65; color: #e6edf3; white-space: pre-wrap; word-break: break-word; }
+  .readme h1, .readme h2, .readme h3 { margin: 10px 0 4px; }
+  .codebox { border: 1px solid #30363d; border-radius: 8px; overflow-x: auto; background: #0d1117; }
+  .codebox table { border-collapse: collapse; width: 100%; }
+  .codebox td { font-family: ui-monospace, Consolas, monospace; font-size: 13px; line-height: 1.6; vertical-align: top; }
+  .codebox td.ln { color: #6e7681; text-align: right; padding: 10px 8px 10px 12px; user-select: none; border-right: 1px solid #21262d; white-space: pre; }
+  .codebox td.lc { padding: 10px 14px; white-space: pre; color: #e6edf3; }
+  .tok-k { color: #ff7b72; } .tok-s { color: #a5d6ff; } .tok-c { color: #8b949e; font-style: italic; } .tok-n { color: #79c0ff; }
+  .form label { display: block; font-size: 14px; font-weight: 600; margin: 14px 0 6px; }
+  .form .hint { color: #8b949e; font-size: 12.5px; margin-top: 4px; }
+  .rowbtns { display: flex; gap: 8px; margin-top: 16px; flex-wrap: wrap; }
+  .empty { text-align: center; color: #8b949e; padding: 34px 10px; font-size: 15px; }
+  .toast { position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%); background: #238636; color: #fff; padding: 10px 18px; border-radius: 24px; font-size: 14.5px; z-index: 50; display: none; box-shadow: 0 4px 18px rgba(0,0,0,.5); }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="logo"><span class="mark">M</span> MiniHub</div>
+  <div class="sp"></div>
+  <button class="btn green" id="topNewBtn">+ New</button>
+</div>
+<div class="wrap">
+
+  <!-- HOME -->
+  <section id="viewHome">
+    <div class="profile">
+      <div class="avatar">S</div>
+      <div>
+        <h1>Shiva</h1>
+        <div class="uname">@shiva-dev</div>
+        <div class="bio">Mere saare projects aur code — ek jagah 📦</div>
+        <div class="stats"><span>📦 <b id="statRepos">0</b> repositories</span><span>📄 <b id="statFiles">0</b> files</span><span>⭐ <b id="statStars">0</b> stars</span></div>
+      </div>
+    </div>
+    <div class="searchrow">
+      <input type="text" id="repoSearch" placeholder="Repository dhoondho…" />
+      <button class="btn green" id="homeNewBtn">+ New repo</button>
+    </div>
+    <div id="repoList"></div>
+  </section>
+
+  <!-- REPO -->
+  <section id="viewRepo" class="hidden">
+    <div class="crumbs"><a href="#" id="crumbHome1">shiva-dev</a><span class="sep">/</span><b id="crumbRepoName"></b><span class="badge">Public</span></div>
+    <p id="repoDesc" style="color:#8b949e;font-size:14.5px;margin-bottom:14px"></p>
+    <div class="filetable">
+      <div class="filerow head"><span style="flex:1">📁 Files</span><button class="btn green small" id="addFileBtn">+ File jodo</button></div>
+      <div id="fileList"></div>
+    </div>
+    <div class="card" id="readmeCard">
+      <div class="chead">📖 README.md</div>
+      <div class="cbody"><div class="readme" id="readmeBody"></div></div>
+    </div>
+    <div class="rowbtns">
+      <button class="btn danger" id="deleteRepoBtn">🗑 Ye repo delete karo</button>
+    </div>
+  </section>
+
+  <!-- FILE -->
+  <section id="viewFile" class="hidden">
+    <div class="crumbs"><a href="#" id="crumbHome2">shiva-dev</a><span class="sep">/</span><a href="#" id="crumbRepo2"></a><span class="sep">/</span><b id="crumbFileName"></b></div>
+    <div class="rowbtns" style="margin:0 0 12px">
+      <button class="btn small" id="copyFileBtn">📋 Copy</button>
+      <button class="btn small" id="downloadFileBtn">⬇ Download</button>
+      <button class="btn small" id="editFileBtn">✏️ Edit</button>
+      <button class="btn small danger" id="deleteFileBtn">🗑 Delete</button>
+    </div>
+    <div class="codebox"><table><tr><td class="ln" id="codeLines"></td><td class="lc" id="codeBody"></td></tr></table></div>
+    <p style="color:#8b949e;font-size:12.5px;margin-top:10px" id="fileMeta"></p>
+  </section>
+
+  <!-- FORM (new repo / new file / edit file) -->
+  <section id="viewForm" class="hidden">
+    <div class="crumbs"><b id="formTitle"></b></div>
+    <div class="form">
+      <div id="repoNameField">
+        <label id="nameLabel">Naam</label>
+        <input type="text" id="formName" placeholder="" />
+        <div class="hint" id="nameHint"></div>
+      </div>
+      <div id="descField">
+        <label>Description (chhota sa varnan)</label>
+        <input type="text" id="formDesc" placeholder="Ye kis baare mein hai…" />
+      </div>
+      <div id="contentField">
+        <label>File ka code / text</label>
+        <textarea id="formContent" rows="14" placeholder="Yahan apna code ya text likho / paste karo…"></textarea>
+      </div>
+      <div class="rowbtns">
+        <button class="btn green" id="formSaveBtn">💾 Save karo</button>
+        <button class="btn" id="formCancelBtn">Cancel</button>
+      </div>
+    </div>
+  </section>
+
+</div>
+<div class="toast" id="toast"></div>
+<script>
+(function () {
+  var KEY = "minihub_v1";
+  var store = null;
+  var curRepo = null, curFile = null, formMode = null;
+
+  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+  function $(id) { return document.getElementById(id); }
+  function toast(msg) { var t = $("toast"); t.textContent = msg; t.style.display = "block"; setTimeout(function () { t.style.display = "none"; }, 2200); }
+  function ago(ts) {
+    var d = Date.now() - ts;
+    if (d < 60000) return "abhi-abhi";
+    if (d < 3600000) return Math.floor(d / 60000) + " minute pehle";
+    if (d < 86400000) return Math.floor(d / 3600000) + " ghante pehle";
+    if (d < 2592000000) return Math.floor(d / 86400000) + " din pehle";
+    return new Date(ts).toLocaleDateString("en-IN");
+  }
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(store)); } catch (e) {} }
+  function seed() {
+    var now = Date.now();
+    return { repos: [
+      { id: "r1", name: "hello-world", desc: "Meri pehli repository — MiniHub seekhne ke liye", star: true, updated: now, files: [
+        { name: "README.md", updated: now, content: "# Hello World 👋\n\nYe meri pehli repository hai.\n\n## MiniHub kaise use karein\n\n1. **+ New repo** dabakar nayi repository banao\n2. Repo kholkar **+ File jodo** se apna code daalo\n3. File par tap karke code dekho, Copy ya Download karo\n4. Sab kuch isi phone/browser mein **save** rehta hai\n\n`All the best!`" },
+        { name: "app.js", updated: now, content: "// Mera pehla program\nvar naam = \"Shiva\";\n\nfunction namaste(naam) {\n  if (naam) {\n    return \"Namaste, \" + naam + \"!\";\n  }\n  return \"Namaste!\";\n}\n\nfor (var i = 1; i <= 3; i++) {\n  console.log(namaste(naam), i);\n}" }
+      ]},
+      { id: "r2", name: "fashion-website", desc: "Fashion Goals website ka sample code", star: false, updated: now - 86400000, files: [
+        { name: "README.md", updated: now - 86400000, content: "# Fashion Goals\n\nMeri fashion affiliate website.\n\n- Products aur shop\n- Reels aur movies\n- Mera AI chat" },
+        { name: "index.html", updated: now - 86400000, content: "<!DOCTYPE html>\n<html>\n<head>\n  <title>Fashion Goals</title>\n</head>\n<body>\n  <h1>Fashion Goals</h1>\n  <p>Style ke liye sab kuch, ek jagah.</p>\n</body>\n</html>" }
+      ]}
+    ]};
+  }
+  function load() {
+    try { var raw = localStorage.getItem(KEY); if (raw) { store = JSON.parse(raw); if (store && store.repos) return; } } catch (e) {}
+    store = seed(); save();
+  }
+  function ext(name) { var m = /\.([a-z0-9]+)$/i.exec(name || ""); return m ? m[1].toLowerCase() : ""; }
+  var LANGS = { html: ["HTML", "#e34c26"], js: ["JavaScript", "#f1e05a"], css: ["CSS", "#563d7c"], py: ["Python", "#3572A5"], json: ["JSON", "#8b949e"], md: ["Markdown", "#8b949e"], txt: ["Text", "#8b949e"] };
+  function repoLang(r) {
+    for (var i = 0; i < r.files.length; i++) { var L = LANGS[ext(r.files[i].name)]; if (L && L[0] !== "Markdown" && L[0] !== "Text") return L; }
+    return ["Text", "#8b949e"];
+  }
+  function highlight(code, e) {
+    var hash = (e === "py" || e === "sh");
+    var re = /(\/\/[^\n]*|\/\*[\s\S]*?\*\/)|("(?:[^"\\\n]|\\.)*"|'(?:[^'\\\n]|\\.)*'|`(?:[^`\\]|\\.)*`)|\b(var|let|const|function|return|if|else|for|while|do|new|class|extends|import|from|export|default|async|await|try|catch|throw|typeof|switch|case|break|continue|def|print|True|False|None|in|of|is|not|and|or|with|as|pass|lambda)\b|(\b\d+(?:\.\d+)?\b)/g;
+    if (hash) re = /(#[^\n]*)|("(?:[^"\\\n]|\\.)*"|'(?:[^'\\\n]|\\.)*')|\b(def|print|return|if|else|elif|for|while|import|from|class|True|False|None|in|of|is|not|and|or|with|as|pass|lambda|try|except)\b|(\b\d+(?:\.\d+)?\b)/g;
+    var out = "", last = 0, m;
+    while ((m = re.exec(code))) {
+      out += esc(code.slice(last, m.index));
+      var cls = m[1] ? "tok-c" : m[2] ? "tok-s" : m[3] ? "tok-k" : "tok-n";
+      out += '<span class="' + cls + '">' + esc(m[0]) + "</span>";
+      last = m.index + m[0].length;
+    }
+    return out + esc(code.slice(last));
+  }
+  function mdLite(text) {
+    return esc(text).split("\n").map(function (line) {
+      if (/^# /.test(line)) return '<span style="display:block;font-size:21px;font-weight:800">' + line.slice(2) + "</span>";
+      if (/^## /.test(line)) return '<span style="display:block;font-size:17px;font-weight:700">' + line.slice(3) + "</span>";
+      if (/^### /.test(line)) return '<span style="display:block;font-size:15px;font-weight:700">' + line.slice(4) + "</span>";
+      return line.replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>").replace(/`([^`]+)`/g, '<code style="background:#161b22;padding:1px 6px;border-radius:4px">$1</code>');
+    }).join("\n");
+  }
+  function show(view) {
+    ["viewHome", "viewRepo", "viewFile", "viewForm"].forEach(function (v) { $(v).classList.toggle("hidden", v !== view); });
+    window.scrollTo(0, 0);
+  }
+  function renderHome() {
+    var q = ($("repoSearch").value || "").toLowerCase();
+    var repos = store.repos.slice().sort(function (a, b) { return b.updated - a.updated; });
+    $("statRepos").textContent = store.repos.length;
+    $("statFiles").textContent = store.repos.reduce(function (n, r) { return n + r.files.length; }, 0);
+    $("statStars").textContent = store.repos.filter(function (r) { return r.star; }).length;
+    var html = "";
+    repos.forEach(function (r) {
+      if (q && r.name.toLowerCase().indexOf(q) === -1 && (r.desc || "").toLowerCase().indexOf(q) === -1) return;
+      var L = repoLang(r);
+      html += '<div class="repo" data-open="' + r.id + '"><h3><a href="#">' + esc(r.name) + '</a><span class="badge">Public</span></h3>' +
+        (r.desc ? '<div class="desc">' + esc(r.desc) + "</div>" : "") +
+        '<div class="meta"><span><span class="langdot" style="background:' + L[1] + '"></span>' + L[0] + "</span><span>📄 " + r.files.length + " files</span><span>" + ago(r.updated) + ' update</span><span style="flex:1"></span><button class="starbtn' + (r.star ? " on" : "") + '" data-star="' + r.id + '">' + (r.star ? "⭐ Starred" : "☆ Star") + "</button></div></div>";
+    });
+    $("repoList").innerHTML = html || '<div class="empty">Koi repository nahi mili.<br><br><button class="btn green" onclick="document.getElementById(\'homeNewBtn\').click()">+ Pehli repo banao</button></div>';
+    Array.prototype.forEach.call(document.querySelectorAll("[data-open]"), function (el) {
+      el.addEventListener("click", function () { openRepo(el.getAttribute("data-open")); });
+    });
+    Array.prototype.forEach.call(document.querySelectorAll("[data-star]"), function (el) {
+      el.addEventListener("click", function (ev) {
+        ev.stopPropagation();
+        var r = findRepo(el.getAttribute("data-star")); if (r) { r.star = !r.star; save(); renderHome(); }
+      });
+    });
+  }
+  function findRepo(id) { for (var i = 0; i < store.repos.length; i++) if (store.repos[i].id === id) return store.repos[i]; return null; }
+  function openRepo(id) {
+    curRepo = findRepo(id); if (!curRepo) return;
+    $("crumbRepoName").textContent = curRepo.name;
+    $("repoDesc").textContent = curRepo.desc || "";
+    var files = curRepo.files.slice().sort(function (a, b) {
+      if (a.name === "README.md") return -1; if (b.name === "README.md") return 1;
+      return a.name.localeCompare(b.name);
+    });
+    $("fileList").innerHTML = files.map(function (f) {
+      return '<div class="filerow" data-file="' + esc(f.name) + '"><span>📄</span><span class="fname"><a href="#">' + esc(f.name) + '</a></span><span class="fmeta">' + (f.content.length / 1024).toFixed(1) + " KB · " + ago(f.updated) + "</span></div>";
+    }).join("") || '<div class="filerow"><span class="fname" style="color:#8b949e">Abhi koi file nahi — "+ File jodo" dabao</span></div>';
+    Array.prototype.forEach.call(document.querySelectorAll("[data-file]"), function (el) {
+      el.addEventListener("click", function () { openFile(el.getAttribute("data-file")); });
+    });
+    var rd = null;
+    curRepo.files.forEach(function (f) { if (f.name === "README.md") rd = f; });
+    $("readmeCard").style.display = rd ? "" : "none";
+    if (rd) $("readmeBody").innerHTML = mdLite(rd.content);
+    show("viewRepo");
+  }
+  function openFile(name) {
+    if (!curRepo) return;
+    curFile = null;
+    curRepo.files.forEach(function (f) { if (f.name === name) curFile = f; });
+    if (!curFile) return;
+    $("crumbRepo2").textContent = curRepo.name;
+    $("crumbFileName").textContent = curFile.name;
+    var lines = curFile.content.split("\n");
+    $("codeLines").textContent = lines.map(function (_, i) { return i + 1; }).join("\n");
+    $("codeBody").innerHTML = highlight(curFile.content, ext(curFile.name));
+    $("fileMeta").textContent = lines.length + " lines · " + (curFile.content.length / 1024).toFixed(1) + " KB · " + ago(curFile.updated) + " update hua";
+    show("viewFile");
+  }
+  function openForm(mode) {
+    formMode = mode;
+    $("repoNameField").style.display = "";
+    $("descField").style.display = mode === "newRepo" ? "" : "none";
+    $("contentField").style.display = mode === "newRepo" ? "none" : "";
+    if (mode === "newRepo") {
+      $("formTitle").textContent = "✨ Nayi repository banao";
+      $("nameLabel").textContent = "Repository ka naam *";
+      $("formName").value = ""; $("formName").placeholder = "jaise: mera-project";
+      $("nameHint").textContent = "Sirf a-z, 0-9, - aur _ chalega. Naam hi repo ki pehchan hai.";
+      $("formDesc").value = "";
+    } else if (mode === "newFile") {
+      $("formTitle").textContent = "📄 Nayi file — " + curRepo.name;
+      $("nameLabel").textContent = "File ka naam *";
+      $("formName").value = ""; $("formName").placeholder = "jaise: index.html ya script.js";
+      $("nameHint").textContent = "Naam ke aakhir mein .html / .js / .css / .md jaisa type zaroor do.";
+      $("formContent").value = "";
+    } else {
+      $("formTitle").textContent = "✏️ File badlo — " + curFile.name;
+      $("nameLabel").textContent = "File ka naam *";
+      $("formName").value = curFile.name;
+      $("nameHint").textContent = "";
+      $("formContent").value = curFile.content;
+    }
+    show("viewForm");
+  }
+  function formSave() {
+    var name = $("formName").value.trim();
+    if (formMode === "newRepo") {
+      if (!/^[a-zA-Z0-9._-]+$/.test(name)) { toast("⚠️ Naam mein sirf a-z, 0-9, - _ . chalega"); return; }
+      if (store.repos.some(function (r) { return r.name.toLowerCase() === name.toLowerCase(); })) { toast("⚠️ Is naam ki repo pehle se hai"); return; }
+      var now = Date.now();
+      var r = { id: "r" + now, name: name, desc: $("formDesc").value.trim(), star: false, updated: now, files: [
+        { name: "README.md", updated: now, content: "# " + name + "\n\n" + ($("formDesc").value.trim() || "Meri nayi repository.") }
+      ]};
+      store.repos.push(r); save(); toast("✅ Repo ban gayi: " + name); openRepo(r.id);
+    } else if (formMode === "newFile") {
+      if (!name || name.indexOf("/") !== -1) { toast("⚠️ File ka sahi naam do"); return; }
+      if (curRepo.files.some(function (f) { return f.name === name; })) { toast("⚠️ Is naam ki file pehle se hai"); return; }
+      curRepo.files.push({ name: name, content: $("formContent").value, updated: Date.now() });
+      curRepo.updated = Date.now(); save(); toast("✅ File save ho gayi"); openRepo(curRepo.id);
+    } else {
+      if (!name || name.indexOf("/") !== -1) { toast("⚠️ File ka sahi naam do"); return; }
+      curFile.name = name; curFile.content = $("formContent").value; curFile.updated = Date.now();
+      curRepo.updated = Date.now(); save(); toast("✅ Badlav save ho gaya"); openFile(name);
+    }
+  }
+  $("topNewBtn").addEventListener("click", function () { openForm("newRepo"); });
+  $("homeNewBtn").addEventListener("click", function () { openForm("newRepo"); });
+  $("repoSearch").addEventListener("input", renderHome);
+  $("addFileBtn").addEventListener("click", function () { openForm("newFile"); });
+  $("editFileBtn").addEventListener("click", function () { openForm("editFile"); });
+  $("formSaveBtn").addEventListener("click", formSave);
+  $("formCancelBtn").addEventListener("click", function () {
+    if (formMode === "newRepo" || !curRepo) { renderHome(); show("viewHome"); }
+    else if (formMode === "editFile" && curFile) openFile(curFile.name);
+    else openRepo(curRepo.id);
+  });
+  $("crumbHome1").addEventListener("click", function (e) { e.preventDefault(); renderHome(); show("viewHome"); });
+  $("crumbHome2").addEventListener("click", function (e) { e.preventDefault(); renderHome(); show("viewHome"); });
+  $("crumbRepo2").addEventListener("click", function (e) { e.preventDefault(); if (curRepo) openRepo(curRepo.id); });
+  $("deleteRepoBtn").addEventListener("click", function () {
+    if (!curRepo) return;
+    if (confirm("Pakka? '" + curRepo.name + "' repo aur uski saari files delete ho jayengi.")) {
+      store.repos = store.repos.filter(function (r) { return r.id !== curRepo.id; });
+      save(); curRepo = null; toast("🗑 Repo delete ho gayi"); renderHome(); show("viewHome");
+    }
+  });
+  $("deleteFileBtn").addEventListener("click", function () {
+    if (!curRepo || !curFile) return;
+    if (confirm("Pakka? '" + curFile.name + "' file delete ho jayegi.")) {
+      curRepo.files = curRepo.files.filter(function (f) { return f.name !== curFile.name; });
+      curRepo.updated = Date.now(); save(); toast("🗑 File delete ho gayi"); openRepo(curRepo.id);
+    }
+  });
+  $("copyFileBtn").addEventListener("click", function () {
+    if (!curFile) return;
+    function done() { toast("📋 Code copy ho gaya"); }
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(curFile.content).then(done, done);
+    else {
+      var ta = document.createElement("textarea"); ta.value = curFile.content; document.body.appendChild(ta);
+      ta.select(); try { document.execCommand("copy"); } catch (e) {} ta.remove(); done();
+    }
+  });
+  $("downloadFileBtn").addEventListener("click", function () {
+    if (!curFile) return;
+    var blob = new Blob([curFile.content], { type: "text/plain" });
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob); a.download = curFile.name; a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 4000);
+    toast("⬇ Download ho rahi hai: " + curFile.name);
+  });
+
+  load();
+  renderHome();
+})();
+</script>
+</body>
+</html>
