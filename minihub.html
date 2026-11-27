@@ -115,10 +115,17 @@
   <section id="viewFile" class="hidden">
     <div class="crumbs"><a href="#" id="crumbHome2">shiva-dev</a><span class="sep">/</span><a href="#" id="crumbRepo2"></a><span class="sep">/</span><b id="crumbFileName"></b></div>
     <div class="rowbtns" style="margin:0 0 12px">
+      <button class="btn small hidden" id="previewFileBtn">👁 Preview</button>
+      <button class="btn small green hidden" id="liveFileBtn">🌐 Live karo</button>
       <button class="btn small" id="copyFileBtn">📋 Copy</button>
       <button class="btn small" id="downloadFileBtn">⬇ Download</button>
       <button class="btn small" id="editFileBtn">✏️ Edit</button>
       <button class="btn small danger" id="deleteFileBtn">🗑 Delete</button>
+    </div>
+    <div id="liveResult" class="hidden" style="border:1px solid #238636;background:#0f2417;border-radius:8px;padding:12px 14px;margin-bottom:12px;font-size:14.5px">
+      ✅ <b>Tumhari website LIVE hai!</b><br>
+      <a id="liveUrl" href="#" target="_blank" rel="noopener" style="word-break:break-all"></a>
+      <div class="rowbtns" style="margin-top:10px"><button class="btn small" id="copyLiveBtn">📋 Link copy karo</button></div>
     </div>
     <div class="codebox"><table><tr><td class="ln" id="codeLines"></td><td class="lc" id="codeBody"></td></tr></table></div>
     <p style="color:#8b949e;font-size:12.5px;margin-top:10px" id="fileMeta"></p>
@@ -269,6 +276,10 @@
     if (!curFile) return;
     $("crumbRepo2").textContent = curRepo.name;
     $("crumbFileName").textContent = curFile.name;
+    var isHtml = /^(html|htm)$/.test(ext(curFile.name));
+    $("previewFileBtn").classList.toggle("hidden", !isHtml);
+    $("liveFileBtn").classList.toggle("hidden", !isHtml);
+    $("liveResult").classList.add("hidden");
     var lines = curFile.content.split("\n");
     $("codeLines").textContent = lines.map(function (_, i) { return i + 1; }).join("\n");
     $("codeBody").innerHTML = highlight(curFile.content, ext(curFile.name));
@@ -358,6 +369,48 @@
       var ta = document.createElement("textarea"); ta.value = curFile.content; document.body.appendChild(ta);
       ta.select(); try { document.execCommand("copy"); } catch (e) {} ta.remove(); done();
     }
+  });
+  $("previewFileBtn").addEventListener("click", function () {
+    if (!curFile) return;
+    var blob = new Blob([curFile.content], { type: "text/html" });
+    window.open(URL.createObjectURL(blob), "_blank");
+  });
+  $("liveFileBtn").addEventListener("click", function () {
+    if (!curRepo || !curFile) return;
+    if (curFile.content.length > 190000) { toast("⚠️ File bahut badi hai — live limit ~200 KB hai"); return; }
+    var code = "";
+    try { code = localStorage.getItem("minihub_code") || ""; } catch (e) {}
+    if (!code) {
+      code = window.prompt("Apna admin code dalo (wahi jo Orders/Reels mein use hota hai):", "") || "";
+      if (!code) return;
+    }
+    var title = curFile.name.toLowerCase() === "index.html" ? curRepo.name : curFile.name.replace(/\.[^.]+$/, "");
+    var btn = $("liveFileBtn");
+    btn.disabled = true; btn.textContent = "⏳ Live ho rahi hai…";
+    fetch("/api/publish-site", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code: code, title: title, html: curFile.content, css: "", js: "" }) })
+      .then(function (r) { return r.json(); })
+      .then(function (j) {
+        btn.disabled = false; btn.textContent = "🌐 Live karo";
+        if (j && j.ok && j.url) {
+          try { localStorage.setItem("minihub_code", code); } catch (e) {}
+          $("liveUrl").textContent = j.url; $("liveUrl").href = j.url;
+          $("liveResult").classList.remove("hidden");
+          toast(j.updated ? "✅ Website update ho gayi!" : "✅ Website LIVE ho gayi!");
+        } else {
+          try { localStorage.removeItem("minihub_code"); } catch (e) {}
+          toast("⚠️ " + ((j && j.error) || "Live nahi hua — code galat ho sakta hai"));
+        }
+      })
+      .catch(function () {
+        btn.disabled = false; btn.textContent = "🌐 Live karo";
+        toast("⚠️ Net slow hai — dobara try karo");
+      });
+  });
+  $("copyLiveBtn").addEventListener("click", function () {
+    var url = $("liveUrl").textContent;
+    function done() { toast("📋 Link copy ho gaya"); }
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(url).then(done, done);
+    else done();
   });
   $("downloadFileBtn").addEventListener("click", function () {
     if (!curFile) return;
